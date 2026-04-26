@@ -14,11 +14,26 @@
 :root{--bg:#0f0f0f;--bg2:#1a1a1a;--bg3:#242424;--bg4:#2e2e2e;--text:#f0f0f0;--text2:#999;--text3:#666;--border:rgba(255,255,255,0.08);--green:#2ecc8e;--green-dim:rgba(46,204,142,0.15);--red:#f0614a;--red-dim:rgba(240,97,74,0.15);--accent:#f5c842;--radius:16px;--radius-sm:10px;--font:'Noto Sans TC',sans-serif}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font);overflow:hidden}
+
+/* Login Screen */
+.login-screen{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;padding:40px 32px;text-align:center}
+.login-logo{font-size:64px;margin-bottom:20px}
+.login-title{font-size:28px;font-weight:700;letter-spacing:-0.5px;margin-bottom:8px}
+.login-sub{font-size:15px;color:var(--text2);line-height:1.6;margin-bottom:48px}
+.google-btn{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;max-width:320px;padding:16px 24px;background:#fff;color:#1f1f1f;border:none;border-radius:var(--radius-sm);font-size:16px;font-weight:600;font-family:var(--font);cursor:pointer;box-shadow:0 2px 16px rgba(0,0,0,0.4);transition:opacity 0.15s}
+.google-btn:active{opacity:0.85}
+.google-btn svg{flex-shrink:0}
+.login-note{font-size:12px;color:var(--text3);margin-top:20px;line-height:1.6}
+
+/* App */
 .app{display:flex;flex-direction:column;height:100vh;max-width:480px;margin:0 auto;position:relative;overflow:hidden}
 .header{padding:52px 20px 16px;background:var(--bg);position:relative;z-index:10;flex-shrink:0}
 .header-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
-.app-title{font-size:22px;font-weight:700;letter-spacing:-0.5px}
-.sync-dot{width:8px;height:8px;border-radius:50%;background:var(--text3);display:inline-block;margin-left:8px;transition:background 0.4s}
+.header-left{display:flex;align-items:center;gap:10px}
+.app-title{font-size:20px;font-weight:700;letter-spacing:-0.5px}
+.user-avatar{width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid var(--border)}
+.user-avatar-placeholder{width:32px;height:32px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:14px;border:2px solid var(--border);cursor:pointer}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--text3);display:inline-block;transition:background 0.4s;flex-shrink:0}
 .sync-dot.synced{background:var(--green)}
 .sync-dot.syncing{background:var(--accent);animation:pulse 1s infinite}
 .sync-dot.error{background:var(--red)}
@@ -26,7 +41,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .month-nav{display:flex;align-items:center;gap:12px}
 .month-btn{background:var(--bg3);border:none;color:var(--text2);width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
 .month-label{font-size:14px;font-weight:500;min-width:70px;text-align:center}
-.balance-card{background:var(--bg2);border-radius:var(--radius);padding:20px;margin:0 20px 0;border:1px solid var(--border)}
+.balance-card{background:var(--bg2);border-radius:var(--radius);padding:20px;margin:0 20px;border:1px solid var(--border)}
 .balance-label{font-size:12px;color:var(--text2);margin-bottom:6px;letter-spacing:0.5px;text-transform:uppercase}
 .balance-amount{font-size:36px;font-weight:700;letter-spacing:-1px;margin-bottom:16px}
 .balance-amount.positive{color:var(--green)}
@@ -103,20 +118,50 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .filter-bar::-webkit-scrollbar{display:none}
 .filter-chip{white-space:nowrap;padding:6px 14px;border-radius:999px;background:var(--bg2);border:1px solid var(--border);color:var(--text2);font-size:13px;cursor:pointer;font-family:var(--font);transition:all 0.15s;flex-shrink:0}
 .filter-chip.active{background:var(--accent);color:#000;border-color:var(--accent);font-weight:600}
-.toast{position:fixed;top:60px;left:50%;transform:translateX(-50%);background:var(--bg3);color:var(--text);font-size:13px;padding:8px 18px;border-radius:999px;z-index:999;opacity:0;transition:opacity 0.3s;pointer-events:none;border:1px solid var(--border)}
+.toast{position:fixed;top:60px;left:50%;transform:translateX(-50%);background:var(--bg3);color:var(--text);font-size:13px;padding:8px 18px;border-radius:999px;z-index:999;opacity:0;transition:opacity 0.3s;pointer-events:none;border:1px solid var(--border);white-space:nowrap}
 .toast.show{opacity:1}
+/* Logout modal */
+.user-modal{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:300;display:none;align-items:flex-end;justify-content:center}
+.user-modal.open{display:flex}
+.user-modal-inner{background:var(--bg2);border-radius:24px 24px 0 0;padding:24px 20px;width:100%;max-width:480px;animation:slideUp 0.25s ease}
+.user-info-row{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+.user-modal-avatar{width:48px;height:48px;border-radius:50%;object-fit:cover}
+.user-modal-name{font-size:16px;font-weight:600}
+.user-modal-email{font-size:13px;color:var(--text2);margin-top:2px}
+.logout-btn{width:100%;padding:14px;background:var(--red-dim);color:var(--red);border:1px solid var(--red);border-radius:var(--radius-sm);font-size:15px;font-weight:600;font-family:var(--font);cursor:pointer}
+.cancel-btn{width:100%;padding:14px;background:none;color:var(--text2);border:none;font-size:15px;font-family:var(--font);cursor:pointer;margin-top:8px}
 ::-webkit-scrollbar{width:0}
 </style>
 </head>
 <body>
-<div class="app">
+
+<!-- Login Screen -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-logo">💰</div>
+  <div class="login-title">記帳本</div>
+  <div class="login-sub">登入後，所有裝置<br>都能看到同一份記帳資料</div>
+  <button class="google-btn" onclick="signInWithGoogle()">
+    <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+    使用 Google 帳號登入
+  </button>
+  <div class="login-note">登入即代表你的資料將儲存於<br>你的 Google 帳號對應的 Firebase 雲端</div>
+</div>
+
+<!-- Main App -->
+<div class="app" id="mainApp" style="display:none">
   <div class="header">
     <div class="header-top">
-      <div class="app-title">💰 記帳本 <span class="sync-dot" id="syncDot" title="同步狀態"></span></div>
-      <div class="month-nav">
-        <button class="month-btn" onclick="changeMonth(-1)">‹</button>
-        <span class="month-label" id="monthLabel"></span>
-        <button class="month-btn" onclick="changeMonth(1)">›</button>
+      <div class="header-left">
+        <div class="app-title">💰 記帳本</div>
+        <div class="sync-dot" id="syncDot"></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="month-nav">
+          <button class="month-btn" onclick="changeMonth(-1)">‹</button>
+          <span class="month-label" id="monthLabel"></span>
+          <button class="month-btn" onclick="changeMonth(1)">›</button>
+        </div>
+        <div class="user-avatar-placeholder" id="avatarBtn" onclick="openUserModal()">👤</div>
       </div>
     </div>
     <div class="balance-card">
@@ -146,8 +191,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
       <div class="section-heading">預算設定</div>
       <div style="display:flex;gap:10px;margin-bottom:16px">
         <select class="form-input" id="budgetCatSel" style="flex:1"></select>
-        <input class="form-input" type="number" id="budgetAmt" placeholder="金額" style="width:120px">
-        <button onclick="saveBudget()" style="background:var(--accent);color:#000;border:none;border-radius:var(--radius-sm);padding:0 16px;font-weight:700;cursor:pointer;font-family:var(--font);font-size:14px">設定</button>
+        <input class="form-input" type="number" id="budgetAmt" placeholder="金額" style="width:110px">
+        <button onclick="saveBudget()" style="background:var(--accent);color:#000;border:none;border-radius:var(--radius-sm);padding:0 14px;font-weight:700;cursor:pointer;font-family:var(--font);font-size:14px">設定</button>
       </div>
       <div class="section-heading">本月預算追蹤</div>
       <div id="budgetList"></div>
@@ -168,7 +213,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   </div>
 
   <button class="fab" onclick="openModal()">＋</button>
-
   <nav class="bottom-nav">
     <button class="nav-item active" onclick="switchTab('overview',0)"><span class="nav-icon">📊</span><span class="nav-label">總覽</span></button>
     <button class="nav-item" onclick="switchTab('transactions',1)"><span class="nav-icon">📋</span><span class="nav-label">交易</span></button>
@@ -177,6 +221,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   </nav>
 </div>
 
+<!-- Add Transaction Modal -->
 <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
   <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-handle"></div>
@@ -196,13 +241,28 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   </div>
 </div>
 
+<!-- User Modal -->
+<div class="user-modal" id="userModal" onclick="closeUserModal(event)">
+  <div class="user-modal-inner" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="user-info-row">
+      <img class="user-modal-avatar" id="modalAvatar" src="" alt="">
+      <div>
+        <div class="user-modal-name" id="modalName"></div>
+        <div class="user-modal-email" id="modalEmail"></div>
+      </div>
+    </div>
+    <button class="logout-btn" onclick="signOut()">登出</button>
+    <button class="cancel-btn" onclick="closeUserModal()">取消</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
-<!-- Firebase SDK -->
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getFirestore, doc, getDoc, setDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut as fbSignOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyA60gtz4Elg7XF9drhdOYyfjduDFShZSB8",
@@ -213,9 +273,10 @@ const firebaseConfig = {
   appId: "1:920733762276:web:b2ada6fd39249c5b7322f1"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
+const firebaseApp = initializeApp(firebaseConfig);
+const db = getFirestore(firebaseApp);
+const auth = getAuth(firebaseApp);
+const provider = new GoogleAuthProvider();
 
 const EXPENSE_CATS = [
   {name:'餐飲',icon:'🍜'},{name:'交通',icon:'🚌'},{name:'購物',icon:'🛍'},{name:'娛樂',icon:'🎮'},
@@ -242,17 +303,62 @@ let userId = null;
 let saveTimeout = null;
 let unsubscribe = null;
 
-function setSyncDot(status) {
-  const dot = document.getElementById('syncDot');
-  dot.className = 'sync-dot ' + status;
-  dot.title = status === 'synced' ? '已同步' : status === 'syncing' ? '同步中...' : '同步失敗';
-}
+// ---- Auth ----
+window.signInWithGoogle = async function() {
+  try {
+    await signInWithPopup(auth, provider);
+  } catch(e) {
+    showToast('登入失敗，請再試一次');
+  }
+};
 
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2000);
+window.signOut = async function() {
+  if (unsubscribe) unsubscribe();
+  await fbSignOut(auth);
+  document.getElementById('userModal').classList.remove('open');
+  document.getElementById('mainApp').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  userId = null;
+};
+
+window.openUserModal = function() { document.getElementById('userModal').classList.add('open'); };
+window.closeUserModal = function(e) {
+  if (!e || e.target === document.getElementById('userModal'))
+    document.getElementById('userModal').classList.remove('open');
+};
+
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    userId = user.uid;
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('mainApp').style.display = 'flex';
+    // Avatar
+    if (user.photoURL) {
+      document.getElementById('avatarBtn').innerHTML = `<img src="${user.photoURL}" style="width:32px;height:32px;border-radius:50%;object-fit:cover">`;
+      document.getElementById('modalAvatar').src = user.photoURL;
+    }
+    document.getElementById('modalName').textContent = user.displayName || '使用者';
+    document.getElementById('modalEmail').textContent = user.email || '';
+    setSyncDot('syncing');
+    try {
+      const snap = await getDoc(doc(db, 'users', userId, 'data', 'main'));
+      if (snap.exists()) {
+        const d = snap.data();
+        state.transactions = d.transactions || [];
+        state.accounts = d.accounts || state.accounts;
+        state.budgets = d.budgets || {};
+      }
+    } catch(e) { setSyncDot('error'); }
+    renderAll();
+    setSyncDot('synced');
+    setupRealtimeSync();
+  }
+});
+
+// ---- Firebase ----
+function setSyncDot(s) {
+  const el = document.getElementById('syncDot');
+  el.className = 'sync-dot ' + s;
 }
 
 async function saveToFirebase() {
@@ -274,56 +380,39 @@ async function saveToFirebase() {
 
 function scheduleSave() {
   clearTimeout(saveTimeout);
-  saveTimeout = setTimeout(saveToFirebase, 800);
+  saveTimeout = setTimeout(saveToFirebase, 600);
 }
 
 function setupRealtimeSync() {
   if (unsubscribe) unsubscribe();
   unsubscribe = onSnapshot(doc(db, 'users', userId, 'data', 'main'), (snap) => {
-    if (snap.exists()) {
-      const d = snap.data();
-      const localTime = state._localUpdateAt || 0;
-      if (d.updatedAt > localTime) {
-        state.transactions = d.transactions || [];
-        state.accounts = d.accounts || [{id:'a1',name:'現金',type:'現金',balance:0},{id:'a2',name:'銀行帳戶',type:'銀行帳戶',balance:0}];
-        state.budgets = d.budgets || {};
-        renderAll();
-        setSyncDot('synced');
-      }
+    if (!snap.exists()) return;
+    const d = snap.data();
+    if (d.updatedAt > (state._localUpdateAt || 0)) {
+      state.transactions = d.transactions || [];
+      state.accounts = d.accounts || state.accounts;
+      state.budgets = d.budgets || {};
+      renderAll();
+      setSyncDot('synced');
     }
   }, () => setSyncDot('error'));
 }
 
-onAuthStateChanged(auth, async (user) => {
-  if (user) {
-    userId = user.uid;
-    setSyncDot('syncing');
-    try {
-      const snap = await getDoc(doc(db, 'users', userId, 'data', 'main'));
-      if (snap.exists()) {
-        const d = snap.data();
-        state.transactions = d.transactions || [];
-        state.accounts = d.accounts || [{id:'a1',name:'現金',type:'現金',balance:0},{id:'a2',name:'銀行帳戶',type:'銀行帳戶',balance:0}];
-        state.budgets = d.budgets || {};
-      }
-    } catch(e) { setSyncDot('error'); }
-    renderAll();
-    setSyncDot('synced');
-    setupRealtimeSync();
-  } else {
-    signInAnonymously(auth).catch(() => { setSyncDot('error'); showToast('無法連線，請檢查網路'); });
-  }
-});
+// ---- UI ----
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
 
 function monthTx() {
   return state.transactions.filter(t => t.date.startsWith(state.currentMonth));
 }
 
 function renderAll() {
-  document.getElementById('monthLabel').textContent = (() => {
-    const [y,m] = state.currentMonth.split('-');
-    return `${y}/${parseInt(m)}`;
-  })();
+  const [y,m] = state.currentMonth.split('-');
+  document.getElementById('monthLabel').textContent = `${y}/${parseInt(m)}`;
   const tx = monthTx();
   const income = tx.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
   const expense = tx.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
@@ -342,12 +431,12 @@ function renderAll() {
   populateBudgetCatSel();
 }
 
-function changeMonth(d) {
+window.changeMonth = function(d) {
   const [y,m] = state.currentMonth.split('-').map(Number);
   const dt = new Date(y, m-1+d, 1);
   state.currentMonth = dt.toISOString().slice(0,7);
   renderAll();
-}
+};
 
 function renderCharts() {
   const [y,m] = state.currentMonth.split('-').map(Number);
@@ -355,39 +444,34 @@ function renderCharts() {
   for (let i=5;i>=0;i--) { const dt = new Date(y, m-1-i, 1); months.push(dt.toISOString().slice(0,7)); }
   const incomes = months.map(mo => state.transactions.filter(t=>t.type==='income'&&t.date.startsWith(mo)).reduce((s,t)=>s+t.amount,0));
   const expenses = months.map(mo => state.transactions.filter(t=>t.type==='expense'&&t.date.startsWith(mo)).reduce((s,t)=>s+t.amount,0));
-  const labels = months.map(mo => parseInt(mo.split('-')[1]) + '月');
+  const labels = months.map(mo => parseInt(mo.split('-')[1])+'月');
   if (barChart) barChart.destroy();
   barChart = new Chart(document.getElementById('barChart'), {
-    type: 'bar',
-    data: { labels, datasets: [
+    type:'bar', data:{ labels, datasets:[
       {label:'收入',data:incomes,backgroundColor:'rgba(46,204,142,0.8)',borderRadius:6,borderSkipped:false},
       {label:'支出',data:expenses,backgroundColor:'rgba(240,97,74,0.8)',borderRadius:6,borderSkipped:false}
     ]},
-    options: { responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{ labels:{ color:'#999', font:{size:12}, boxWidth:12 }}},
-      scales:{ x:{ticks:{color:'#666'},grid:{color:'rgba(255,255,255,0.05)'}}, y:{ticks:{color:'#666',callback:v=>`${(v/1000).toFixed(0)}K`},grid:{color:'rgba(255,255,255,0.05)'}} }
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#999',font:{size:12},boxWidth:12}}},
+      scales:{x:{ticks:{color:'#666'},grid:{color:'rgba(255,255,255,0.05)'}},y:{ticks:{color:'#666',callback:v=>`${(v/1000).toFixed(0)}K`},grid:{color:'rgba(255,255,255,0.05)'}}}
     }
   });
   const catData = {};
-  monthTx().filter(t=>t.type==='expense').forEach(t => { catData[t.category]=(catData[t.category]||0)+t.amount; });
+  monthTx().filter(t=>t.type==='expense').forEach(t=>{catData[t.category]=(catData[t.category]||0)+t.amount;});
   if (doughnutChart) doughnutChart.destroy();
   const catKeys = Object.keys(catData);
   if (catKeys.length) {
     doughnutChart = new Chart(document.getElementById('doughnutChart'), {
-      type: 'doughnut',
-      data: { labels: catKeys, datasets:[{data:catKeys.map(k=>catData[k]),backgroundColor:COLORS,borderWidth:0,hoverOffset:6}] },
-      options: { responsive:true, maintainAspectRatio:false, cutout:'65%',
-        plugins:{ legend:{ position:'right', labels:{color:'#999',font:{size:12},boxWidth:12,padding:8}}}
-      }
+      type:'doughnut', data:{labels:catKeys,datasets:[{data:catKeys.map(k=>catData[k]),backgroundColor:COLORS,borderWidth:0,hoverOffset:6}]},
+      options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'right',labels:{color:'#999',font:{size:12},boxWidth:12,padding:8}}}}
     });
   }
 }
 
 function txCard(t, showDel=true) {
-  const allCats = [...EXPENSE_CATS,...INCOME_CATS];
-  const cat = allCats.find(c=>c.name===t.category) || {icon:'📦'};
-  const sign = t.type==='income' ? '+' : '-';
+  const cat = [...EXPENSE_CATS,...INCOME_CATS].find(c=>c.name===t.category) || {icon:'📦'};
   const acc = state.accounts.find(a=>a.id===t.accountId);
+  const sign = t.type==='income' ? '+' : '-';
   return `<div class="tx-item">
     <div class="tx-icon" style="background:${t.type==='income'?'rgba(46,204,142,0.15)':'rgba(240,97,74,0.1)'}">${cat.icon}</div>
     <div class="tx-info">
@@ -409,36 +493,36 @@ function renderRecentTx() {
 
 function renderFilterChips() {
   const chips = [{id:'all',label:'全部'},{id:'income',label:'收入'},{id:'expense',label:'支出'}];
-  [...new Set(monthTx().map(t=>t.category))].forEach(c => chips.push({id:c,label:c}));
+  [...new Set(monthTx().map(t=>t.category))].forEach(c=>chips.push({id:c,label:c}));
   document.getElementById('filterBar').innerHTML = chips.map(c=>`
     <button class="filter-chip ${activeFilter===c.id?'active':''}" onclick="window._setFilter('${c.id}')">${c.label}</button>
   `).join('');
 }
 
-window._setFilter = function(f) { activeFilter = f; renderFilterChips(); renderTxList(); };
+window._setFilter = function(f) { activeFilter=f; renderFilterChips(); renderTxList(); };
 
 function renderTxList() {
-  let tx = monthTx().filter(t => {
-    if (activeFilter === 'all') return true;
-    if (activeFilter === 'income' || activeFilter === 'expense') return t.type === activeFilter;
-    return t.category === activeFilter;
+  let tx = monthTx().filter(t=>{
+    if (activeFilter==='all') return true;
+    if (activeFilter==='income'||activeFilter==='expense') return t.type===activeFilter;
+    return t.category===activeFilter;
   }).sort((a,b)=>b.date.localeCompare(a.date));
   const el = document.getElementById('txListContainer');
-  if (!tx.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">🔍</div>沒有符合的交易</div>'; return; }
+  if (!tx.length) { el.innerHTML='<div class="empty-state"><div class="empty-icon">🔍</div>沒有符合的交易</div>'; return; }
   const groups = {};
-  tx.forEach(t => { if (!groups[t.date]) groups[t.date]=[]; groups[t.date].push(t); });
-  el.innerHTML = Object.entries(groups).sort((a,b)=>b[0].localeCompare(a[0])).map(([date,txs]) =>
-    `<div class="tx-group-label">${date}</div>` + txs.map(t=>txCard(t)).join('')
+  tx.forEach(t=>{if(!groups[t.date])groups[t.date]=[];groups[t.date].push(t);});
+  el.innerHTML = Object.entries(groups).sort((a,b)=>b[0].localeCompare(a[0])).map(([date,txs])=>
+    `<div class="tx-group-label">${date}</div>`+txs.map(t=>txCard(t)).join('')
   ).join('');
 }
 
 function renderBudgets() {
   const catSpend = {};
-  monthTx().filter(t=>t.type==='expense').forEach(t => { catSpend[t.category]=(catSpend[t.category]||0)+t.amount; });
+  monthTx().filter(t=>t.type==='expense').forEach(t=>{catSpend[t.category]=(catSpend[t.category]||0)+t.amount;});
   const el = document.getElementById('budgetList');
   const entries = Object.entries(state.budgets);
-  if (!entries.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">🎯</div>尚未設定預算</div>'; return; }
-  el.innerHTML = entries.map(([cat,limit]) => {
+  if (!entries.length) { el.innerHTML='<div class="empty-state"><div class="empty-icon">🎯</div>尚未設定預算</div>'; return; }
+  el.innerHTML = entries.map(([cat,limit])=>{
     const spent = catSpend[cat]||0;
     const pct = Math.min(100, Math.round(spent/limit*100));
     const color = pct>=100?'#f0614a':pct>=80?'#f5c842':'#2ecc8e';
@@ -460,17 +544,14 @@ function populateBudgetCatSel() {
 window.saveBudget = function() {
   const cat = document.getElementById('budgetCatSel').value;
   const amt = parseFloat(document.getElementById('budgetAmt').value);
-  if (!amt || amt<=0) return;
-  state.budgets[cat] = amt;
-  document.getElementById('budgetAmt').value = '';
-  state._localUpdateAt = Date.now();
-  scheduleSave();
-  renderBudgets();
-  showToast('預算已儲存');
+  if (!amt||amt<=0) return;
+  state.budgets[cat]=amt;
+  document.getElementById('budgetAmt').value='';
+  state._localUpdateAt=Date.now(); scheduleSave(); renderBudgets(); showToast('預算已儲存');
 };
 
 function renderAccounts() {
-  document.getElementById('accountList').innerHTML = state.accounts.map(a => `
+  document.getElementById('accountList').innerHTML = state.accounts.map(a=>`
     <div class="acc-card">
       <div class="acc-info"><div class="acc-name">${a.name}</div><div class="acc-type">${a.type}</div></div>
       <div style="display:flex;align-items:center;gap:8px">
@@ -484,110 +565,82 @@ function renderAccounts() {
 window.addAccount = function() {
   const name = document.getElementById('accNameIn').value.trim();
   if (!name) return;
-  const type = document.getElementById('accTypeIn').value;
-  const bal = parseFloat(document.getElementById('accBalIn').value)||0;
-  state.accounts.push({id:'a'+Date.now(),name,type,balance:bal});
-  document.getElementById('accNameIn').value = '';
-  document.getElementById('accBalIn').value = '';
-  state._localUpdateAt = Date.now();
-  scheduleSave();
-  renderAll();
-  showToast('帳戶已新增');
+  state.accounts.push({id:'a'+Date.now(),name,type:document.getElementById('accTypeIn').value,balance:parseFloat(document.getElementById('accBalIn').value)||0});
+  document.getElementById('accNameIn').value='';
+  document.getElementById('accBalIn').value='';
+  state._localUpdateAt=Date.now(); scheduleSave(); renderAll(); showToast('帳戶已新增');
 };
 
 window._deleteAccount = function(id) {
   if (state.accounts.length<=1) return alert('至少需要一個帳戶');
-  state.accounts = state.accounts.filter(a=>a.id!==id);
-  state._localUpdateAt = Date.now();
-  scheduleSave();
-  renderAll();
+  state.accounts=state.accounts.filter(a=>a.id!==id);
+  state._localUpdateAt=Date.now(); scheduleSave(); renderAll();
 };
 
 window.openModal = function() {
   document.getElementById('modalOverlay').classList.add('open');
+  currentType='expense';
+  document.getElementById('typeExpense').className='type-btn active expense';
+  document.getElementById('typeIncome').className='type-btn income';
+  selectedCat=EXPENSE_CATS[0].name;
   buildCatGrid();
-  populateAccSel();
-  document.getElementById('txDateIn').value = new Date().toISOString().slice(0,10);
-  document.getElementById('txAmt').value = '';
-  document.getElementById('txNoteIn').value = '';
-  selectedCat = currentType==='expense' ? EXPENSE_CATS[0].name : INCOME_CATS[0].name;
-  buildCatGrid();
-  setTimeout(()=>document.getElementById('txAmt').focus(), 200);
+  document.getElementById('txAccSel').innerHTML=state.accounts.map(a=>`<option value="${a.id}">${a.name}</option>`).join('');
+  document.getElementById('txDateIn').value=new Date().toISOString().slice(0,10);
+  document.getElementById('txAmt').value='';
+  document.getElementById('txNoteIn').value='';
+  setTimeout(()=>document.getElementById('txAmt').focus(),200);
 };
 
 window.closeModal = function(e) {
-  if (!e || e.target===document.getElementById('modalOverlay'))
+  if (!e||e.target===document.getElementById('modalOverlay'))
     document.getElementById('modalOverlay').classList.remove('open');
 };
 
 window.setType = function(t) {
-  currentType = t;
-  document.getElementById('typeExpense').className = 'type-btn' + (t==='expense'?' active expense':'');
-  document.getElementById('typeIncome').className = 'type-btn' + (t==='income'?' active income':'');
-  selectedCat = '';
-  buildCatGrid();
+  currentType=t;
+  document.getElementById('typeExpense').className='type-btn'+(t==='expense'?' active expense':'');
+  document.getElementById('typeIncome').className='type-btn'+(t==='income'?' active income':'');
+  selectedCat=''; buildCatGrid();
 };
 
 function buildCatGrid() {
-  const cats = currentType==='expense' ? EXPENSE_CATS : INCOME_CATS;
-  if (!selectedCat) selectedCat = cats[0].name;
-  document.getElementById('catGrid').innerHTML = cats.map(c=>`
+  const cats=currentType==='expense'?EXPENSE_CATS:INCOME_CATS;
+  if (!selectedCat) selectedCat=cats[0].name;
+  document.getElementById('catGrid').innerHTML=cats.map(c=>`
     <button class="cat-btn${selectedCat===c.name?' selected':''}" onclick="window._selectCat('${c.name}')">
       <span>${c.icon}</span>${c.name}
-    </button>
-  `).join('');
+    </button>`).join('');
 }
 
-window._selectCat = function(name) { selectedCat = name; buildCatGrid(); };
-
-function populateAccSel() {
-  document.getElementById('txAccSel').innerHTML = state.accounts.map(a=>`<option value="${a.id}">${a.name}</option>`).join('');
-}
+window._selectCat = function(name) { selectedCat=name; buildCatGrid(); };
 
 window.addTransaction = function() {
-  const amt = parseFloat(document.getElementById('txAmt').value);
-  if (!amt || amt<=0) return;
-  const accId = document.getElementById('txAccSel').value;
-  const date = document.getElementById('txDateIn').value;
-  const note = document.getElementById('txNoteIn').value.trim();
-  const t = {id:Date.now()+'', type:currentType, amount:amt, category:selectedCat, accountId:accId, date, note};
+  const amt=parseFloat(document.getElementById('txAmt').value);
+  if (!amt||amt<=0) return;
+  const accId=document.getElementById('txAccSel').value;
+  const t={id:Date.now()+'',type:currentType,amount:amt,category:selectedCat,accountId:accId,date:document.getElementById('txDateIn').value,note:document.getElementById('txNoteIn').value.trim()};
   state.transactions.push(t);
-  const acc = state.accounts.find(a=>a.id===accId);
-  if (acc) acc.balance += currentType==='income' ? amt : -amt;
+  const acc=state.accounts.find(a=>a.id===accId);
+  if (acc) acc.balance+=currentType==='income'?amt:-amt;
   document.getElementById('modalOverlay').classList.remove('open');
-  state._localUpdateAt = Date.now();
-  scheduleSave();
-  renderAll();
-  showToast('已記帳 ✓');
+  state._localUpdateAt=Date.now(); scheduleSave(); renderAll(); showToast('已記帳 ✓');
 };
 
 window._deleteTx = function(id) {
-  const t = state.transactions.find(x=>x.id===id);
+  const t=state.transactions.find(x=>x.id===id);
   if (!t) return;
-  const acc = state.accounts.find(a=>a.id===t.accountId);
-  if (acc) acc.balance += t.type==='income' ? -t.amount : t.amount;
-  state.transactions = state.transactions.filter(x=>x.id!==id);
-  state._localUpdateAt = Date.now();
-  scheduleSave();
-  renderAll();
+  const acc=state.accounts.find(a=>a.id===t.accountId);
+  if (acc) acc.balance+=t.type==='income'?-t.amount:t.amount;
+  state.transactions=state.transactions.filter(x=>x.id!==id);
+  state._localUpdateAt=Date.now(); scheduleSave(); renderAll();
 };
 
-window.switchTab = function(name, idx) {
+window.switchTab = function(name,idx) {
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.getElementById('sec-'+name).classList.add('active');
   document.querySelectorAll('.nav-item').forEach((n,i)=>n.classList.toggle('active',i===idx));
-  if (name==='overview') setTimeout(()=>renderCharts(), 50);
+  if (name==='overview') setTimeout(()=>renderCharts(),50);
 };
-
-window.changeMonth = function(d) {
-  const [y,m] = state.currentMonth.split('-').map(Number);
-  const dt = new Date(y, m-1+d, 1);
-  state.currentMonth = dt.toISOString().slice(0,7);
-  renderAll();
-};
-
-// Initial render while waiting for Firebase
-renderAll();
 </script>
 </body>
 </html>

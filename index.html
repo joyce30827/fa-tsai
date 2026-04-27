@@ -56,9 +56,58 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .breakdown-name{font-size:14px}
 .breakdown-type{font-size:11px;color:var(--text3);margin-top:2px}
 .breakdown-val{font-size:15px;font-weight:500}
+/* ── Transaction page new layout ── */
+.tx-month-header{display:grid;grid-template-columns:1fr 1.5fr 1fr;background:var(--bg2);border-bottom:1px solid var(--border);padding:env(safe-area-inset-top,0) 0 0;padding-top:calc(env(safe-area-inset-top,0) + 48px)}
+.tx-month-prev,.tx-month-next{padding:14px 12px 14px;cursor:pointer;opacity:.5;transition:opacity .15s}
+.tx-month-prev:active,.tx-month-next:active{opacity:.8}
+.tx-month-next{text-align:right}
+.tx-month-side-year{font-size:10px;color:var(--text3);margin-bottom:3px}
+.tx-month-side-range{font-size:12px;color:var(--text2)}
+.tx-month-current{padding:14px 8px;text-align:center;border-left:1px solid var(--border);border-right:1px solid var(--border)}
+.tx-month-cur-year{font-size:12px;color:var(--text2);margin-bottom:4px;font-weight:600}
+.tx-month-cur-range{font-size:16px;font-weight:700;color:var(--text)}
+.tx-summary-bar{display:grid;grid-template-columns:1fr 1px 1fr;background:var(--bg2);border-bottom:1px solid var(--border)}
+.tx-sum-item{padding:18px 20px;cursor:pointer}
+.tx-sum-label{font-size:12px;color:var(--text2);margin-bottom:6px}
+.tx-sum-val{font-size:24px;font-weight:700;letter-spacing:-.5px;color:var(--text)}
+.tx-sum-val.income{color:var(--text)}
+.tx-sum-active{background:var(--bg3)}
+.tx-sum-divider{background:var(--border)}
+.tx-subtab-bar{display:flex;border-bottom:1px solid var(--border);background:var(--bg)}
+.tx-subtab{flex:1;padding:13px;background:none;border:none;font-family:var(--font);font-size:14px;color:var(--text3);cursor:pointer;position:relative;font-weight:500;transition:color .15s}
+.tx-subtab.active{color:var(--text);font-weight:700}
+.tx-subtab.active::after{content:'';position:absolute;bottom:0;left:20%;right:20%;height:2px;background:var(--accent);border-radius:1px}
+/* Timeline rows for tx list */
+.tl-group{display:flex;padding:0 16px;border-bottom:1px solid var(--border)}
+.tl-group:last-child{border-bottom:none}
+.tl-date-col{width:36px;padding-top:16px;flex-shrink:0;text-align:center}
+.tl-date-m{font-size:10px;color:var(--text3);font-weight:500;line-height:1.4}
+.tl-date-d{font-size:20px;font-weight:700;color:var(--text2);line-height:1.1}
+.tl-rows{flex:1;border-left:1px solid var(--border);margin-left:10px;padding-left:14px}
+.tl-row{display:flex;align-items:flex-start;padding:13px 0;border-bottom:1px solid var(--border);gap:10px;cursor:default}
+.tl-rows .tl-row:last-child{border-bottom:none}
+.tl-info{flex:1;min-width:0}
+.tl-cat{font-size:12px;font-weight:600;margin-bottom:3px}
+.tl-cat.income{color:var(--green)}.tl-cat.expense{color:var(--accent)}.tl-cat.neutral{color:var(--text3)}
+.tl-desc{font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:5px}
+.tl-badges{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.tl-acc-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;color:#fff}
+.tl-tag-badge{font-size:10px;padding:2px 7px;border-radius:4px;background:var(--bg3);border:1px solid var(--border);color:var(--text2)}
+.tl-amount{font-size:15px;font-weight:700;text-align:right;flex-shrink:0;padding-top:2px}
+.tl-amount.income{color:var(--green)}.tl-amount.expense{color:var(--text)}.tl-amount.neutral{color:var(--text2)}
+.tl-del{background:none;border:none;color:var(--text3);font-size:15px;padding:2px 6px;cursor:pointer;margin-left:2px;flex-shrink:0;align-self:center}
+/* Cat view */
+.cat-row{display:flex;align-items:center;justify-content:space-between;padding:13px 20px;border-bottom:1px solid var(--border)}
+.cat-row:last-child{border-bottom:none}
+.cat-row-left{display:flex;align-items:center;gap:12px}
+.cat-row-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;background:var(--bg3)}
+.cat-row-name{font-size:14px;font-weight:500}
+.cat-row-count{font-size:11px;color:var(--text3);margin-top:2px}
+.cat-row-amt{font-size:15px;font-weight:700}
+.cat-bar-wrap{height:3px;background:var(--bg3);border-radius:2px;margin:8px 20px 4px}
+.cat-bar{height:3px;border-radius:2px;background:var(--accent);transition:width .4s}
 /* Charts */
 .chart-wrap{height:200px;position:relative;margin:4px 0}
-.chart-wrap-sm{height:170px;position:relative;margin:4px 0}
 /* Accounts */
 .group-label{font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;padding:12px 20px 6px}
 .acc-card{background:var(--bg2);border-radius:var(--radius);border:1px solid var(--border);padding:16px 18px;margin:0 16px 10px;cursor:pointer;transition:border-color .15s}
@@ -251,25 +300,42 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 
     <!-- TAB 3: 明細 -->
     <div id="sec-transactions" class="section">
-      <div class="page-header">
-        <div class="page-header-row">
-          <div class="page-title">明細</div>
-          <div class="header-actions">
-            <div class="month-nav">
-              <button class="month-btn" onclick="changeMonth(-1)">‹</button>
-              <span class="month-label" id="monthLabel"></span>
-              <button class="month-btn" onclick="changeMonth(1)">›</button>
-            </div>
-          </div>
+      <!-- Month selector header -->
+      <div class="tx-month-header">
+        <div class="tx-month-prev" id="txMonthPrev" onclick="changeMonth(-1)">
+          <div class="tx-month-side-year" id="txPrevYear"></div>
+          <div class="tx-month-side-range" id="txPrevRange"></div>
+        </div>
+        <div class="tx-month-current">
+          <div class="tx-month-cur-year" id="txCurYear"></div>
+          <div class="tx-month-cur-range" id="txCurRange"></div>
+        </div>
+        <div class="tx-month-next" id="txMonthNext" onclick="changeMonth(1)">
+          <div class="tx-month-side-year" id="txNextYear"></div>
+          <div class="tx-month-side-range" id="txNextRange"></div>
         </div>
       </div>
-      <div class="tx-summary-strip" style="grid-template-columns:1fr 1fr 1fr">
-        <div class="tx-strip-item"><div class="tx-strip-label">收入</div><div class="tx-strip-val" style="color:var(--green)" id="txIncome">NT$ 0</div></div>
-        <div class="tx-strip-item"><div class="tx-strip-label">支出</div><div class="tx-strip-val" style="color:var(--red)" id="txExpense">NT$ 0</div></div>
-        <div class="tx-strip-item"><div class="tx-strip-label">結餘</div><div class="tx-strip-val" id="txBalance">NT$ 0</div></div>
+      <!-- Income / Expense summary -->
+      <div class="tx-summary-bar">
+        <div class="tx-sum-item" id="txSumIncome">
+          <div class="tx-sum-label">收入</div>
+          <div class="tx-sum-val income" id="txIncome">$ 0</div>
+        </div>
+        <div class="tx-sum-divider"></div>
+        <div class="tx-sum-item tx-sum-active" id="txSumExpense">
+          <div class="tx-sum-label">支出</div>
+          <div class="tx-sum-val" id="txExpense">$ 0</div>
+        </div>
       </div>
-      <div class="filter-bar" id="filterBar"></div>
-      <div id="txListContainer"></div>
+      <!-- Sub tabs: 分類 / 明細 -->
+      <div class="tx-subtab-bar">
+        <button class="tx-subtab" id="subtabCat" onclick="switchTxSubtab('cat')">分類</button>
+        <button class="tx-subtab active" id="subtabDetail" onclick="switchTxSubtab('detail')">明細</button>
+      </div>
+      <!-- 分類 view -->
+      <div id="txCatView" style="display:none;padding:8px 0 80px"></div>
+      <!-- 明細 view -->
+      <div id="txListContainer" style="padding-bottom:80px"></div>
     </div>
 
     <!-- TAB 4: 設定 -->
@@ -617,35 +683,100 @@ window.openDetail=function(id){
 window.closeDetail=()=>{document.getElementById('detailScreen').classList.remove('open');detailAccId=null;};
 
 // Transactions
-function updateMonthLabel(){const[y,m]=state.currentMonth.split('-');document.getElementById('monthLabel').textContent=`${y}/${parseInt(m)}`;}
+let txSubtab='detail';
+window.switchTxSubtab=function(tab){
+  txSubtab=tab;
+  document.getElementById('subtabCat').classList.toggle('active',tab==='cat');
+  document.getElementById('subtabDetail').classList.toggle('active',tab==='detail');
+  document.getElementById('txCatView').style.display=tab==='cat'?'block':'none';
+  document.getElementById('txListContainer').style.display=tab==='detail'?'block':'none';
+  renderTransactions();
+};
+function monthRangeLabel(ym){
+  const[y,m]=ym.split('-').map(Number);
+  const last=new Date(y,m,0).getDate();
+  return`${m}/1 - ${m}/${last}`;
+}
+function updateMonthLabel(){
+  const[y,m]=state.currentMonth.split('-').map(Number);
+  const prev=new Date(y,m-2,1);const next=new Date(y,m,1);
+  const prevYM=prev.toISOString().slice(0,7);
+  const nextYM=next.toISOString().slice(0,7);
+  document.getElementById('txPrevYear').textContent=prevYM.split('-')[0];
+  document.getElementById('txPrevRange').textContent=monthRangeLabel(prevYM);
+  document.getElementById('txCurYear').textContent=y;
+  document.getElementById('txCurRange').textContent=`${m}/1 - ${m}/${new Date(y,m,0).getDate()}`;
+  document.getElementById('txNextYear').textContent=nextYM.split('-')[0];
+  document.getElementById('txNextRange').textContent=monthRangeLabel(nextYM);
+  // also update old monthLabel if exists
+  const ml=document.getElementById('monthLabel');if(ml)ml.textContent=`${y}/${m}`;
+}
 window.changeMonth=function(d){const[y,m]=state.currentMonth.split('-').map(Number);const dt=new Date(y,m-1+d,1);state.currentMonth=dt.toISOString().slice(0,7);renderTransactions();};
-function txCardHTML(t,compact=false){
-  const icon=catIcon(t.category,t.type);const acc=accById(t.accountId);const sign=t.type==='income'?'+':'-';
-  const tag=t.tag?`<span style="background:var(--bg4);border-radius:999px;padding:1px 7px;font-size:10px;color:var(--text2);margin-left:4px">${t.tag}</span>`:'';
-  const del=compact?'':`<button class="tx-del" onclick="deleteTx('${t.id}');event.stopPropagation()">✕</button>`;
-  return`<div class="tx-item"><div class="tx-icon" style="background:${t.type==='income'?'rgba(46,204,142,0.12)':'rgba(240,97,74,0.1)'}">${icon}</div><div class="tx-info"><div class="tx-cat">${t.category}${tag}</div><div class="tx-meta">${t.note||''}${t.note&&acc?' · ':''}${acc?acc.name:''}</div></div><div class="tx-right"><div class="tx-amount ${t.type}">${sign} NT$${t.amount.toLocaleString()}</div><div class="tx-date-small">${t.date.slice(5)}</div></div>${del}</div>`;
+function tlCardHTML(t){
+  const acc=accById(t.accountId);
+  const amtCls=t.type==='income'?'income':t.type==='expense'?'expense':'neutral';
+  const catCls=amtCls;
+  const badgeColor=acc?(ACC_KIND_META[acc.kind]?.color||'#555'):'#555';
+  const accBadge=acc?`<span class="tl-acc-badge" style="background:${badgeColor}">${acc.name.slice(0,4)}</span>`:'';
+  const tagBadge=t.tag?`<span class="tl-tag-badge">${t.tag}</span>`:'';
+  const amtStr=t.type==='income'?`$ ${t.amount.toLocaleString()}`:`$ -${t.amount.toLocaleString()}`;
+  return`<div class="tl-row">
+    <div class="tl-info">
+      <div class="tl-cat ${catCls}">${t.category}</div>
+      <div class="tl-desc">${t.note||t.category}</div>
+      <div class="tl-badges">${accBadge}${tagBadge}</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:2px">
+      <div class="tl-amount ${amtCls}">${amtStr}</div>
+      <button class="tl-del" onclick="deleteTx('${t.id}');event.stopPropagation()">✕</button>
+    </div>
+  </div>`;
 }
 function renderTransactions(){
   updateMonthLabel();
   const tx=monthTx();
   const inc=tx.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
   const exp=tx.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
-  const bal=inc-exp;
-  document.getElementById('txIncome').textContent='NT$ '+inc.toLocaleString();
-  document.getElementById('txExpense').textContent='NT$ '+exp.toLocaleString();
-  const balEl=document.getElementById('txBalance');
-  balEl.textContent=(bal<0?'- ':'')+'NT$ '+Math.abs(bal).toLocaleString();
-  balEl.style.color=bal>=0?'var(--green)':'var(--red)';
-  const chips=[{id:'all',label:'全部'},{id:'income',label:'收入'},{id:'expense',label:'支出'}];
-  [...new Set(tx.map(t=>t.category))].forEach(c=>chips.push({id:c,label:c}));
-  document.getElementById('filterBar').innerHTML=chips.map(c=>`<button class="chip ${activeFilter===c.id?'active':''}" onclick="window._setFilter('${c.id}')">${c.label}</button>`).join('');
-  let filtered=tx.filter(t=>{if(activeFilter==='all')return true;if(activeFilter==='income'||activeFilter==='expense')return t.type===activeFilter;return t.category===activeFilter;}).sort((a,b)=>b.date.localeCompare(a.date));
-  const el=document.getElementById('txListContainer');
-  if(!filtered.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">🔍</div>這個月沒有記錄</div>';return;}
-  const g={};filtered.forEach(t=>{if(!g[t.date])g[t.date]=[];g[t.date].push(t);});
-  el.innerHTML=Object.entries(g).sort((a,b)=>b[0].localeCompare(a[0])).map(([date,ts])=>`<div class="tx-group-date">${date}</div>`+ts.map(t=>txCardHTML(t)).join('')).join('');
+  document.getElementById('txIncome').textContent='$ '+inc.toLocaleString();
+  document.getElementById('txExpense').textContent='$ '+exp.toLocaleString();
+
+  if(txSubtab==='cat'){
+    // Category breakdown view
+    const expTx=tx.filter(t=>t.type==='expense');
+    const totalExp=expTx.reduce((s,t)=>s+t.amount,0);
+    const catMap={};
+    expTx.forEach(t=>{if(!catMap[t.category])catMap[t.category]={amount:0,count:0,icon:'📦'};catMap[t.category].amount+=t.amount;catMap[t.category].count++;});
+    // get icons from expCats
+    state.expCats.forEach(c=>{if(catMap[c.name])catMap[c.name].icon=c.icon;});
+    const sorted=Object.entries(catMap).sort((a,b)=>b[1].amount-a[1].amount);
+    const el=document.getElementById('txCatView');
+    if(!sorted.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">🔍</div>這個月沒有支出記錄</div>';return;}
+    el.innerHTML=`<div style="padding:10px 20px 6px;font-size:11px;color:var(--text3);font-weight:600;letter-spacing:.6px;text-transform:uppercase">支出分類</div>`+sorted.map(([name,d])=>{
+      const pct=totalExp?Math.round(d.amount/totalExp*100):0;
+      return`<div class="cat-row">
+        <div class="cat-row-left">
+          <div class="cat-row-icon">${d.icon}</div>
+          <div><div class="cat-row-name">${name}</div><div class="cat-row-count">${d.count} 筆 · ${pct}%</div></div>
+        </div>
+        <div class="cat-row-amt" style="color:var(--text)">$ ${d.amount.toLocaleString()}</div>
+      </div>
+      <div class="cat-bar-wrap"><div class="cat-bar" style="width:${pct}%"></div></div>`;
+    }).join('');
+  } else {
+    // Timeline detail view
+    const sorted=tx.slice().sort((a,b)=>b.date.localeCompare(a.date));
+    const el=document.getElementById('txListContainer');
+    if(!sorted.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">🔍</div>這個月沒有記錄</div>';return;}
+    const g={};sorted.forEach(t=>{if(!g[t.date])g[t.date]=[];g[t.date].push(t);});
+    el.innerHTML=Object.entries(g).sort((a,b)=>b[0].localeCompare(a[0])).map(([date,ts])=>{
+      const d=new Date(date+'T00:00:00');
+      return`<div class="tl-group">
+        <div class="tl-date-col"><div class="tl-date-m">${d.getMonth()+1}月</div><div class="tl-date-d">${d.getDate()}</div></div>
+        <div class="tl-rows">${ts.map(t=>tlCardHTML(t)).join('')}</div>
+      </div>`;
+    }).join('');
+  }
 }
-window._setFilter=f=>{activeFilter=f;renderTransactions();};
 
 // Settings
 function renderSettings(){

@@ -595,7 +595,7 @@ let userId=null,saveTimeout=null,unsubscribe=null;
 let curType='expense',selCat='',activeFilter='all',catModalType='expense',detailAccId=null;
 let barChart=null,doughChart=null;
 
-window.signInWithGoogle=async()=>{try{await signInWithPopup(auth,provider);}catch(e){showToast('登入失敗');}};
+window.signInWithGoogle=async()=>{try{await signInWithPopup(auth,provider);}catch(e){console.error(e);showToast('登入失敗：'+e.code);}};
 window.doSignOut=async()=>{if(unsubscribe)unsubscribe();await fbSignOut(auth);closeUserModal();document.getElementById('mainApp').style.display='none';document.getElementById('loginScreen').style.display='flex';userId=null;};
 
 onAuthStateChanged(auth,async user=>{

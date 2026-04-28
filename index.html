@@ -182,7 +182,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .modal{background:var(--bg2);border-radius:22px 22px 0 0;padding:22px 18px 32px;width:100%;max-width:480px;max-height:92vh;overflow-y:auto;-webkit-overflow-scrolling:touch;animation:slideUp .22s ease}
 @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
 .modal-handle{width:34px;height:4px;background:var(--bg4);border-radius:2px;margin:0 auto 18px}
-.modal-title{font-size:17px;font-weight:700;margin-bottom:18px;text-align:center}
+.modal-header-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.modal-title{font-size:17px;font-weight:700;text-align:center;flex:1}
+.modal-close-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text2);width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;line-height:1}
 .type-toggle{display:flex;background:var(--bg3);border-radius:var(--radius-sm);padding:4px;margin-bottom:18px}
 .type-btn{flex:1;padding:9px;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;background:none;color:var(--text2);font-family:var(--font);transition:all .15s}
 .type-btn.active.income{background:var(--green-dim);color:var(--green)}
@@ -416,7 +418,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 <div class="modal-overlay" id="txModal" onclick="closeTxModal(event)">
   <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-handle"></div>
-    <div class="modal-title">新增交易</div>
+    <div class="modal-header-row">
+      <div class="modal-title">新增收支明細</div>
+      <button class="modal-close-btn" onclick="closeTxModal()">✕</button>
+    </div>
     <div class="type-toggle">
       <button class="type-btn active expense" id="typeExpense" onclick="setType('expense')">支出</button>
       <button class="type-btn income" id="typeIncome" onclick="setType('income')">收入</button>

@@ -21,14 +21,14 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .google-btn{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;max-width:300px;padding:15px 24px;background:#fff;color:#1f1f1f;border:none;border-radius:var(--radius-sm);font-size:15px;font-weight:600;font-family:var(--font);cursor:pointer;box-shadow:0 2px 20px rgba(0,0,0,0.5);transition:opacity .15s}
 .google-btn:active{opacity:.85}
 .app{display:flex;flex-direction:column;height:100vh;max-width:480px;margin:0 auto;position:relative;overflow:hidden}
-.scroll-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:80px}
+.scroll-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(80px + env(safe-area-inset-bottom,0px))}
 ::-webkit-scrollbar{width:0}
 .bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:rgba(12,12,12,0.96);backdrop-filter:blur(20px);border-top:1px solid var(--border);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom)}
 .nav-item{flex:1;padding:10px 4px 8px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;border:none;background:none;color:var(--text3);transition:color .15s}
 .nav-item.active{color:var(--accent)}
 .nav-icon{font-size:21px;line-height:1}
 .nav-label{font-size:10px;font-weight:500;letter-spacing:.3px}
-.section{display:none}.section.active{display:block}
+.section{display:none;padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}.section.active{display:block}
 .page-header{padding:52px 20px 12px;position:sticky;top:0;background:var(--bg);z-index:10}
 .page-header-row{display:flex;justify-content:space-between;align-items:center}
 .page-title{font-size:22px;font-weight:700;letter-spacing:-.5px}
@@ -127,7 +127,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .detail-hero-sub{font-size:12px;color:rgba(255,255,255,0.6);margin-bottom:18px;padding-left:48px}
 .detail-hero-bal-label{font-size:11px;color:rgba(255,255,255,0.6);letter-spacing:.6px;text-align:right;margin-bottom:4px}
 .detail-hero-bal{font-size:36px;font-weight:700;color:#fff;text-align:right;letter-spacing:-1px}
-.detail-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:20px}
+.detail-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:40px}
 /* Timeline tx list */
 .dtx-group{display:flex;padding:0 16px;border-bottom:1px solid var(--border)}
 .dtx-group:last-child{border-bottom:none}
@@ -333,9 +333,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
         <button class="tx-subtab active" id="subtabDetail" onclick="switchTxSubtab('detail')">明細</button>
       </div>
       <!-- 分類 view -->
-      <div id="txCatView" style="display:none;padding:8px 0 80px"></div>
+      <div id="txCatView" style="display:none;padding:8px 0"></div>
       <!-- 明細 view -->
-      <div id="txListContainer" style="padding-bottom:80px"></div>
+      <div id="txListContainer"></div>
     </div>
 
     <!-- TAB 4: 設定 -->

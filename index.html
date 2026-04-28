@@ -608,10 +608,11 @@ window.signInWithGoogle=async()=>{
 window.doSignOut=async()=>{if(unsubscribe)unsubscribe();await auth.signOut();closeUserModal();document.getElementById('mainApp').style.display='none';document.getElementById('loginScreen').style.display='flex';userId=null;};
 
 auth.getRedirectResult().then(result=>{
-  if(result?.user) console.log('Redirect login success');
-}).catch(e=>{console.error('Redirect error:',e);showToast('登入失敗：'+e.code);});
+  if(result?.user) console.log('Redirect login success:', result.user.email);
+}).catch(e=>{console.error('Redirect error:',e.code, e.message);});
 
 auth.onAuthStateChanged(async user=>{
+  console.log('onAuthStateChanged:', user ? user.email : 'null');
   if(user){
     userId=user.uid;
     document.getElementById('loginScreen').style.display='none';
@@ -622,8 +623,20 @@ auth.onAuthStateChanged(async user=>{
     document.getElementById('settingsUserName').textContent=user.displayName||'使用者';
     document.getElementById('settingsUserEmail').textContent=user.email||'';
     setSyncDot('syncing');
-    try{const snap=await db.collection('users').doc(userId).collection('data').doc('main').get();if(snap.exists){const d=snap.data();state.transactions=d.transactions||[];state.accounts=d.accounts||[];state.tags=d.tags||state.tags;state.expCats=d.expCats||state.expCats;state.incCats=d.incCats||state.incCats;}}catch(e){setSyncDot('error');}
-    renderAll();setSyncDot('synced');setupSync();
+    try{
+      const snap=await db.collection('users').doc(userId).collection('data').doc('main').get();
+      if(snap.exists){const d=snap.data();state.transactions=d.transactions||[];state.accounts=d.accounts||[];state.tags=d.tags||state.tags;state.expCats=d.expCats||state.expCats;state.incCats=d.incCats||state.incCats;}
+      setSyncDot('synced');
+    }catch(e){
+      console.error('Firestore load error:',e.code, e.message);
+      setSyncDot('error');
+    }
+    renderAll();
+    setupSync();
+  } else {
+    userId=null;
+    document.getElementById('mainApp').style.display='none';
+    document.getElementById('loginScreen').style.display='flex';
   }
 });
 function setSyncDot(s){document.getElementById('syncDot').className='sync-dot '+s;}

@@ -269,6 +269,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .breakdown-subtotal{display:flex;justify-content:space-between;align-items:center;padding:10px 0 2px;border-top:1px solid var(--border);margin-top:4px;font-size:13px;font-weight:600;color:var(--text2)}
 .empty-state{text-align:center;color:var(--text3);font-size:13px;padding:36px 20px}
 .empty-icon{font-size:36px;margin-bottom:10px}
+/* ── Slide animation for month/year switch ── */
+@keyframes slideInRight{from{opacity:0;transform:translateX(32px)}to{opacity:1;transform:translateX(0)}}
+@keyframes slideInLeft{from{opacity:0;transform:translateX(-32px)}to{opacity:1;transform:translateX(0)}}
+.slide-in-right{animation:slideInRight .22s cubic-bezier(.25,.46,.45,.94) both}
+.slide-in-left{animation:slideInLeft .22s cubic-bezier(.25,.46,.45,.94) both}
 </style>
 </head>
 <body>
@@ -787,6 +792,7 @@ window.closeDetail=()=>{document.getElementById('detailScreen').classList.remove
 let txSubtab='detail';
 let txViewMode='month'; // 'month' | 'year'
 let currentYear=new Date().getFullYear();
+let _slideDir=null; // 'left' | 'right' | null
 
 window.toggleTxViewMode=function(){
   txViewMode=txViewMode==='month'?'year':'month';
@@ -804,6 +810,7 @@ window.toggleTxViewMode=function(){
 
 window.changeYear=function(d){
   currentYear+=d;
+  _slideDir=d>0?'right':'left';
   renderTransactions();
 };
 
@@ -843,7 +850,7 @@ function updateMonthLabel(){
   document.getElementById('txNextRange').textContent=monthRangeLabel(nextYM);
   const ml=document.getElementById('monthLabel');if(ml)ml.textContent=`${y}/${m}`;
 }
-window.changeMonth=function(d){const[y,m]=state.currentMonth.split('-').map(Number);const dt=new Date(y,m-1+d,1);state.currentMonth=dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0');renderTransactions();};
+window.changeMonth=function(d){const[y,m]=state.currentMonth.split('-').map(Number);const dt=new Date(y,m-1+d,1);state.currentMonth=dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0');_slideDir=d>0?'right':'left';renderTransactions();};
 function tlCardHTML(t){
   const acc=accById(t.accountId);
   const amtCls=t.type==='income'?'income':t.type==='expense'?'expense':'neutral';
@@ -877,6 +884,18 @@ function renderTransactions(){
   document.getElementById('txIncome').textContent='$ '+inc.toLocaleString();
   document.getElementById('txExpense').textContent='$ '+exp.toLocaleString();
 
+  // Determine animation class
+  const animCls=_slideDir==='right'?'slide-in-right':_slideDir==='left'?'slide-in-left':'';
+  _slideDir=null;
+
+  function applyAnim(el){
+    if(!animCls)return;
+    el.classList.remove('slide-in-right','slide-in-left');
+    // force reflow
+    void el.offsetWidth;
+    el.classList.add(animCls);
+  }
+
   if(txSubtab==='cat'){
     // Category breakdown view
     const expTx=tx.filter(t=>t.type==='expense');
@@ -887,7 +906,7 @@ function renderTransactions(){
     state.expCats.forEach(c=>{if(catMap[c.name])catMap[c.name].icon=c.icon;});
     const sorted=Object.entries(catMap).sort((a,b)=>b[1].amount-a[1].amount);
     const el=document.getElementById('txCatView');
-    if(!sorted.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">🔍</div>這個月沒有支出記錄</div>';return;}
+    if(!sorted.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">🔍</div>這個月沒有支出記錄</div>';applyAnim(el);return;}
     el.innerHTML=`<div style="padding:10px 20px 6px;font-size:11px;color:var(--text3);font-weight:600;letter-spacing:.6px;text-transform:uppercase">支出分類</div>`+sorted.map(([name,d])=>{
       const pct=totalExp?Math.round(d.amount/totalExp*100):0;
       return`<div class="cat-row">
@@ -899,11 +918,12 @@ function renderTransactions(){
       </div>
       <div class="cat-bar-wrap"><div class="cat-bar" style="width:${pct}%"></div></div>`;
     }).join('');
+    applyAnim(el);
   } else {
     // Timeline detail view
     const sorted=tx.slice().sort((a,b)=>b.date.localeCompare(a.date));
     const el=document.getElementById('txListContainer');
-    if(!sorted.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">🔍</div>這個月沒有記錄</div>';return;}
+    if(!sorted.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">🔍</div>這個月沒有記錄</div>';applyAnim(el);return;}
     const g={};sorted.forEach(t=>{if(!g[t.date])g[t.date]=[];g[t.date].push(t);});
     el.innerHTML=Object.entries(g).sort((a,b)=>b[0].localeCompare(a[0])).map(([date,ts])=>{
       const d=new Date(date+'T00:00:00');
@@ -912,10 +932,19 @@ function renderTransactions(){
         <div class="tl-rows">${ts.map(t=>tlCardHTML(t)).join('')}</div>
       </div>`;
     }).join('');
+    applyAnim(el);
   }
 }
 
 function renderYearView(){
+  const animCls=_slideDir==='right'?'slide-in-right':_slideDir==='left'?'slide-in-left':'';
+  _slideDir=null;
+  function applyAnim(el){
+    if(!animCls)return;
+    el.classList.remove('slide-in-right','slide-in-left');
+    void el.offsetWidth;
+    el.classList.add(animCls);
+  }
   const yearTx=state.transactions.filter(t=>t.date.startsWith(currentYear+''));
   const yearInc=yearTx.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
   const yearExp=yearTx.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
@@ -935,7 +964,7 @@ function renderYearView(){
   yearTx.forEach(t=>{const mk=t.date.slice(0,7);if(months[mk])months[mk].push(t);});
 
   const hasAny=yearTx.length>0;
-  if(!hasAny){el.innerHTML='<div class="empty-state"><div class="empty-icon">🗓️</div>'+currentYear+'年沒有任何記錄</div>';return;}
+  if(!hasAny){el.innerHTML='<div class="empty-state"><div class="empty-icon">🗓️</div>'+currentYear+'年沒有任何記錄</div>';applyAnim(el);return;}
 
   el.innerHTML=Object.entries(months).reverse().map(([ym,txs])=>{
     const[y,m]=ym.split('-').map(Number);
@@ -954,6 +983,7 @@ function renderYearView(){
       </div>
     </div>`;
   }).filter(Boolean).join('');
+  applyAnim(el);
 }
 
 window.drillIntoMonth=function(ym){

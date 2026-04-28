@@ -56,7 +56,36 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .breakdown-name{font-size:14px}
 .breakdown-type{font-size:11px;color:var(--text3);margin-top:2px}
 .breakdown-val{font-size:15px;font-weight:500}
-/* ── Transaction page new layout ── */
+/* ── Tx toolbar ── */
+.tx-toolbar{display:flex;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top,0px) + 14px) 16px 12px;background:var(--bg2);border-bottom:1px solid var(--border)}
+.tx-toolbar-title{font-size:20px;font-weight:700}
+.tx-toolbar-actions{display:flex;align-items:center;gap:4px}
+.tx-tool-btn{background:none;border:none;color:var(--text2);cursor:pointer;padding:7px;border-radius:8px;display:flex;align-items:center;justify-content:center;transition:background .15s,color .15s}
+.tx-tool-btn:active{background:var(--bg3)}
+.tx-tool-btn.active{color:var(--accent)}
+/* ── Search overlay ── */
+.search-header{display:flex;align-items:center;gap:10px;padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 10px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg2)}
+.search-input-wrap{flex:1;display:flex;align-items:center;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:0 10px;gap:8px}
+.search-input-icon{color:var(--text3);flex-shrink:0}
+.search-input{flex:1;background:none;border:none;outline:none;color:var(--text);font-size:15px;font-family:var(--font);padding:11px 0}
+.search-clear-btn{background:none;border:none;color:var(--text3);cursor:pointer;font-size:15px;padding:4px;line-height:1}
+.search-cancel-btn{background:none;border:none;color:var(--accent);font-size:15px;font-family:var(--font);cursor:pointer;white-space:nowrap;padding:4px 0 4px 4px;font-weight:500}
+.search-results-list{flex:1;overflow-y:auto;padding-bottom:40px}
+.search-empty{text-align:center;color:var(--text3);font-size:14px;padding:60px 20px}
+.search-empty-icon{font-size:40px;margin-bottom:12px}
+.search-result-date-label{font-size:11px;color:var(--text3);font-weight:600;letter-spacing:.5px;padding:14px 16px 4px;text-transform:uppercase}
+.yr-month-block{border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s}
+.yr-month-block:active{background:var(--bg3)}
+.yr-month-header{display:flex;align-items:center;padding:14px 18px;gap:10px}
+.yr-month-label{font-size:16px;font-weight:700;width:36px;flex-shrink:0}
+.yr-month-count{font-size:12px;color:var(--text3);flex-shrink:0}
+.yr-month-amounts{flex:1;display:flex;gap:10px;justify-content:flex-end;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
+.yr-inc{color:var(--green)}.yr-exp{color:var(--text2)}
+.yr-chevron{color:var(--text3);font-size:18px;margin-left:4px}
+/* ── Tx month header safe-area ── */
+.tx-month-header{padding-top:0}
+.tx-year-header{display:grid;grid-template-columns:1fr 1.5fr 1fr;background:var(--bg2);border-bottom:1px solid var(--border)}
+.tx-view-mode-badge{font-size:10px;font-weight:700;letter-spacing:.5px;padding:2px 8px;border-radius:20px;margin-left:6px;background:var(--accent-dim);color:var(--accent);vertical-align:middle}
 .tx-month-header{display:grid;grid-template-columns:1fr 1.5fr 1fr;background:var(--bg2);border-bottom:1px solid var(--border);padding:env(safe-area-inset-top,0) 0 0;padding-top:calc(env(safe-area-inset-top,0) + 48px)}
 .tx-month-prev,.tx-month-next{padding:14px 12px 14px;cursor:pointer;opacity:.5;transition:opacity .15s}
 .tx-month-prev:active,.tx-month-next:active{opacity:.8}
@@ -302,19 +331,50 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 
     <!-- TAB 3: 明細 -->
     <div id="sec-transactions" class="section">
-      <!-- Month selector header -->
-      <div class="tx-month-header">
-        <div class="tx-month-prev" id="txMonthPrev" onclick="changeMonth(-1)">
-          <div class="tx-month-side-year" id="txPrevYear"></div>
-          <div class="tx-month-side-range" id="txPrevRange"></div>
+      <!-- Top toolbar -->
+      <div class="tx-toolbar">
+        <div class="tx-toolbar-title">收支表</div>
+        <div class="tx-toolbar-actions">
+          <button class="tx-tool-btn" onclick="openTxSearch()" title="搜尋">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </button>
+          <button class="tx-tool-btn" id="txCalBtn" onclick="toggleTxViewMode()" title="切換檢視">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </button>
+          <button class="tx-tool-btn" id="txFilterBtn" title="篩選">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+          </button>
         </div>
-        <div class="tx-month-current">
-          <div class="tx-month-cur-year" id="txCurYear"></div>
-          <div class="tx-month-cur-range" id="txCurRange"></div>
+      </div>
+      <!-- Period selector header (month or year mode) -->
+      <div id="txPeriodHeader">
+        <!-- Month mode -->
+        <div class="tx-month-header" id="txMonthHeader">
+          <div class="tx-month-prev" id="txMonthPrev" onclick="changeMonth(-1)">
+            <div class="tx-month-side-year" id="txPrevYear"></div>
+            <div class="tx-month-side-range" id="txPrevRange"></div>
+          </div>
+          <div class="tx-month-current">
+            <div class="tx-month-cur-year" id="txCurYear"></div>
+            <div class="tx-month-cur-range" id="txCurRange"></div>
+          </div>
+          <div class="tx-month-next" id="txMonthNext" onclick="changeMonth(1)">
+            <div class="tx-month-side-year" id="txNextYear"></div>
+            <div class="tx-month-side-range" id="txNextRange"></div>
+          </div>
         </div>
-        <div class="tx-month-next" id="txMonthNext" onclick="changeMonth(1)">
-          <div class="tx-month-side-year" id="txNextYear"></div>
-          <div class="tx-month-side-range" id="txNextRange"></div>
+        <!-- Year mode -->
+        <div class="tx-year-header" id="txYearHeader" style="display:none">
+          <div class="tx-month-prev" onclick="changeYear(-1)">
+            <div class="tx-month-side-year" id="txPrevYearLabel"></div>
+          </div>
+          <div class="tx-month-current">
+            <div class="tx-month-cur-year">年度檢視</div>
+            <div class="tx-month-cur-range" id="txCurYearLabel"></div>
+          </div>
+          <div class="tx-month-next" onclick="changeYear(1)">
+            <div class="tx-month-side-year" id="txNextYearLabel"></div>
+          </div>
         </div>
       </div>
       <!-- Income / Expense summary -->
@@ -338,6 +398,19 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
       <div id="txCatView" style="display:none;padding:8px 0"></div>
       <!-- 明細 view -->
       <div id="txListContainer"></div>
+    </div>
+
+    <!-- Search overlay -->
+    <div id="txSearchOverlay" style="display:none;flex-direction:column;position:fixed;inset:0;background:var(--bg);z-index:120">
+      <div class="search-header">
+        <div class="search-input-wrap">
+          <svg class="search-input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input class="search-input" id="txSearchInput" type="text" placeholder="搜尋備註關鍵字…" oninput="doTxSearch()" autocomplete="off">
+          <button class="search-clear-btn" id="txSearchClear" onclick="clearTxSearch()" style="display:none">✕</button>
+        </div>
+        <button class="search-cancel-btn" onclick="closeTxSearch()">取消</button>
+      </div>
+      <div id="txSearchResults" class="search-results-list"></div>
     </div>
 
     <!-- TAB 4: 設定 -->
@@ -689,7 +762,33 @@ window.closeDetail=()=>{document.getElementById('detailScreen').classList.remove
 
 // Transactions
 let txSubtab='detail';
-window.switchTxSubtab=function(tab){
+let txViewMode='month'; // 'month' | 'year'
+let currentYear=new Date().getFullYear();
+
+window.toggleTxViewMode=function(){
+  txViewMode=txViewMode==='month'?'year':'month';
+  document.getElementById('txCalBtn').classList.toggle('active',txViewMode==='year');
+  document.getElementById('txMonthHeader').style.display=txViewMode==='month'?'grid':'none';
+  document.getElementById('txYearHeader').style.display=txViewMode==='year'?'grid':'none';
+  // year mode hides sub-tabs (always show 明細 list grouped by month)
+  document.getElementById('subtabCat').style.display=txViewMode==='year'?'none':'';
+  document.getElementById('subtabDetail').style.display=txViewMode==='year'?'none':'';
+  if(txViewMode==='year'){
+    currentYear=parseInt(state.currentMonth.split('-')[0]);
+  }
+  renderTransactions();
+};
+
+window.changeYear=function(d){
+  currentYear+=d;
+  renderTransactions();
+};
+
+function updateYearLabel(){
+  document.getElementById('txPrevYearLabel').textContent=currentYear-1;
+  document.getElementById('txCurYearLabel').textContent=currentYear+'年';
+  document.getElementById('txNextYearLabel').textContent=currentYear+1;
+}
   txSubtab=tab;
   document.getElementById('subtabCat').classList.toggle('active',tab==='cat');
   document.getElementById('subtabDetail').classList.toggle('active',tab==='detail');
@@ -742,6 +841,11 @@ function tlCardHTML(t){
   </div>`;
 }
 function renderTransactions(){
+  if(txViewMode==='year'){
+    updateYearLabel();
+    renderYearView();
+    return;
+  }
   updateMonthLabel();
   const tx=monthTx();
   const inc=tx.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
@@ -787,7 +891,58 @@ function renderTransactions(){
   }
 }
 
-// Settings
+function renderYearView(){
+  const yearTx=state.transactions.filter(t=>t.date.startsWith(currentYear+''));
+  const yearInc=yearTx.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const yearExp=yearTx.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  document.getElementById('txIncome').textContent='$ '+yearInc.toLocaleString();
+  document.getElementById('txExpense').textContent='$ '+yearExp.toLocaleString();
+
+  const el=document.getElementById('txListContainer');
+  document.getElementById('txCatView').style.display='none';
+  el.style.display='block';
+
+  // Group by month
+  const months={};
+  for(let m=1;m<=12;m++){
+    const key=`${currentYear}-${String(m).padStart(2,'0')}`;
+    months[key]=[];
+  }
+  yearTx.forEach(t=>{const mk=t.date.slice(0,7);if(months[mk])months[mk].push(t);});
+
+  const hasAny=yearTx.length>0;
+  if(!hasAny){el.innerHTML='<div class="empty-state"><div class="empty-icon">🗓️</div>'+currentYear+'年沒有任何記錄</div>';return;}
+
+  el.innerHTML=Object.entries(months).reverse().map(([ym,txs])=>{
+    const[y,m]=ym.split('-').map(Number);
+    const inc=txs.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+    const exp=txs.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+    if(!txs.length)return''; // skip empty months
+    return`<div class="yr-month-block" onclick="drillIntoMonth('${ym}')">
+      <div class="yr-month-header">
+        <div class="yr-month-label">${m} 月</div>
+        <div class="yr-month-count">${txs.length} 筆</div>
+        <div class="yr-month-amounts">
+          ${inc?`<span class="yr-inc">+${inc.toLocaleString()}</span>`:''}
+          ${exp?`<span class="yr-exp">-${exp.toLocaleString()}</span>`:''}
+        </div>
+        <div class="yr-chevron">›</div>
+      </div>
+    </div>`;
+  }).filter(Boolean).join('');
+}
+
+window.drillIntoMonth=function(ym){
+  state.currentMonth=ym;
+  txViewMode='month';
+  currentYear=parseInt(ym.split('-')[0]);
+  document.getElementById('txCalBtn').classList.remove('active');
+  document.getElementById('txMonthHeader').style.display='grid';
+  document.getElementById('txYearHeader').style.display='none';
+  document.getElementById('subtabCat').style.display='';
+  document.getElementById('subtabDetail').style.display='';
+  renderTransactions();
+};
 function renderSettings(){
   document.getElementById('expCatCount').textContent=state.expCats.length+' 個分類';
   document.getElementById('incCatCount').textContent=state.incCats.length+' 個分類';
@@ -801,6 +956,45 @@ window.closeCatModal=function(e){if(!e||e.target===document.getElementById('catM
 function renderCatList(){const list=catModalType==='expense'?state.expCats:state.incCats;document.getElementById('catManageList').innerHTML=list.map(c=>`<div class="cat-manage-item"><div class="cat-manage-left"><span class="cat-manage-icon">${c.icon}</span><span class="cat-manage-name">${c.name}</span></div><button class="cat-manage-del" onclick="deleteCat('${c.name}')">✕</button></div>`).join('');}
 window.addCat=function(){const icon=document.getElementById('newCatIcon').value.trim()||'📦';const name=document.getElementById('newCatName').value.trim();if(!name)return;const list=catModalType==='expense'?state.expCats:state.incCats;if(list.find(c=>c.name===name))return showToast('已有此分類');list.push({name,icon});document.getElementById('newCatIcon').value='';document.getElementById('newCatName').value='';state._localUpdateAt=Date.now();scheduleSave();renderCatList();renderSettings();showToast('分類已新增');};
 window.deleteCat=function(name){if(catModalType==='expense')state.expCats=state.expCats.filter(c=>c.name!==name);else state.incCats=state.incCats.filter(c=>c.name!==name);state._localUpdateAt=Date.now();scheduleSave();renderCatList();renderSettings();};
+
+// ── Transaction search ──
+window.openTxSearch=function(){
+  const el=document.getElementById('txSearchOverlay');
+  el.style.display='flex';
+  document.getElementById('txSearchInput').value='';
+  document.getElementById('txSearchClear').style.display='none';
+  document.getElementById('txSearchResults').innerHTML=
+    '<div class="search-empty"><div class="search-empty-icon">🔍</div>輸入備註關鍵字搜尋所有明細</div>';
+  setTimeout(()=>document.getElementById('txSearchInput').focus(),80);
+};
+window.closeTxSearch=function(){
+  document.getElementById('txSearchOverlay').style.display='none';
+};
+window.clearTxSearch=function(){
+  document.getElementById('txSearchInput').value='';
+  document.getElementById('txSearchClear').style.display='none';
+  document.getElementById('txSearchResults').innerHTML=
+    '<div class="search-empty"><div class="search-empty-icon">🔍</div>輸入備註關鍵字搜尋所有明細</div>';
+  document.getElementById('txSearchInput').focus();
+};
+window.doTxSearch=function(){
+  const q=document.getElementById('txSearchInput').value.trim().toLowerCase();
+  document.getElementById('txSearchClear').style.display=q?'block':'none';
+  const el=document.getElementById('txSearchResults');
+  if(!q){el.innerHTML='<div class="search-empty"><div class="search-empty-icon">🔍</div>輸入備註關鍵字搜尋所有明細</div>';return;}
+  const results=state.transactions.filter(t=>
+    (t.note&&t.note.toLowerCase().includes(q))
+  ).sort((a,b)=>b.date.localeCompare(a.date));
+  if(!results.length){el.innerHTML='<div class="search-empty"><div class="search-empty-icon">😶</div>找不到符合的記錄</div>';return;}
+  const g={};results.forEach(t=>{if(!g[t.date])g[t.date]=[];g[t.date].push(t);});
+  el.innerHTML=Object.entries(g).map(([date,ts])=>{
+    const d=new Date(date+'T00:00:00');
+    return`<div class="tl-group">
+      <div class="tl-date-col"><div class="tl-date-m">${d.getMonth()+1}月</div><div class="tl-date-d">${d.getDate()}</div></div>
+      <div class="tl-rows">${ts.map(t=>tlCardHTML(t)).join('')}</div>
+    </div>`;
+  }).join('');
+};
 
 // Swipe gesture for transactions month switching
 (function(){

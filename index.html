@@ -247,6 +247,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .add-tag-row{display:flex;gap:8px;padding:0 16px 14px}
 .add-tag-input{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:13px;font-family:var(--font);padding:9px 12px;outline:none}
 .add-tag-input:focus{border-color:var(--accent)}
+.filter-tag-chip{padding:7px 14px;border-radius:999px;background:var(--bg3);border:2px solid var(--border);color:var(--text2);font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;font-family:var(--font)}
+.filter-tag-chip.selected{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
+.tx-tool-btn.filter-active{color:var(--accent)}
+.filter-active-dot{position:absolute;top:6px;right:6px;width:6px;height:6px;border-radius:50%;background:var(--accent);pointer-events:none}
 .add-tag-btn{background:var(--accent);color:#000;border:none;border-radius:var(--radius-sm);padding:9px 16px;font-weight:600;cursor:pointer;font-family:var(--font);font-size:13px}
 .cat-manage-item{display:flex;align-items:center;justify-content:space-between;padding:12px 4px;border-bottom:1px solid var(--border)}
 .cat-manage-item:last-child{border-bottom:none}
@@ -347,7 +351,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
           <button class="tx-tool-btn" id="txCalBtn" onclick="toggleTxViewMode()" title="切換檢視">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
           </button>
-          <button class="tx-tool-btn" id="txFilterBtn" title="篩選">
+          <button class="tx-tool-btn" id="txFilterBtn" onclick="openTagFilterModal()" title="篩選" style="position:relative">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
           </button>
         </div>
@@ -544,6 +548,20 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   </div>
 </div>
 
+<!-- Tag Filter Modal -->
+<div class="modal-overlay" id="tagFilterModal" onclick="closeTagFilterModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-header-row">
+      <div class="modal-title">標籤篩選</div>
+      <button class="modal-close-btn" onclick="closeTagFilterModal()">✕</button>
+    </div>
+    <div id="tagFilterList" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;min-height:40px"></div>
+    <button class="submit-btn" onclick="applyTagFilter()">確定</button>
+    <button style="width:100%;padding:12px;background:none;color:var(--text2);border:none;font-size:14px;font-family:var(--font);cursor:pointer;margin-top:6px" onclick="clearTagFilter()">清除篩選</button>
+  </div>
+</div>
+
 <!-- Account Modal -->
 <div class="modal-overlay" id="accModal" onclick="closeAccModal(event)">
   <div class="modal" onclick="event.stopPropagation()">
@@ -626,6 +644,8 @@ const DEF_INC=[{name:'薪資',icon:'💼'},{name:'獎金',icon:'🎉'},{name:'�
 let state={transactions:[],accounts:[],tags:['日常','工作','旅遊','家庭'],expCats:JSON.parse(JSON.stringify(DEF_EXP)),incCats:JSON.parse(JSON.stringify(DEF_INC)),currentMonth:new Date().toISOString().slice(0,7)};
 let userId=null,saveTimeout=null,unsubscribe=null;
 let curType='expense',selCat='',activeFilter='all',catModalType='expense',detailAccId=null;
+let selectedFilterTags=[];  // active tag filter (empty = show all)
+let _pendingFilterTags=[];  // tags selected inside modal before confirm
 let barChart=null,doughChart=null;
 
 window.signInWithGoogle=async()=>{
@@ -642,7 +662,6 @@ window.doSignOut=async()=>{if(unsubscribe)unsubscribe();await auth.signOut();clo
 
 
 auth.onAuthStateChanged(async user=>{
-  console.log('onAuthStateChanged:', user ? user.email : 'null');
   if(user){
     userId=user.uid;
     document.getElementById('loginScreen').style.display='none';
@@ -675,7 +694,7 @@ function scheduleSave(){clearTimeout(saveTimeout);saveTimeout=setTimeout(saveToF
 function setupSync(){if(unsubscribe)unsubscribe();unsubscribe=db.collection('users').doc(userId).collection('data').doc('main').onSnapshot(snap=>{if(!snap.exists)return;const d=snap.data();if(d.updatedAt>(state._localUpdateAt||0)){state.transactions=d.transactions||[];state.accounts=d.accounts||[];state.tags=d.tags||state.tags;state.expCats=d.expCats||state.expCats;state.incCats=d.incCats||state.incCats;renderAll();setSyncDot('synced');}},()=>setSyncDot('error'));}
 
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
-function monthTx(m){return state.transactions.filter(t=>t.date.startsWith(m||state.currentMonth));}
+function monthTx(m){return state.transactions.filter(t=>t.date.startsWith(m||state.currentMonth)&&(selectedFilterTags.length===0||selectedFilterTags.includes(t.tag)));}
 function accById(id){return state.accounts.find(a=>a.id===id);}
 function catIcon(name,type){const l=type==='income'?state.incCats:state.expCats;return(l.find(c=>c.name===name)||{icon:'📦'}).icon;}
 
@@ -973,7 +992,7 @@ function renderYearView(){
     void el.offsetWidth;
     el.classList.add(animCls);
   }
-  const yearTx=state.transactions.filter(t=>t.date.startsWith(currentYear+''));
+  const yearTx=state.transactions.filter(t=>t.date.startsWith(currentYear+'')&&(selectedFilterTags.length===0||selectedFilterTags.includes(t.tag)));
   const yearInc=yearTx.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
   const yearExp=yearTx.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
   document.getElementById('txIncome').textContent='$ '+yearInc.toLocaleString();
@@ -1123,6 +1142,47 @@ window.openQuickCatModal=function(){
   document.getElementById('quickCatModal').classList.add('open');
 };
 window.closeQuickCatModal=function(e){if(!e||e.target===document.getElementById('quickCatModal'))document.getElementById('quickCatModal').classList.remove('open');};
+
+// ── Tag Filter Modal ──
+window.openTagFilterModal=function(){
+  _pendingFilterTags=[...selectedFilterTags];
+  const tags=state.tags;
+  const el=document.getElementById('tagFilterList');
+  if(!tags.length){
+    el.innerHTML='<div style="color:var(--text3);font-size:13px">尚未建立任何標籤</div>';
+  } else {
+    el.innerHTML=tags.map(tag=>`<button class="filter-tag-chip${_pendingFilterTags.includes(tag)?' selected':''}" onclick="toggleFilterChip(this,'${tag}')">${tag}</button>`).join('');
+  }
+  document.getElementById('tagFilterModal').classList.add('open');
+};
+window.closeTagFilterModal=function(e){if(!e||e.target===document.getElementById('tagFilterModal'))document.getElementById('tagFilterModal').classList.remove('open');};
+window.toggleFilterChip=function(el,tag){
+  const idx=_pendingFilterTags.indexOf(tag);
+  if(idx===-1){_pendingFilterTags.push(tag);el.classList.add('selected');}
+  else{_pendingFilterTags.splice(idx,1);el.classList.remove('selected');}
+};
+window.applyTagFilter=function(){
+  selectedFilterTags=[..._pendingFilterTags];
+  document.getElementById('tagFilterModal').classList.remove('open');
+  updateFilterIcon();
+  renderTransactions();
+};
+window.clearTagFilter=function(){
+  selectedFilterTags=[];_pendingFilterTags=[];
+  document.getElementById('tagFilterModal').classList.remove('open');
+  updateFilterIcon();
+  renderTransactions();
+};
+function updateFilterIcon(){
+  const btn=document.getElementById('txFilterBtn');
+  btn.classList.toggle('filter-active',selectedFilterTags.length>0);
+  const existing=btn.querySelector('.filter-active-dot');
+  if(selectedFilterTags.length>0){
+    if(!existing){const dot=document.createElement('span');dot.className='filter-active-dot';btn.appendChild(dot);}
+  } else {
+    if(existing)existing.remove();
+  }
+}
 function renderQuickCatList(){
   const list=curType==='expense'?state.expCats:state.incCats;
   document.getElementById('quickCatList').innerHTML=list.map(c=>`<div class="cat-manage-item"><div class="cat-manage-left"><span class="cat-manage-icon">${c.icon}</span><span class="cat-manage-name">${c.name}</span></div><button class="cat-manage-del" onclick="deleteQuickCat('${c.name}')">✕</button></div>`).join('');

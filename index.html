@@ -37,6 +37,71 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .sync-dot{width:7px;height:7px;border-radius:50%;background:var(--text3);transition:background .4s}
 .sync-dot.synced{background:var(--green)}.sync-dot.syncing{background:var(--accent);animation:pulse 1s infinite}.sync-dot.error{background:var(--red)}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+/* ── Interest Rate Page ── */
+.rate-hero{background:linear-gradient(135deg,#0d2137 0%,#0a1a2e 100%);border-radius:var(--radius);border:1px solid rgba(91,164,245,0.2);padding:20px;margin:12px 16px}
+.rate-hero-label{font-size:11px;color:#5b8fb3;letter-spacing:.8px;text-transform:uppercase;font-weight:500;margin-bottom:6px}
+.rate-ai-btn{display:flex;align-items:center;gap:10px;width:100%;padding:14px 18px;background:linear-gradient(135deg,rgba(91,164,245,0.15),rgba(91,164,245,0.08));border:1px solid rgba(91,164,245,0.3);border-radius:var(--radius-sm);color:var(--blue);font-size:14px;font-weight:600;font-family:var(--font);cursor:pointer;transition:all .2s;text-align:left;margin-bottom:12px}
+.rate-ai-btn:active{opacity:.8}
+.rate-ai-btn-icon{font-size:20px;flex-shrink:0}
+.rate-ai-btn-text{flex:1}
+.rate-ai-btn-sub{font-size:11px;color:var(--text3);font-weight:400;margin-top:2px}
+.rate-ai-btn.loading{opacity:.7;pointer-events:none}
+.rate-bank-card{background:var(--bg2);border-radius:var(--radius);border:1px solid var(--border);margin:0 16px 10px;overflow:hidden}
+.rate-bank-header{display:flex;align-items:center;padding:14px 18px;cursor:pointer;gap:12px}
+.rate-bank-icon{width:38px;height:38px;border-radius:10px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.rate-bank-info{flex:1;min-width:0}
+.rate-bank-name{font-size:15px;font-weight:600}
+.rate-bank-best{font-size:12px;color:var(--text3);margin-top:2px}
+.rate-bank-badge{font-size:13px;font-weight:700;color:var(--blue);flex-shrink:0}
+.rate-bank-chevron{color:var(--text3);font-size:16px;transition:transform .2s;flex-shrink:0}
+.rate-bank-chevron.open{transform:rotate(90deg)}
+.rate-tiers{padding:0 18px 14px;border-top:1px solid var(--border)}
+.rate-tier-row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border)}
+.rate-tier-row:last-child{border-bottom:none}
+.rate-tier-label{font-size:13px;color:var(--text2)}
+.rate-tier-inputs{display:flex;align-items:center;gap:6px}
+.rate-tier-input{background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;font-family:var(--font);padding:5px 8px;width:80px;text-align:right}
+.rate-tier-input:focus{outline:none;border-color:var(--blue)}
+.rate-tier-pct{font-size:13px;color:var(--text3)}
+.rate-bank-actions{display:flex;gap:6px;padding:0 18px 14px}
+.rate-tier-add-btn{flex:1;padding:8px;background:none;border:1px dashed var(--border);border-radius:8px;color:var(--text3);font-size:13px;font-family:var(--font);cursor:pointer}
+.rate-tier-add-btn:active{background:var(--bg3)}
+.rate-bank-del-btn{padding:8px 12px;background:none;border:1px solid rgba(240,97,74,0.3);border-radius:8px;color:var(--red);font-size:13px;font-family:var(--font);cursor:pointer}
+.rate-add-bank-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:calc(100% - 32px);margin:4px 16px 14px;padding:13px;background:none;border:1px dashed rgba(91,164,245,0.3);border-radius:var(--radius-sm);color:var(--blue);font-size:14px;font-family:var(--font);cursor:pointer;font-weight:500}
+.rate-add-bank-btn:active{background:var(--bg3)}
+/* AI Confirm Modal */
+.ai-confirm-list{max-height:55vh;overflow-y:auto;margin:0 -18px;padding:0 18px}
+.ai-confirm-item{background:var(--bg3);border-radius:var(--radius-sm);border:1px solid var(--border);padding:14px;margin-bottom:10px}
+.ai-confirm-bank-row{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.ai-confirm-bank-name{font-size:15px;font-weight:600;flex:1}
+.ai-confirm-skip{background:none;border:none;color:var(--text3);font-size:13px;cursor:pointer;font-family:var(--font);padding:2px 6px}
+.ai-confirm-tier{display:flex;align-items:center;gap:6px;padding:5px 0;font-size:13px;color:var(--text2)}
+.ai-confirm-tier-rate{color:var(--blue);font-weight:600;margin-left:auto}
+.ai-source{font-size:11px;color:var(--text3);margin-top:10px;text-align:right}
+/* Allocation section */
+.alloc-card{background:var(--bg2);border-radius:var(--radius);border:1px solid var(--border);margin:0 16px 10px;overflow:hidden}
+.alloc-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border)}
+.alloc-title{font-size:14px;font-weight:600}
+.alloc-refresh-btn{background:none;border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:12px;color:var(--text2);cursor:pointer;font-family:var(--font)}
+.alloc-item{display:flex;align-items:center;padding:13px 18px;border-bottom:1px solid var(--border);gap:12px}
+.alloc-item:last-child{border-bottom:none}
+.alloc-rank{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.alloc-rank.r1{background:rgba(245,200,66,0.2);color:var(--accent)}
+.alloc-rank.r2{background:rgba(200,200,200,0.15);color:#aaa}
+.alloc-rank.r3{background:rgba(180,100,60,0.2);color:#c8762c}
+.alloc-rank.rn{background:var(--bg3);color:var(--text3)}
+.alloc-info{flex:1;min-width:0}
+.alloc-bank{font-size:14px;font-weight:600}
+.alloc-acc{font-size:11px;color:var(--text3);margin-top:2px}
+.alloc-right{text-align:right;flex-shrink:0}
+.alloc-rate{font-size:14px;font-weight:700;color:var(--blue)}
+.alloc-amount{font-size:11px;color:var(--text3);margin-top:2px}
+.alloc-move-badge{font-size:11px;padding:2px 7px;border-radius:4px;background:rgba(46,204,142,0.15);color:var(--green);margin-top:4px;display:inline-block}
+.alloc-empty{text-align:center;padding:30px 20px;color:var(--text3);font-size:13px}
+.rate-pending-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);margin-left:6px;vertical-align:middle}
+/* Loading spinner */
+.spin{display:inline-block;animation:spinR .7s linear infinite}
+@keyframes spinR{to{transform:rotate(360deg)}}
 .card{background:var(--bg2);border-radius:var(--radius);border:1px solid var(--border);padding:18px 20px;margin:0 16px 12px}
 .section-heading{font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;padding:8px 20px 6px;margin-top:4px}
 /* Net worth */
@@ -470,14 +535,54 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
         </div>
       </div>
     </div>
-  </div>
+    <!-- TAB 5: 利率 -->
+    <div id="sec-rates" class="section">
+      <div class="page-header">
+        <div class="page-header-row">
+          <div class="page-title">活存利率</div>
+          <div class="header-actions">
+            <button class="icon-btn" onclick="openAddBankModal()" title="新增銀行">＋</button>
+          </div>
+        </div>
+      </div>
 
+      <!-- AI fetch card -->
+      <div class="rate-hero">
+        <div class="rate-hero-label">✦ AI 智能助手</div>
+        <button class="rate-ai-btn" id="aiRateBtn" onclick="fetchRatesWithAI()">
+          <span class="rate-ai-btn-icon">🤖</span>
+          <div class="rate-ai-btn-text">
+            <div>自動抓取最新利率</div>
+            <div class="rate-ai-btn-sub">由 AI 搜尋各大銀行活存利率，再由您確認</div>
+          </div>
+          <span>›</span>
+        </button>
+        <div id="aiRateStatus" style="font-size:12px;color:var(--text3);text-align:center;min-height:16px"></div>
+      </div>
+
+      <div class="section-heading">已設定銀行</div>
+      <div id="rateBankList"></div>
+      <button class="rate-add-bank-btn" onclick="openAddBankModal()">＋ 手動新增銀行</button>
+
+      <div class="section-heading" style="margin-top:8px">📊 資產配置建議
+        <span id="allocPendingDot" class="rate-pending-dot" style="display:none"></span>
+      </div>
+      <div class="alloc-card" id="allocCard">
+        <div class="alloc-header">
+          <div class="alloc-title">依利率由高到低配置</div>
+          <button class="alloc-refresh-btn" onclick="renderAllocation()">重新計算</button>
+        </div>
+        <div id="allocList"><div class="alloc-empty">請先設定銀行利率，<br>並在帳戶頁新增台幣活存帳戶</div></div>
+      </div>
+    </div>
+  </div><!-- end scroll-body -->
   <button class="fab" onclick="openTxModal()">＋</button>
   <nav class="bottom-nav">
     <button class="nav-item active" onclick="switchTab('overview',0)"><span class="nav-icon">📊</span><span class="nav-label">總覽</span></button>
     <button class="nav-item" onclick="switchTab('accounts',1)"><span class="nav-icon">🏦</span><span class="nav-label">帳戶</span></button>
     <button class="nav-item" onclick="switchTab('transactions',2)"><span class="nav-icon">📋</span><span class="nav-label">明細</span></button>
-    <button class="nav-item" onclick="switchTab('settings',3)"><span class="nav-icon">⚙️</span><span class="nav-label">設定</span></button>
+    <button class="nav-item" onclick="switchTab('rates',3)"><span class="nav-icon">💹</span><span class="nav-label">利率</span></button>
+    <button class="nav-item" onclick="switchTab('settings',4)"><span class="nav-icon">⚙️</span><span class="nav-label">設定</span></button>
   </nav>
 </div>
 
@@ -610,6 +715,46 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   </div>
 </div>
 
+<!-- Add Bank Modal -->
+<div class="modal-overlay" id="addBankModal" onclick="closeAddBankModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-header-row">
+      <div class="modal-title">新增銀行</div>
+      <button class="modal-close-btn" onclick="closeAddBankModal()">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">銀行名稱</label>
+      <input class="form-input" id="newBankName" placeholder="例：玉山銀行、國泰世華" maxlength="20">
+    </div>
+    <div class="form-group">
+      <label class="form-label">銀行 Icon（選填）</label>
+      <input class="form-input" id="newBankIcon" placeholder="🏦" style="font-size:20px;text-align:center" maxlength="4">
+    </div>
+    <div class="form-group">
+      <label class="form-label">活存利率 %（基本）</label>
+      <input class="form-input" type="number" id="newBankRate" placeholder="例：0.80" step="0.01" min="0" max="99">
+    </div>
+    <button class="submit-btn" onclick="addBankRate()">新增</button>
+  </div>
+</div>
+
+<!-- AI Confirm Modal -->
+<div class="modal-overlay" id="aiConfirmModal" onclick="closeAiConfirmModal(event)">
+  <div class="modal" onclick="event.stopPropagation()" style="max-height:88vh">
+    <div class="modal-handle"></div>
+    <div class="modal-header-row">
+      <div class="modal-title">🤖 AI 建議利率</div>
+      <button class="modal-close-btn" onclick="closeAiConfirmModal()">✕</button>
+    </div>
+    <p style="font-size:13px;color:var(--text3);margin-bottom:14px">以下為 AI 搜尋到的最新利率，請確認後選擇要匯入的銀行。利率數據僅供參考，請以各銀行官網為準。</p>
+    <div class="ai-confirm-list" id="aiConfirmList"></div>
+    <div id="aiSourceNote" class="ai-source"></div>
+    <button class="submit-btn" style="margin-top:16px" onclick="importAiRates()">匯入選取的銀行</button>
+    <button style="width:100%;padding:12px;background:none;color:var(--text2);border:none;font-size:14px;font-family:var(--font);cursor:pointer;margin-top:6px" onclick="closeAiConfirmModal()">取消</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.0/firebase-app-compat.min.js"></script>
@@ -674,7 +819,7 @@ auth.onAuthStateChanged(async user=>{
     setSyncDot('syncing');
     try{
       const snap=await db.collection('users').doc(userId).collection('data').doc('main').get();
-      if(snap.exists){const d=snap.data();state.transactions=d.transactions||[];state.accounts=d.accounts||[];state.tags=d.tags||state.tags;state.expCats=d.expCats||state.expCats;state.incCats=d.incCats||state.incCats;}
+      if(snap.exists){const d=snap.data();state.transactions=d.transactions||[];state.accounts=d.accounts||[];state.tags=d.tags||state.tags;state.expCats=d.expCats||state.expCats;state.incCats=d.incCats||state.incCats;state.bankRates=d.bankRates||[];}
       setSyncDot('synced');
     }catch(e){
       console.error('Firestore load error:',e.code, e.message);
@@ -691,7 +836,7 @@ auth.onAuthStateChanged(async user=>{
 function setSyncDot(s){document.getElementById('syncDot').className='sync-dot '+s;}
 async function saveToFirebase(){if(!userId)return;setSyncDot('syncing');try{await db.collection('users').doc(userId).collection('data').doc('main').set({transactions:state.transactions,accounts:state.accounts,tags:state.tags,expCats:state.expCats,incCats:state.incCats,updatedAt:Date.now()});setSyncDot('synced');}catch(e){setSyncDot('error');showToast('同步失敗');}}
 function scheduleSave(){clearTimeout(saveTimeout);saveTimeout=setTimeout(saveToFirebase,600);}
-function setupSync(){if(unsubscribe)unsubscribe();unsubscribe=db.collection('users').doc(userId).collection('data').doc('main').onSnapshot(snap=>{if(!snap.exists)return;const d=snap.data();if(d.updatedAt>(state._localUpdateAt||0)){state.transactions=d.transactions||[];state.accounts=d.accounts||[];state.tags=d.tags||state.tags;state.expCats=d.expCats||state.expCats;state.incCats=d.incCats||state.incCats;renderAll();setSyncDot('synced');}},()=>setSyncDot('error'));}
+function setupSync(){if(unsubscribe)unsubscribe();unsubscribe=db.collection('users').doc(userId).collection('data').doc('main').onSnapshot(snap=>{if(!snap.exists)return;const d=snap.data();if(d.updatedAt>(state._localUpdateAt||0)){state.transactions=d.transactions||[];state.accounts=d.accounts||[];state.tags=d.tags||state.tags;state.expCats=d.expCats||state.expCats;state.incCats=d.incCats||state.incCats;state.bankRates=d.bankRates||[];renderAll();setSyncDot('synced');}},()=>setSyncDot('error'));}
 
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
 function monthTx(m){return state.transactions.filter(t=>t.date.startsWith(m||state.currentMonth)&&(selectedFilterTags.length===0||selectedFilterTags.includes(t.tag)));}
@@ -1247,8 +1392,281 @@ window.addAccount=function(){const name=document.getElementById('accName').value
 window.openUserModal=()=>document.getElementById('userModal').classList.add('open');
 window.closeUserModal=function(e){if(!e||e.target===document.getElementById('userModal'))document.getElementById('userModal').classList.remove('open');};
 
+// User modal
+window.openUserModal=()=>document.getElementById('userModal').classList.add('open');
+window.closeUserModal=function(e){if(!e||e.target===document.getElementById('userModal'))document.getElementById('userModal').classList.remove('open');};
+
 // Tab switch
-window.switchTab=function(name,idx){document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));document.getElementById('sec-'+name).classList.add('active');document.querySelectorAll('.nav-item').forEach((n,i)=>n.classList.toggle('active',i===idx));document.getElementById('scrollBody').scrollTop=0;if(name==='overview')setTimeout(()=>renderCharts(),60);};
+window.switchTab=function(name,idx){document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));document.getElementById('sec-'+name).classList.add('active');document.querySelectorAll('.nav-item').forEach((n,i)=>n.classList.toggle('active',i===idx));document.getElementById('scrollBody').scrollTop=0;if(name==='overview')setTimeout(()=>renderCharts(),60);if(name==='rates')renderRatePage();};
+
+// ══════════════════════════════════════════════
+// Interest Rate & Allocation System
+// ══════════════════════════════════════════════
+
+function getBankRates(){return state.bankRates||(state.bankRates=[]);}
+
+function bestRateForBalance(bank,balance){
+  if(!bank.tiers||!bank.tiers.length)return 0;
+  const sorted=[...bank.tiers].sort((a,b)=>{
+    if(a.upTo===null&&b.upTo===null)return 0;
+    if(a.upTo===null)return 1;
+    if(b.upTo===null)return -1;
+    return a.upTo-b.upTo;
+  });
+  for(const t of sorted){
+    if(t.upTo===null||balance<=t.upTo)return parseFloat(t.rate)||0;
+  }
+  return parseFloat(sorted[sorted.length-1].rate)||0;
+}
+
+function renderRatePage(){
+  const banks=getBankRates();
+  const el=document.getElementById('rateBankList');
+  if(!banks.length){
+    el.innerHTML='<div class="empty-state" style="margin:0 16px 12px"><div class="empty-icon">🏦</div>尚未設定任何銀行<br>點右上角 ＋ 或使用 AI 自動抓取</div>';
+    renderAllocation();
+    return;
+  }
+  el.innerHTML=banks.map((bank,bi)=>{
+    const tiers=bank.tiers||[];
+    const maxRate=tiers.length?Math.max(...tiers.map(t=>parseFloat(t.rate)||0)):0;
+    const tiersHTML=tiers.map((tier,ti)=>`
+      <div class="rate-tier-row">
+        <div class="rate-tier-label">${tier.upTo?'最高 '+Number(tier.upTo).toLocaleString()+' 元以下':'以上 / 無上限'}</div>
+        <div class="rate-tier-inputs">
+          <input class="rate-tier-input" type="number" value="${tier.rate}" step="0.01" min="0"
+            onchange="updateTierRate(${bi},${ti},this.value)" placeholder="0.00">
+          <span class="rate-tier-pct">%</span>
+          <button onclick="deleteTier(${bi},${ti})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;padding:2px 4px">✕</button>
+        </div>
+      </div>`).join('');
+    return`<div class="rate-bank-card" id="bankCard_${bi}">
+      <div class="rate-bank-header" onclick="toggleBankCard(${bi})">
+        <div class="rate-bank-icon">${bank.icon||'🏦'}</div>
+        <div class="rate-bank-info">
+          <div class="rate-bank-name">${bank.name}</div>
+          <div class="rate-bank-best">${tiers.length} 個利率級距</div>
+        </div>
+        <div class="rate-bank-badge">${maxRate?maxRate.toFixed(2)+'%':'—'}</div>
+        <div class="rate-bank-chevron" id="chevron_${bi}">›</div>
+      </div>
+      <div id="bankTiers_${bi}" style="display:none">
+        <div class="rate-tiers">
+          ${tiersHTML||'<div style="font-size:13px;color:var(--text3);padding:8px 0">尚未設定利率</div>'}
+        </div>
+        <div class="rate-bank-actions">
+          <button class="rate-tier-add-btn" onclick="addTierToBank(${bi})">＋ 新增分級利率</button>
+          <button class="rate-bank-del-btn" onclick="deleteBank(${bi})">刪除銀行</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  renderAllocation();
+}
+
+window.toggleBankCard=function(bi){
+  const tiers=document.getElementById('bankTiers_'+bi);
+  const chev=document.getElementById('chevron_'+bi);
+  const open=tiers.style.display==='block';
+  tiers.style.display=open?'none':'block';
+  chev.classList.toggle('open',!open);
+};
+window.updateTierRate=function(bi,ti,val){
+  const banks=getBankRates();
+  if(banks[bi]&&banks[bi].tiers[ti]){banks[bi].tiers[ti].rate=parseFloat(val)||0;state._localUpdateAt=Date.now();scheduleSave();renderAllocation();}
+};
+window.deleteTier=function(bi,ti){
+  const banks=getBankRates();
+  if(banks[bi])banks[bi].tiers.splice(ti,1);
+  state._localUpdateAt=Date.now();scheduleSave();renderRatePage();
+};
+window.addTierToBank=function(bi){
+  const banks=getBankRates();
+  if(!banks[bi])return;
+  const upToStr=prompt('此級距的存款上限（元），例：500000\n輸入 0 或留空 = 無上限（最高級）：');
+  if(upToStr===null)return;
+  const upTo=upToStr.trim()===''||upToStr==='0'?null:parseInt(upToStr.replace(/,/g,''))||null;
+  banks[bi].tiers.push({upTo,rate:0});
+  // Sort tiers
+  banks[bi].tiers.sort((a,b)=>{if(a.upTo===null)return 1;if(b.upTo===null)return -1;return a.upTo-b.upTo;});
+  state._localUpdateAt=Date.now();scheduleSave();
+  renderRatePage();
+  setTimeout(()=>{const t=document.getElementById('bankTiers_'+bi);const c=document.getElementById('chevron_'+bi);if(t){t.style.display='block';c&&c.classList.add('open');}},50);
+};
+window.deleteBank=function(bi){
+  const banks=getBankRates();
+  if(!confirm('確認刪除此銀行利率設定？'))return;
+  banks.splice(bi,1);
+  state._localUpdateAt=Date.now();scheduleSave();
+  renderRatePage();showToast('已刪除');
+};
+
+// Add Bank Modal
+window.openAddBankModal=function(){
+  document.getElementById('newBankName').value='';
+  document.getElementById('newBankIcon').value='';
+  document.getElementById('newBankRate').value='';
+  document.getElementById('addBankModal').classList.add('open');
+  setTimeout(()=>document.getElementById('newBankName').focus(),200);
+};
+window.closeAddBankModal=function(e){if(!e||e.target===document.getElementById('addBankModal'))document.getElementById('addBankModal').classList.remove('open');};
+window.addBankRate=function(){
+  const name=document.getElementById('newBankName').value.trim();
+  if(!name)return showToast('請輸入銀行名稱');
+  const icon=document.getElementById('newBankIcon').value.trim()||'🏦';
+  const rate=parseFloat(document.getElementById('newBankRate').value)||0;
+  const banks=getBankRates();
+  banks.push({id:'b'+Date.now(),name,icon,tiers:[{upTo:null,rate}]});
+  state._localUpdateAt=Date.now();scheduleSave();
+  document.getElementById('addBankModal').classList.remove('open');
+  renderRatePage();showToast('銀行已新增 ✓');
+};
+
+// ── AI fetch rates ──
+let aiPendingRates=[];
+window.fetchRatesWithAI=async function(){
+  const btn=document.getElementById('aiRateBtn');
+  const status=document.getElementById('aiRateStatus');
+  btn.classList.add('loading');
+  btn.innerHTML='<span class="rate-ai-btn-icon"><span class="spin">⟳</span></span><div class="rate-ai-btn-text"><div>AI 搜尋中...</div><div class="rate-ai-btn-sub">請稍候，正在查詢最新利率</div></div>';
+  status.textContent='';
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1500,
+        tools:[{type:'web_search_20250305',name:'web_search'}],
+        messages:[{role:'user',content:`請搜尋台灣主要銀行最新台幣活期存款（活存）年利率。
+目標銀行：台灣銀行、土地銀行、合作金庫、第一銀行、華南銀行、彰化銀行、玉山銀行、國泰世華、富邦銀行、中信銀行、台新銀行、元大銀行、永豐銀行、凱基銀行、星展銀行。
+只回傳 JSON，不要任何其他文字：
+{"banks":[{"name":"銀行名稱","icon":"emoji","tiers":[{"upTo":null,"rate":0.00}],"source":"來源"}]}
+分級利率範例：[{"upTo":500000,"rate":1.50},{"upTo":null,"rate":0.80}]`}]
+      })
+    });
+    const data=await res.json();
+    const text=data.content.filter(c=>c.type==='text').map(c=>c.text).join('');
+    const match=text.match(/\{[\s\S]*\}/);
+    if(!match)throw new Error('解析失敗');
+    const parsed=JSON.parse(match[0]);
+    aiPendingRates=parsed.banks||[];
+    if(!aiPendingRates.length)throw new Error('無資料');
+    renderAiConfirmModal();
+    document.getElementById('aiConfirmModal').classList.add('open');
+    status.textContent='✓ 找到 '+aiPendingRates.length+' 家銀行，請確認後匯入';
+  }catch(e){
+    console.error(e);
+    status.textContent='⚠ 抓取失敗，請稍後再試或手動新增';
+    showToast('AI 抓取失敗');
+  }finally{
+    btn.classList.remove('loading');
+    btn.innerHTML='<span class="rate-ai-btn-icon">🤖</span><div class="rate-ai-btn-text"><div>自動抓取最新利率</div><div class="rate-ai-btn-sub">由 AI 搜尋各大銀行活存利率，再由您確認</div></div><span>›</span>';
+  }
+};
+function renderAiConfirmModal(){
+  const el=document.getElementById('aiConfirmList');
+  const existing=getBankRates().map(b=>b.name);
+  el.innerHTML=aiPendingRates.map((bank,i)=>{
+    const alreadyExists=existing.includes(bank.name);
+    const tiersHTML=(bank.tiers||[]).map(t=>`<div class="ai-confirm-tier"><span>${t.upTo?'最高 '+Number(t.upTo).toLocaleString()+' 元':'無上限'}</span><span class="ai-confirm-tier-rate">${parseFloat(t.rate).toFixed(2)}%</span></div>`).join('');
+    return`<div class="ai-confirm-item" id="aiItem_${i}">
+      <div class="ai-confirm-bank-row">
+        <span style="font-size:20px">${bank.icon||'🏦'}</span>
+        <span class="ai-confirm-bank-name">${bank.name}${alreadyExists?' <span style="font-size:10px;color:var(--accent)">(將更新)</span>':''}</span>
+        <button class="ai-confirm-skip" onclick="toggleAiItem(${i})">略過</button>
+      </div>
+      ${tiersHTML}
+      ${bank.source?`<div class="ai-source">來源：${bank.source}</div>`:''}
+    </div>`;
+  }).join('');
+}
+window.toggleAiItem=function(i){
+  const el=document.getElementById('aiItem_'+i);
+  const skipped=el.style.opacity==='0.35';
+  el.style.opacity=skipped?'1':'0.35';
+  el.dataset.skipped=skipped?'':'1';
+};
+window.closeAiConfirmModal=function(e){if(!e||e.target===document.getElementById('aiConfirmModal'))document.getElementById('aiConfirmModal').classList.remove('open');};
+window.importAiRates=function(){
+  const banks=getBankRates();
+  let count=0;
+  aiPendingRates.forEach((bank,i)=>{
+    const el=document.getElementById('aiItem_'+i);
+    if(el&&el.dataset.skipped==='1')return;
+    const existing=banks.find(b=>b.name===bank.name);
+    if(existing){existing.tiers=bank.tiers;existing.icon=bank.icon||existing.icon;}
+    else banks.push({id:'b'+Date.now()+i,name:bank.name,icon:bank.icon||'🏦',tiers:bank.tiers});
+    count++;
+  });
+  state._localUpdateAt=Date.now();scheduleSave();
+  document.getElementById('aiConfirmModal').classList.remove('open');
+  renderRatePage();showToast('已匯入 '+count+' 家銀行利率 ✓');
+};
+
+// ── Allocation ──
+function renderAllocation(){
+  const banks=getBankRates();
+  const bankAccs=state.accounts.filter(a=>a.kind==='asset_bank'&&a.balance>0);
+  const el=document.getElementById('allocList');
+  if(!banks.length||!bankAccs.length){
+    el.innerHTML='<div class="alloc-empty">請先設定銀行利率，<br>並在帳戶頁新增台幣活存帳戶（正餘額）</div>';
+    return;
+  }
+  function matchBank(accName){return banks.find(b=>accName.includes(b.name)||b.name.includes(accName))||null;}
+  const items=bankAccs.map(acc=>{
+    const bank=matchBank(acc.name);
+    const rate=bank?bestRateForBalance(bank,acc.balance):null;
+    return{acc,bank,rate};
+  });
+  items.sort((a,b)=>{
+    if(a.rate===null&&b.rate===null)return 0;
+    if(a.rate===null)return 1;if(b.rate===null)return -1;
+    return b.rate-a.rate;
+  });
+  const totalBal=items.reduce((s,i)=>s+i.acc.balance,0);
+  el.innerHTML=items.map((item,idx)=>{
+    const rankCls=idx===0?'r1':idx===1?'r2':idx===2?'r3':'rn';
+    const rateStr=item.rate!==null?item.rate.toFixed(2)+'%':'未設定';
+    const annualInterest=item.rate?Math.round(item.acc.balance*item.rate/100):null;
+    const pct=totalBal?Math.round(item.acc.balance/totalBal*100):0;
+    let moveBadge='';
+    if(idx>0&&items[0].rate&&item.rate!==null&&items[0].rate>item.rate){
+      const diff=(items[0].rate-item.rate).toFixed(2);
+      const extraInterest=Math.round(item.acc.balance*(items[0].rate-item.rate)/100);
+      moveBadge=`<div class="alloc-move-badge">↑ 移到 ${items[0].acc.name} 可多 ${diff}%（年增 NT$ ${extraInterest.toLocaleString()}）</div>`;
+    }
+    return`<div class="alloc-item">
+      <div class="alloc-rank ${rankCls}">${idx+1}</div>
+      <div class="alloc-info">
+        <div class="alloc-bank">${item.acc.name}</div>
+        <div class="alloc-acc">${item.bank?item.bank.name:'未匹配利率'} · 佔 ${pct}%</div>
+        ${moveBadge}
+      </div>
+      <div class="alloc-right">
+        <div class="alloc-rate">${rateStr}</div>
+        <div class="alloc-amount">NT$ ${item.acc.balance.toLocaleString()}</div>
+        ${annualInterest?`<div style="font-size:10px;color:var(--text3)">年息≈ NT$ ${annualInterest.toLocaleString()}</div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// Patch saveToFirebase to include bankRates
+const _origSaveToFirebase=saveToFirebase;
+saveToFirebase=async function(){
+  if(!userId)return;setSyncDot('syncing');
+  try{
+    await db.collection('users').doc(userId).collection('data').doc('main').set({
+      transactions:state.transactions,accounts:state.accounts,tags:state.tags,
+      expCats:state.expCats,incCats:state.incCats,bankRates:state.bankRates||[],
+      updatedAt:Date.now()
+    });setSyncDot('synced');
+  }catch(e){setSyncDot('error');showToast('同步失敗');}
+};
+
+// Also patch the Firestore load to include bankRates
+const _origOnAuthChanged=auth.onAuthStateChanged;
 
 renderAll();
 </script>

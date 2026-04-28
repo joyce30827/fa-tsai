@@ -699,19 +699,23 @@ function monthRangeLabel(ym){
 }
 function updateMonthLabel(){
   const[y,m]=state.currentMonth.split('-').map(Number);
-  const prev=new Date(y,m-2,1);const next=new Date(y,m,1);
-  const prevYM=prev.toISOString().slice(0,7);
-  const nextYM=next.toISOString().slice(0,7);
-  document.getElementById('txPrevYear').textContent=prevYM.split('-')[0];
+  // prev: m-1 in JS Date (0-indexed) means m-2 offset → use new Date(y, m-2, 1)
+  // JS Date month is 0-indexed: Jan=0. So current month index = m-1.
+  // prev month = new Date(y, (m-1)-1, 1) = new Date(y, m-2, 1)
+  // next month = new Date(y, (m-1)+1, 1) = new Date(y, m, 1)
+  const prev=new Date(y, m-2, 1);
+  const next=new Date(y, m, 1);
+  function ym(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
+  const prevYM=ym(prev); const nextYM=ym(next);
+  document.getElementById('txPrevYear').textContent=prev.getFullYear();
   document.getElementById('txPrevRange').textContent=monthRangeLabel(prevYM);
   document.getElementById('txCurYear').textContent=y;
   document.getElementById('txCurRange').textContent=`${m}/1 - ${m}/${new Date(y,m,0).getDate()}`;
-  document.getElementById('txNextYear').textContent=nextYM.split('-')[0];
+  document.getElementById('txNextYear').textContent=next.getFullYear();
   document.getElementById('txNextRange').textContent=monthRangeLabel(nextYM);
-  // also update old monthLabel if exists
   const ml=document.getElementById('monthLabel');if(ml)ml.textContent=`${y}/${m}`;
 }
-window.changeMonth=function(d){const[y,m]=state.currentMonth.split('-').map(Number);const dt=new Date(y,m-1+d,1);state.currentMonth=dt.toISOString().slice(0,7);renderTransactions();};
+window.changeMonth=function(d){const[y,m]=state.currentMonth.split('-').map(Number);const dt=new Date(y,m-1+d,1);state.currentMonth=dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0');renderTransactions();};
 function tlCardHTML(t){
   const acc=accById(t.accountId);
   const amtCls=t.type==='income'?'income':t.type==='expense'?'expense':'neutral';
@@ -793,7 +797,19 @@ function renderCatList(){const list=catModalType==='expense'?state.expCats:state
 window.addCat=function(){const icon=document.getElementById('newCatIcon').value.trim()||'📦';const name=document.getElementById('newCatName').value.trim();if(!name)return;const list=catModalType==='expense'?state.expCats:state.incCats;if(list.find(c=>c.name===name))return showToast('已有此分類');list.push({name,icon});document.getElementById('newCatIcon').value='';document.getElementById('newCatName').value='';state._localUpdateAt=Date.now();scheduleSave();renderCatList();renderSettings();showToast('分類已新增');};
 window.deleteCat=function(name){if(catModalType==='expense')state.expCats=state.expCats.filter(c=>c.name!==name);else state.incCats=state.incCats.filter(c=>c.name!==name);state._localUpdateAt=Date.now();scheduleSave();renderCatList();renderSettings();};
 
-// Transaction modal
+// Swipe gesture for transactions month switching
+(function(){
+  let sx=0,sy=0;
+  const el=document.getElementById('sec-transactions');
+  el.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY;},{passive:true});
+  el.addEventListener('touchend',e=>{
+    const dx=e.changedTouches[0].clientX-sx;
+    const dy=e.changedTouches[0].clientY-sy;
+    if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)*1.5){
+      changeMonth(dx<0?1:-1);
+    }
+  },{passive:true});
+})();
 window.openTxModal=function(){curType='expense';document.getElementById('typeExpense').className='type-btn active expense';document.getElementById('typeIncome').className='type-btn income';selCat=state.expCats[0]?.name||'';buildCatGrid();document.getElementById('txAccSel').innerHTML=state.accounts.map(a=>`<option value="${a.id}">${a.name}</option>`).join('');document.getElementById('txDate').value=new Date().toISOString().slice(0,10);document.getElementById('txAmt').value='';document.getElementById('txNote').value='';document.getElementById('txTagSel').innerHTML='<option value="">無標籤</option>'+state.tags.map(t=>`<option>${t}</option>`).join('');document.getElementById('txModal').classList.add('open');setTimeout(()=>document.getElementById('txAmt').focus(),200);};
 window.closeTxModal=function(e){if(!e||e.target===document.getElementById('txModal'))document.getElementById('txModal').classList.remove('open');};
 window.setType=function(type){curType=type;document.getElementById('typeExpense').className='type-btn'+(type==='expense'?' active expense':'');document.getElementById('typeIncome').className='type-btn'+(type==='income'?' active income':'');selCat='';buildCatGrid();};

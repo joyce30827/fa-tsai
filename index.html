@@ -546,18 +546,34 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
         </div>
       </div>
 
-      <!-- AI fetch card -->
+      <!-- Import card -->
       <div class="rate-hero">
-        <div class="rate-hero-label">✦ AI 智能助手</div>
+        <div class="rate-hero-label">✦ 快速匯入</div>
         <button class="rate-ai-btn" id="aiRateBtn" onclick="fetchRatesWithAI()">
           <span class="rate-ai-btn-icon">🤖</span>
           <div class="rate-ai-btn-text">
-            <div>自動抓取最新利率</div>
-            <div class="rate-ai-btn-sub">由 AI 搜尋各大銀行活存利率，再由您確認</div>
+            <div>AI 自動抓取最新利率</div>
+            <div class="rate-ai-btn-sub">由 Gemini 搜尋各大銀行活存利率，再由您確認</div>
           </div>
           <span>›</span>
         </button>
-        <div id="aiRateStatus" style="font-size:12px;color:var(--text3);text-align:center;min-height:16px"></div>
+        <div id="aiRateStatus" style="font-size:12px;color:var(--text3);text-align:center;min-height:14px;margin-bottom:8px"></div>
+        <button class="rate-ai-btn" onclick="openJsonImportModal()">
+          <span class="rate-ai-btn-icon">📋</span>
+          <div class="rate-ai-btn-text">
+            <div>手動貼入 JSON 匯入</div>
+            <div class="rate-ai-btn-sub">自行查詢後貼入 JSON 一次匯入</div>
+          </div>
+          <span>›</span>
+        </button>
+        <button class="rate-ai-btn" style="margin-top:8px;margin-bottom:0" onclick="loadDefaultRates()">
+          <span class="rate-ai-btn-icon">🏦</span>
+          <div class="rate-ai-btn-text">
+            <div>載入預設台灣主要銀行</div>
+            <div class="rate-ai-btn-sub">13 家常見銀行（利率僅供參考，請自行確認調整）</div>
+          </div>
+          <span>›</span>
+        </button>
       </div>
 
       <div class="section-heading">已設定銀行</div>
@@ -712,6 +728,26 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
     </div>
     <button class="logout-btn" onclick="doSignOut()">登出</button>
     <button class="cancel-btn" onclick="closeUserModal()">取消</button>
+  </div>
+</div>
+
+<!-- JSON Import Modal -->
+<div class="modal-overlay" id="jsonImportModal" onclick="closeJsonImportModal(event)">
+  <div class="modal" onclick="event.stopPropagation()" style="max-height:88vh">
+    <div class="modal-handle"></div>
+    <div class="modal-header-row">
+      <div class="modal-title">📋 貼入 JSON 匯入</div>
+      <button class="modal-close-btn" onclick="closeJsonImportModal()">✕</button>
+    </div>
+    <p style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:6px">
+      你可以在這個對話視窗問 Claude：<br>
+      <span style="color:var(--blue);font-size:12px">「請給我台灣主要銀行活存利率的 JSON，格式為 {"banks":[{"name":"...","icon":"...","tiers":[{"upTo":null,"rate":0.00}]}]}」</span>
+    </p>
+    <p style="font-size:12px;color:var(--text3);margin-bottom:12px">取得 JSON 後貼到下方欄位：</p>
+    <textarea id="jsonImportInput" style="width:100%;height:160px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:12px;font-family:monospace;padding:12px;resize:vertical;line-height:1.5" placeholder='{"banks":[{"name":"玉山銀行","icon":"🦅","tiers":[{"upTo":null,"rate":0.80}]}]}'></textarea>
+    <div id="jsonImportError" style="font-size:12px;color:var(--red);margin-top:6px;min-height:16px"></div>
+    <button class="submit-btn" style="margin-top:12px" onclick="importFromJson()">匯入</button>
+    <button style="width:100%;padding:12px;background:none;color:var(--text2);border:none;font-size:14px;font-family:var(--font);cursor:pointer;margin-top:6px" onclick="closeJsonImportModal()">取消</button>
   </div>
 </div>
 
@@ -1522,48 +1558,98 @@ window.addBankRate=function(){
   renderRatePage();showToast('銀行已新增 ✓');
 };
 
-// ── AI fetch rates ──
+// ── JSON Import ──
 let aiPendingRates=[];
+window.openJsonImportModal=function(){
+  document.getElementById('jsonImportInput').value='';
+  document.getElementById('jsonImportError').textContent='';
+  document.getElementById('jsonImportModal').classList.add('open');
+  setTimeout(()=>document.getElementById('jsonImportInput').focus(),200);
+};
+window.closeJsonImportModal=function(e){if(!e||e.target===document.getElementById('jsonImportModal'))document.getElementById('jsonImportModal').classList.remove('open');};
+window.importFromJson=function(){
+  const raw=document.getElementById('jsonImportInput').value.trim();
+  const errEl=document.getElementById('jsonImportError');
+  errEl.textContent='';
+  try{
+    const match=raw.match(/\{[\s\S]*\}/);
+    if(!match)throw new Error('找不到 JSON 格式');
+    const parsed=JSON.parse(match[0]);
+    const banks2=parsed.banks||[];
+    if(!banks2.length)throw new Error('banks 陣列是空的');
+    aiPendingRates=banks2;
+    renderAiConfirmModal();
+    document.getElementById('jsonImportModal').classList.remove('open');
+    document.getElementById('aiConfirmModal').classList.add('open');
+  }catch(e){
+    errEl.textContent='❌ 格式錯誤：'+e.message;
+  }
+};
+
+// ── Default rates (台灣主要銀行，一般牌告活存利率，僅供參考) ──
+window.loadDefaultRates=function(){
+  if(!confirm('載入 13 家銀行預設利率（約 0.80%，請確認後自行調整為實際利率）？'))return;
+  const defaults=[
+    {name:'台灣銀行',icon:'🏛️',tiers:[{upTo:null,rate:0.80}]},
+    {name:'土地銀行',icon:'🏦',tiers:[{upTo:null,rate:0.80}]},
+    {name:'合作金庫',icon:'🏦',tiers:[{upTo:null,rate:0.80}]},
+    {name:'第一銀行',icon:'🏦',tiers:[{upTo:null,rate:0.80}]},
+    {name:'華南銀行',icon:'🏦',tiers:[{upTo:null,rate:0.80}]},
+    {name:'彰化銀行',icon:'🏦',tiers:[{upTo:null,rate:0.80}]},
+    {name:'玉山銀行',icon:'🦅',tiers:[{upTo:null,rate:0.80}]},
+    {name:'國泰世華',icon:'🐯',tiers:[{upTo:null,rate:0.80}]},
+    {name:'富邦銀行',icon:'🦁',tiers:[{upTo:null,rate:0.80}]},
+    {name:'中信銀行',icon:'🔵',tiers:[{upTo:null,rate:0.80}]},
+    {name:'台新銀行',icon:'🟢',tiers:[{upTo:null,rate:0.80}]},
+    {name:'永豐銀行',icon:'🏦',tiers:[{upTo:null,rate:0.80}]},
+    {name:'凱基銀行',icon:'🏦',tiers:[{upTo:null,rate:0.80}]},
+  ];
+  aiPendingRates=defaults;
+  renderAiConfirmModal();
+  document.getElementById('aiConfirmModal').classList.add('open');
+};
+// ── AI Auto Fetch (Gemini via Cloudflare Worker) ──
 window.fetchRatesWithAI=async function(){
   const btn=document.getElementById('aiRateBtn');
   const status=document.getElementById('aiRateStatus');
   btn.classList.add('loading');
-  btn.innerHTML='<span class="rate-ai-btn-icon"><span class="spin">⟳</span></span><div class="rate-ai-btn-text"><div>AI 搜尋中...</div><div class="rate-ai-btn-sub">請稍候，正在查詢最新利率</div></div>';
+  btn.innerHTML='<span class="rate-ai-btn-icon"><span class="spin">⟳</span></span><div class="rate-ai-btn-text"><div>AI 搜尋中...</div><div class="rate-ai-btn-sub">請稍候，約需 10-20 秒</div></div>';
   status.textContent='';
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
+    const res=await fetch('https://curly-bread-c941.joyce30827.workers.dev/',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:1500,
-        tools:[{type:'web_search_20250305',name:'web_search'}],
-        messages:[{role:'user',content:`請搜尋台灣主要銀行最新台幣活期存款（活存）年利率。
+        prompt:`請用 Google 搜尋台灣主要銀行最新台幣活期存款（活存）年利率（2025年）。
 目標銀行：台灣銀行、土地銀行、合作金庫、第一銀行、華南銀行、彰化銀行、玉山銀行、國泰世華、富邦銀行、中信銀行、台新銀行、元大銀行、永豐銀行、凱基銀行、星展銀行。
-只回傳 JSON，不要任何其他文字：
-{"banks":[{"name":"銀行名稱","icon":"emoji","tiers":[{"upTo":null,"rate":0.00}],"source":"來源"}]}
-分級利率範例：[{"upTo":500000,"rate":1.50},{"upTo":null,"rate":0.80}]`}]
+只回傳 JSON，不要任何其他文字、不要 markdown 格式、不要 \`\`\`json：
+{"banks":[{"name":"銀行名稱","icon":"emoji","tiers":[{"upTo":null,"rate":0.00}],"source":"來源網址"}]}
+若有分級利率，範例：[{"upTo":500000,"rate":1.50},{"upTo":null,"rate":0.80}]
+upTo 為存款上限（元），無上限填 null。rate 為年利率 %（例如 0.80 代表 0.80%）。`
       })
     });
+    if(!res.ok)throw new Error('Worker 回應錯誤 '+res.status);
     const data=await res.json();
-    const text=data.content.filter(c=>c.type==='text').map(c=>c.text).join('');
+    if(data.error)throw new Error(data.error);
+    const text=data.text||'';
     const match=text.match(/\{[\s\S]*\}/);
-    if(!match)throw new Error('解析失敗');
+    if(!match)throw new Error('無法解析 JSON');
     const parsed=JSON.parse(match[0]);
     aiPendingRates=parsed.banks||[];
-    if(!aiPendingRates.length)throw new Error('無資料');
+    if(!aiPendingRates.length)throw new Error('沒有找到銀行資料');
     renderAiConfirmModal();
     document.getElementById('aiConfirmModal').classList.add('open');
     status.textContent='✓ 找到 '+aiPendingRates.length+' 家銀行，請確認後匯入';
   }catch(e){
     console.error(e);
-    status.textContent='⚠ 抓取失敗，請稍後再試或手動新增';
+    status.textContent='⚠ 失敗：'+e.message;
     showToast('AI 抓取失敗');
   }finally{
     btn.classList.remove('loading');
-    btn.innerHTML='<span class="rate-ai-btn-icon">🤖</span><div class="rate-ai-btn-text"><div>自動抓取最新利率</div><div class="rate-ai-btn-sub">由 AI 搜尋各大銀行活存利率，再由您確認</div></div><span>›</span>';
+    btn.innerHTML='<span class="rate-ai-btn-icon">🤖</span><div class="rate-ai-btn-text"><div>AI 自動抓取最新利率</div><div class="rate-ai-btn-sub">由 Gemini 搜尋各大銀行活存利率，再由您確認</div></div><span>›</span>';
   }
 };
+
 function renderAiConfirmModal(){
   const el=document.getElementById('aiConfirmList');
   const existing=getBankRates().map(b=>b.name);

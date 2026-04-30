@@ -1456,16 +1456,20 @@ function bestRateForBalance(bank,balance){
 }
 
 function renderRatePage(){
+  // 同步帳戶銀行到 bankRates（帳戶有但利率清單沒有的自動補上）
+  syncBanksFromAccounts();
+
   const banks=getBankRates();
   const el=document.getElementById('rateBankList');
   if(!banks.length){
-    el.innerHTML='<div class="empty-state" style="margin:0 16px 12px"><div class="empty-icon">🏦</div>尚未設定任何銀行<br>點右上角 ＋ 或使用 AI 自動抓取</div>';
+    el.innerHTML='<div class="empty-state" style="margin:0 16px 12px"><div class="empty-icon">🏦</div>尚未有銀行帳戶<br>請先到帳戶頁新增銀行帳戶</div>';
     renderAllocation();
     return;
   }
   el.innerHTML=banks.map((bank,bi)=>{
     const tiers=bank.tiers||[];
     const maxRate=tiers.length?Math.max(...tiers.map(t=>parseFloat(t.rate)||0)):0;
+    const fetchedInfo=bank.fetchedDate?`<span style="font-size:10px;color:var(--text3);margin-left:6px">📅 ${bank.fetchedDate}</span>`:'<span style="font-size:10px;color:var(--accent);margin-left:6px">未設定</span>';
     const tiersHTML=tiers.map((tier,ti)=>`
       <div class="rate-tier-row">
         <div class="rate-tier-label">${tier.upTo?'最高 '+Number(tier.upTo).toLocaleString()+' 元以下':'以上 / 無上限'}</div>
@@ -1480,24 +1484,35 @@ function renderRatePage(){
       <div class="rate-bank-header" onclick="toggleBankCard(${bi})">
         <div class="rate-bank-icon">${bank.icon||'🏦'}</div>
         <div class="rate-bank-info">
-          <div class="rate-bank-name">${bank.name}</div>
-          <div class="rate-bank-best">${tiers.length} 個利率級距</div>
+          <div class="rate-bank-name">${bank.name} ${fetchedInfo}</div>
+          <div class="rate-bank-best">${tiers.length} 個利率級距${bank.source?' · <a href="'+bank.source+'" target="_blank" style="color:var(--blue);font-size:10px">來源</a>':''}</div>
         </div>
         <div class="rate-bank-badge">${maxRate?maxRate.toFixed(2)+'%':'—'}</div>
         <div class="rate-bank-chevron" id="chevron_${bi}">›</div>
       </div>
       <div id="bankTiers_${bi}" style="display:none">
         <div class="rate-tiers">
-          ${tiersHTML||'<div style="font-size:13px;color:var(--text3);padding:8px 0">尚未設定利率</div>'}
+          ${tiersHTML||'<div style="font-size:13px;color:var(--text3);padding:8px 0">尚未設定利率，點下方新增</div>'}
         </div>
         <div class="rate-bank-actions">
           <button class="rate-tier-add-btn" onclick="addTierToBank(${bi})">＋ 新增分級利率</button>
-          <button class="rate-bank-del-btn" onclick="deleteBank(${bi})">刪除銀行</button>
         </div>
       </div>
     </div>`;
   }).join('');
   renderAllocation();
+}
+
+// 從帳戶同步銀行名稱到利率清單（只新增，不刪除）
+function syncBanksFromAccounts(){
+  const banks=getBankRates();
+  const accs=state.accounts.filter(a=>a.kind==='asset_bank');
+  accs.forEach(acc=>{
+    const name=acc.name.trim();
+    if(!banks.find(b=>b.name===name)){
+      banks.push({id:'b'+Date.now()+Math.random(),name,icon:'🏦',tiers:[],fetchedDate:'',source:''});
+    }
+  });
 }
 
 window.toggleBankCard=function(bi){
@@ -1616,46 +1631,69 @@ window.fetchRatesWithAI=async function(){
   btn.innerHTML='<span class="rate-ai-btn-icon"><span class="spin">⟳</span></span><div class="rate-ai-btn-text"><div>AI 搜尋中...</div><div class="rate-ai-btn-sub">請稍候，約需 10-20 秒</div></div>';
   status.textContent='';
   try{
+    // 從帳戶取得銀行名稱清單
+    const bankNames=getUniqueBankNames();
+    if(!bankNames.length)throw new Error('請先在帳戶頁新增銀行帳戶');
     const res=await fetch('https://curly-bread-c941.joyce30827.workers.dev/',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        prompt:`請用 Google 搜尋台灣主要銀行最新台幣活期存款（活存）年利率（2025年）。
-目標銀行：台灣銀行、土地銀行、合作金庫、第一銀行、華南銀行、彰化銀行、玉山銀行、國泰世華、富邦銀行、中信銀行、台新銀行、元大銀行、永豐銀行、凱基銀行、星展銀行。
-只回傳 JSON，不要任何其他文字、不要 markdown 格式、不要 \`\`\`json：
-{"banks":[{"name":"銀行名稱","icon":"emoji","tiers":[{"upTo":null,"rate":0.00}],"source":"來源網址"}]}
-若有分級利率，範例：[{"upTo":500000,"rate":1.50},{"upTo":null,"rate":0.80}]
-upTo 為存款上限（元），無上限填 null。rate 為年利率 %（例如 0.80 代表 0.80%）。`
+        prompt:`請用 Google 搜尋以下台灣銀行的最新台幣活期存款（活存）年利率。
+目標銀行：${bankNames.join('、')}。
+請同時記錄你找到的資料是哪個時間點的（例如「2025年4月」）。
+只回傳純 JSON 物件，不要任何說明文字、不要 markdown、不要 \`\`\` 符號：
+{"fetchedDate":"資料時間點（例如2025年4月）","banks":[{"name":"銀行名稱","icon":"emoji","tiers":[{"upTo":null,"rate":0.00}],"source":"來源網址"}]}
+若有分級利率範例：[{"upTo":500000,"rate":1.50},{"upTo":null,"rate":0.80}]
+upTo 為存款上限（元），無上限填 null。rate 為年利率 % 數字（例如 0.80）。`
       })
     });
     if(!res.ok)throw new Error('Worker 回應錯誤 '+res.status);
     const data=await res.json();
     if(data.error)throw new Error(data.error);
-    const text=data.text||'';
-    const match=text.match(/\{[\s\S]*\}/);
-    if(!match)throw new Error('無法解析 JSON');
+    const raw=data.text||'';
+    // 強力清除 markdown 包裝
+    const cleaned=raw.replace(/```json|```/g,'').trim();
+    const match=cleaned.match(/\{[\s\S]*\}/);
+    if(!match)throw new Error('無法解析 JSON，原始回應：'+raw.slice(0,100));
     const parsed=JSON.parse(match[0]);
     aiPendingRates=parsed.banks||[];
+    aiPendingFetchedDate=parsed.fetchedDate||'';
     if(!aiPendingRates.length)throw new Error('沒有找到銀行資料');
     renderAiConfirmModal();
     document.getElementById('aiConfirmModal').classList.add('open');
-    status.textContent='✓ 找到 '+aiPendingRates.length+' 家銀行，請確認後匯入';
+    status.textContent='✓ 找到 '+aiPendingRates.length+' 家銀行（'+aiPendingFetchedDate+'），請確認後匯入';
   }catch(e){
-    console.error(e);
+    console.error('AI fetch error:',e);
     status.textContent='⚠ 失敗：'+e.message;
     showToast('AI 抓取失敗');
   }finally{
     btn.classList.remove('loading');
-    btn.innerHTML='<span class="rate-ai-btn-icon">🤖</span><div class="rate-ai-btn-text"><div>AI 自動抓取最新利率</div><div class="rate-ai-btn-sub">由 Gemini 搜尋各大銀行活存利率，再由您確認</div></div><span>›</span>';
+    btn.innerHTML='<span class="rate-ai-btn-icon">🤖</span><div class="rate-ai-btn-text"><div>AI 自動抓取最新利率</div><div class="rate-ai-btn-sub">由 Gemini 搜尋您帳戶中的銀行利率</div></div><span>›</span>';
   }
 };
+
+// 從帳戶清單取得不重複的銀行名稱
+function getUniqueBankNames(){
+  const accs=state.accounts.filter(a=>a.kind==='asset_bank');
+  const names=[...new Set(accs.map(a=>a.name.trim()))];
+  return names;
+}
+
+let aiPendingFetchedDate='';
 
 function renderAiConfirmModal(){
   const el=document.getElementById('aiConfirmList');
   const existing=getBankRates().map(b=>b.name);
+  // 顯示資料時間點
+  const dateNote=document.getElementById('aiSourceNote');
+  if(dateNote)dateNote.textContent=aiPendingFetchedDate?'📅 資料時間點：'+aiPendingFetchedDate+'（匯入後仍請以各銀行官網為準）':'';
   el.innerHTML=aiPendingRates.map((bank,i)=>{
     const alreadyExists=existing.includes(bank.name);
-    const tiersHTML=(bank.tiers||[]).map(t=>`<div class="ai-confirm-tier"><span>${t.upTo?'最高 '+Number(t.upTo).toLocaleString()+' 元':'無上限'}</span><span class="ai-confirm-tier-rate">${parseFloat(t.rate).toFixed(2)}%</span></div>`).join('');
+    const tiersHTML=(bank.tiers||[]).map(t=>`
+      <div class="ai-confirm-tier">
+        <span>${t.upTo?'最高 '+Number(t.upTo).toLocaleString()+' 元':'無上限'}</span>
+        <span class="ai-confirm-tier-rate">${parseFloat(t.rate).toFixed(2)}%</span>
+      </div>`).join('');
     return`<div class="ai-confirm-item" id="aiItem_${i}">
       <div class="ai-confirm-bank-row">
         <span style="font-size:20px">${bank.icon||'🏦'}</span>
@@ -1681,8 +1719,14 @@ window.importAiRates=function(){
     const el=document.getElementById('aiItem_'+i);
     if(el&&el.dataset.skipped==='1')return;
     const existing=banks.find(b=>b.name===bank.name);
-    if(existing){existing.tiers=bank.tiers;existing.icon=bank.icon||existing.icon;}
-    else banks.push({id:'b'+Date.now()+i,name:bank.name,icon:bank.icon||'🏦',tiers:bank.tiers});
+    if(existing){
+      existing.tiers=bank.tiers;
+      existing.icon=bank.icon||existing.icon;
+      existing.fetchedDate=aiPendingFetchedDate;
+      existing.source=bank.source||'';
+    } else {
+      banks.push({id:'b'+Date.now()+i,name:bank.name,icon:bank.icon||'🏦',tiers:bank.tiers,fetchedDate:aiPendingFetchedDate,source:bank.source||''});
+    }
     count++;
   });
   state._localUpdateAt=Date.now();scheduleSave();

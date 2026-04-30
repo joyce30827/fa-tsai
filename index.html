@@ -28,6 +28,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .nav-item.active{color:var(--accent)}
 .nav-icon{font-size:21px;line-height:1}
 .nav-label{font-size:10px;font-weight:500;letter-spacing:.3px}
+/* FAB: on mobile floats above nav; on desktop becomes sidebar button (see @media) */
+.fab{position:fixed;right:20px;bottom:calc(70px + env(safe-area-inset-bottom));width:52px;height:52px;border-radius:50%;background:var(--accent);color:#000;font-size:26px;font-weight:300;border:none;cursor:pointer;z-index:200;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(245,200,66,0.4);transition:transform .15s}
+.fab:active{transform:scale(.92)}
 .section{display:none;padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}.section.active{display:block}
 .page-header{padding:52px 20px 12px;position:sticky;top:0;background:var(--bg);z-index:10}
 .page-header-row{display:flex;justify-content:space-between;align-items:center}
@@ -267,9 +270,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .tx-amount.income{color:var(--green)}.tx-amount.expense{color:var(--red)}
 .tx-date-small{font-size:10px;color:var(--text3);margin-top:2px}
 .tx-del{background:none;border:none;color:var(--text3);font-size:16px;padding:4px 6px;cursor:pointer;margin-left:2px}
-/* FAB */
-.fab{position:fixed;bottom:84px;right:50%;transform:translateX(calc(50% + 160px));width:52px;height:52px;border-radius:50%;background:var(--accent);border:none;color:#000;font-size:26px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(245,200,66,0.35);z-index:50;transition:transform .15s}
-.fab:active{transform:translateX(calc(50% + 160px)) scale(0.93)}
 /* Modals */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:200;display:none;align-items:flex-end;justify-content:center}
 .modal-overlay.open{display:flex}
@@ -344,6 +344,98 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 @keyframes slideInLeft{from{opacity:0;transform:translateX(-32px)}to{opacity:1;transform:translateX(0)}}
 .slide-in-right{animation:slideInRight .22s cubic-bezier(.25,.46,.45,.94) both}
 .slide-in-left{animation:slideInLeft .22s cubic-bezier(.25,.46,.45,.94) both}
+
+/* ══════════════════════════════════════════
+   RWD Desktop Layout (768px+)
+   ══════════════════════════════════════════ */
+@media(min-width:768px){
+  html,body{overflow:hidden}
+  .app{max-width:100%;flex-direction:row;height:100vh}
+
+  /* Sidebar */
+  .bottom-nav{
+    position:static;transform:none;
+    width:220px;min-width:220px;
+    flex-direction:column;justify-content:flex-start;align-items:stretch;
+    border-top:none;border-right:1px solid var(--border);
+    padding:0;height:100vh;
+    background:var(--bg2);overflow:hidden;flex-shrink:0;
+    order:-1;
+  }
+  .bottom-nav::before{
+    content:'📒 記帳本';
+    display:block;font-size:16px;font-weight:700;
+    padding:28px 20px 20px;color:var(--text);
+    letter-spacing:-.3px;
+    border-bottom:1px solid var(--border);margin-bottom:8px;
+  }
+  .nav-item{
+    flex-direction:row;justify-content:flex-start;
+    gap:12px;padding:11px 18px;
+    border-radius:10px;margin:2px 8px;
+    color:var(--text2);transition:background .15s,color .15s;
+  }
+  .nav-item:hover{background:var(--bg3);color:var(--text)}
+  .nav-item.active{background:rgba(245,200,66,0.1);color:var(--accent)}
+  .nav-icon{font-size:18px;line-height:1;flex-shrink:0}
+  .nav-label{font-size:14px;font-weight:500}
+
+  /* FAB becomes a sidebar button */
+  .fab{
+    position:static;transform:none;
+    width:calc(100% - 20px);margin:0 10px 24px;
+    border-radius:10px;height:42px;
+    font-size:15px;font-weight:600;
+    bottom:auto;right:auto;
+    box-shadow:none;
+    letter-spacing:-.2px;
+  }
+  .fab::before{content:'＋  新增收支';font-size:15px;font-weight:600}
+
+  /* Spacer pushes FAB to bottom */
+  .bottom-nav::after{content:'';flex:1;display:block;min-height:20px}
+
+  /* Scroll body */
+  .scroll-body{flex:1;height:100vh;overflow-y:auto;padding-bottom:0}
+  .section{padding-bottom:40px}
+  .page-header{padding:32px 28px 12px}
+
+  /* Content spacing */
+  .card{margin:0 24px 14px}
+  .net-worth-card{margin:16px 24px}
+  .rate-hero{margin:12px 24px}
+  .rate-bank-card{margin:0 24px 10px}
+  .alloc-card{margin:0 24px 10px}
+  .section-heading{padding:10px 28px 6px}
+  .rate-add-bank-btn{width:calc(100% - 48px);margin:4px 24px 14px}
+  .tx-toolbar{padding:24px 24px 12px}
+  .tx-month-header{padding-top:0}
+
+  /* Modal */
+  .modal-overlay{align-items:center}
+  .modal{max-width:480px;border-radius:var(--radius);margin:0 auto;max-height:85vh}
+
+  /* Detail screen offset for sidebar */
+  .detail-screen{left:220px}
+
+  /* Overview 2-col charts */
+  #sec-overview .card:nth-of-type(3),
+  #sec-overview .card:nth-of-type(4){display:inline-flex;flex-direction:column;width:calc(50% - 28px);vertical-align:top}
+}
+
+@media(min-width:1100px){
+  .bottom-nav{width:240px;min-width:240px}
+  .detail-screen{left:240px}
+  .page-header{padding:36px 36px 14px}
+  .card{margin:0 32px 14px}
+  .net-worth-card{margin:16px 32px}
+  .rate-hero{margin:12px 32px}
+  .rate-bank-card{margin:0 32px 10px}
+  .alloc-card{margin:0 32px 10px}
+  .section-heading{padding:10px 36px 6px}
+  .rate-add-bank-btn{width:calc(100% - 64px);margin:4px 32px 14px}
+  .tx-toolbar{padding:28px 36px 12px}
+}
 </style>
 </head>
 <body>
@@ -359,6 +451,14 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 </div>
 
 <div class="app" id="mainApp" style="display:none">
+  <nav class="bottom-nav">
+    <button class="nav-item active" onclick="switchTab('overview',0)"><span class="nav-icon">📊</span><span class="nav-label">總覽</span></button>
+    <button class="nav-item" onclick="switchTab('accounts',1)"><span class="nav-icon">🏦</span><span class="nav-label">帳戶</span></button>
+    <button class="nav-item" onclick="switchTab('transactions',2)"><span class="nav-icon">📋</span><span class="nav-label">明細</span></button>
+    <button class="nav-item" onclick="switchTab('rates',3)"><span class="nav-icon">💹</span><span class="nav-label">利率</span></button>
+    <button class="nav-item" onclick="switchTab('settings',4)"><span class="nav-icon">⚙️</span><span class="nav-label">設定</span></button>
+    <button class="fab" onclick="openTxModal()">＋</button>
+  </nav>
   <div class="scroll-body" id="scrollBody">
 
     <!-- TAB 1: 總覽 -->
@@ -549,20 +649,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
       <!-- Import card -->
       <div class="rate-hero">
         <div class="rate-hero-label">✦ 快速匯入</div>
-        <button class="rate-ai-btn" id="aiRateBtn" onclick="fetchRatesWithAI()">
-          <span class="rate-ai-btn-icon">🤖</span>
-          <div class="rate-ai-btn-text">
-            <div>AI 自動抓取最新利率</div>
-            <div class="rate-ai-btn-sub">由 Gemini 搜尋各大銀行活存利率，再由您確認</div>
-          </div>
-          <span>›</span>
-        </button>
-        <div id="aiRateStatus" style="font-size:12px;color:var(--text3);text-align:center;min-height:14px;margin-bottom:8px"></div>
         <button class="rate-ai-btn" onclick="openJsonImportModal()">
           <span class="rate-ai-btn-icon">📋</span>
           <div class="rate-ai-btn-text">
-            <div>手動貼入 JSON 匯入</div>
-            <div class="rate-ai-btn-sub">自行查詢後貼入 JSON 一次匯入</div>
+            <div>貼入 JSON 匯入利率</div>
+            <div class="rate-ai-btn-sub">詢問 Claude / ChatGPT 取得 JSON，貼入後一次匯入</div>
           </div>
           <span>›</span>
         </button>
@@ -574,6 +665,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
           </div>
           <span>›</span>
         </button>
+        <div id="rateLastUpdatedBar" style="display:none;margin-top:10px;padding:8px 10px;background:rgba(245,200,66,0.08);border-radius:8px;border:1px solid rgba(245,200,66,0.2);font-size:12px;color:var(--text2);display:flex;align-items:center;gap:6px">
+          <span>🕐</span>
+          <span id="rateLastUpdatedText"></span>
+        </div>
       </div>
 
       <div class="section-heading">已設定銀行</div>
@@ -592,14 +687,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
       </div>
     </div>
   </div><!-- end scroll-body -->
-  <button class="fab" onclick="openTxModal()">＋</button>
-  <nav class="bottom-nav">
-    <button class="nav-item active" onclick="switchTab('overview',0)"><span class="nav-icon">📊</span><span class="nav-label">總覽</span></button>
-    <button class="nav-item" onclick="switchTab('accounts',1)"><span class="nav-icon">🏦</span><span class="nav-label">帳戶</span></button>
-    <button class="nav-item" onclick="switchTab('transactions',2)"><span class="nav-icon">📋</span><span class="nav-label">明細</span></button>
-    <button class="nav-item" onclick="switchTab('rates',3)"><span class="nav-icon">💹</span><span class="nav-label">利率</span></button>
-    <button class="nav-item" onclick="switchTab('settings',4)"><span class="nav-icon">⚙️</span><span class="nav-label">設定</span></button>
-  </nav>
 </div>
 
 <!-- Account Detail -->
@@ -1455,21 +1542,68 @@ function bestRateForBalance(bank,balance){
   return parseFloat(sorted[sorted.length-1].rate)||0;
 }
 
-function renderRatePage(){
-  // 同步帳戶銀行到 bankRates（帳戶有但利率清單沒有的自動補上）
-  syncBanksFromAccounts();
+// 各銀行官網利率查詢連結
+const BANK_URLS={
+  '台灣銀行':'https://www.bot.com.tw/zh/personal/deposits/demand-deposit',
+  '土地銀行':'https://www.landbank.com.tw/tw/Personal/Interest',
+  '合作金庫':'https://www.tcb-bank.com.tw/personal/deposits/DemandDeposit',
+  '第一銀行':'https://www.firstbank.com.tw/rate/savings',
+  '華南銀行':'https://www.hncb.com.tw/wps/portal/HNCB/deposit/rate',
+  '彰化銀行':'https://www.bankchb.com/chb_web/deposit/depositinterest.jsp',
+  '玉山銀行':'https://www.esunbank.com/zh-tw/personal/deposit/rate',
+  '國泰世華':'https://www.cathaybk.com.tw/cathaybk/personal/deposit/products/saving-account/',
+  '富邦銀行':'https://www.fubon.com/banking/personal/deposit/demand_deposit/index.html',
+  '中信銀行':'https://www.ctbcbank.com/twrbo/zh/personal/deposits/rateTable.html',
+  '台新銀行':'https://www.taishinbank.com.tw/TSB/personal/deposits/introduce/rateinfo/',
+  '元大銀行':'https://www.yuantabank.com.tw/bank/deposit/interestRates/',
+  '永豐銀行':'https://www.sinopac.com/sinopacBT/portal/bank/deposit/rate.html',
+  '凱基銀行':'https://www.kgibank.com/zh-tw/personal/deposit/rate',
+  '星展銀行':'https://www.dbs.com/tw/personal-zh/deposits/rates.page',
+};
 
+function renderRatePage(){
+  syncBanksFromAccounts();
   const banks=getBankRates();
   const el=document.getElementById('rateBankList');
+
+  // 更新日期提醒
+  const allDates=banks.filter(b=>b.rateUpdatedAt).map(b=>b.rateUpdatedAt);
+  const lastUpdated=allDates.length?Math.max(...allDates):null;
+  const bar=document.getElementById('rateLastUpdatedBar');
+  const barText=document.getElementById('rateLastUpdatedText');
+  if(lastUpdated&&bar&&barText){
+    const days=Math.floor((Date.now()-lastUpdated)/86400000);
+    bar.style.display='flex';
+    if(days<7){
+      bar.style.borderColor='rgba(46,204,142,0.2)';
+      bar.style.background='rgba(46,204,142,0.08)';
+      barText.textContent=`上次更新：${new Date(lastUpdated).toLocaleDateString('zh-TW')}（${days} 天前）`;
+    } else if(days<30){
+      bar.style.borderColor='rgba(245,200,66,0.3)';
+      bar.style.background='rgba(245,200,66,0.08)';
+      barText.textContent=`上次更新：${new Date(lastUpdated).toLocaleDateString('zh-TW')}（${days} 天前，建議確認是否有異動）`;
+    } else {
+      bar.style.borderColor='rgba(240,97,74,0.3)';
+      bar.style.background='rgba(240,97,74,0.08)';
+      barText.textContent=`上次更新：${new Date(lastUpdated).toLocaleDateString('zh-TW')}（已超過 ${days} 天，建議重新確認利率）`;
+    }
+  } else if(bar){
+    bar.style.display='none';
+  }
+
   if(!banks.length){
     el.innerHTML='<div class="empty-state" style="margin:0 16px 12px"><div class="empty-icon">🏦</div>尚未有銀行帳戶<br>請先到帳戶頁新增銀行帳戶</div>';
     renderAllocation();
     return;
   }
+
   el.innerHTML=banks.map((bank,bi)=>{
     const tiers=bank.tiers||[];
     const maxRate=tiers.length?Math.max(...tiers.map(t=>parseFloat(t.rate)||0)):0;
-    const fetchedInfo=bank.fetchedDate?`<span style="font-size:10px;color:var(--text3);margin-left:6px">📅 ${bank.fetchedDate}</span>`:'<span style="font-size:10px;color:var(--accent);margin-left:6px">未設定</span>';
+    const updatedStr=bank.rateUpdatedAt
+      ?`📅 ${new Date(bank.rateUpdatedAt).toLocaleDateString('zh-TW')}`
+      :'<span style="color:var(--accent)">尚未設定利率</span>';
+    const websiteUrl=BANK_URLS[bank.name]||'';
     const tiersHTML=tiers.map((tier,ti)=>`
       <div class="rate-tier-row">
         <div class="rate-tier-label">${tier.upTo?'最高 '+Number(tier.upTo).toLocaleString()+' 元以下':'以上 / 無上限'}</div>
@@ -1484,8 +1618,8 @@ function renderRatePage(){
       <div class="rate-bank-header" onclick="toggleBankCard(${bi})">
         <div class="rate-bank-icon">${bank.icon||'🏦'}</div>
         <div class="rate-bank-info">
-          <div class="rate-bank-name">${bank.name} ${fetchedInfo}</div>
-          <div class="rate-bank-best">${tiers.length} 個利率級距${bank.source?' · <a href="'+bank.source+'" target="_blank" style="color:var(--blue);font-size:10px">來源</a>':''}</div>
+          <div class="rate-bank-name">${bank.name}</div>
+          <div class="rate-bank-best" style="font-size:11px;color:var(--text3)">${updatedStr}</div>
         </div>
         <div class="rate-bank-badge">${maxRate?maxRate.toFixed(2)+'%':'—'}</div>
         <div class="rate-bank-chevron" id="chevron_${bi}">›</div>
@@ -1496,6 +1630,7 @@ function renderRatePage(){
         </div>
         <div class="rate-bank-actions">
           <button class="rate-tier-add-btn" onclick="addTierToBank(${bi})">＋ 新增分級利率</button>
+          ${websiteUrl?`<a href="${websiteUrl}" target="_blank" class="rate-tier-add-btn" style="text-align:center;text-decoration:none;color:var(--blue);border-color:rgba(91,164,245,0.3)">🔗 官網查詢</a>`:''}
         </div>
       </div>
     </div>`;
@@ -1510,7 +1645,7 @@ function syncBanksFromAccounts(){
   accs.forEach(acc=>{
     const name=acc.name.trim();
     if(!banks.find(b=>b.name===name)){
-      banks.push({id:'b'+Date.now()+Math.random(),name,icon:'🏦',tiers:[],fetchedDate:'',source:''});
+      banks.push({id:'b'+Date.now()+Math.random(),name,icon:'🏦',tiers:[],rateUpdatedAt:null,source:''});
     }
   });
 }
@@ -1524,7 +1659,11 @@ window.toggleBankCard=function(bi){
 };
 window.updateTierRate=function(bi,ti,val){
   const banks=getBankRates();
-  if(banks[bi]&&banks[bi].tiers[ti]){banks[bi].tiers[ti].rate=parseFloat(val)||0;state._localUpdateAt=Date.now();scheduleSave();renderAllocation();}
+  if(banks[bi]&&banks[bi].tiers[ti]){
+    banks[bi].tiers[ti].rate=parseFloat(val)||0;
+    banks[bi].rateUpdatedAt=Date.now();
+    state._localUpdateAt=Date.now();scheduleSave();renderAllocation();
+  }
 };
 window.deleteTier=function(bi,ti){
   const banks=getBankRates();
@@ -1717,6 +1856,7 @@ window.closeAiConfirmModal=function(e){if(!e||e.target===document.getElementById
 window.importAiRates=function(){
   const banks=getBankRates();
   let count=0;
+  const now=Date.now();
   aiPendingRates.forEach((bank,i)=>{
     const el=document.getElementById('aiItem_'+i);
     if(el&&el.dataset.skipped==='1')return;
@@ -1724,10 +1864,10 @@ window.importAiRates=function(){
     if(existing){
       existing.tiers=bank.tiers;
       existing.icon=bank.icon||existing.icon;
-      existing.fetchedDate=aiPendingFetchedDate;
+      existing.rateUpdatedAt=now;
       existing.source=bank.source||'';
     } else {
-      banks.push({id:'b'+Date.now()+i,name:bank.name,icon:bank.icon||'🏦',tiers:bank.tiers,fetchedDate:aiPendingFetchedDate,source:bank.source||''});
+      banks.push({id:'b'+now+i,name:bank.name,icon:bank.icon||'🏦',tiers:bank.tiers,rateUpdatedAt:now,source:bank.source||''});
     }
     count++;
   });

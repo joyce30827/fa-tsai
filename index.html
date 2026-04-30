@@ -1650,6 +1650,8 @@ upTo 為存款上限（元），無上限填 null。rate 為年利率 % 數字�
     if(!res.ok)throw new Error('Worker 回應錯誤 '+res.status);
     const data=await res.json();
     if(data.error)throw new Error(data.error);
+    // Debug：如果有 debug 欄位，印出來看結構
+    if(data.debug){console.warn('Gemini 完整回應：',JSON.stringify(data.debug,null,2));}
     const raw=data.text||'';
     // 強力清除 markdown 包裝
     const cleaned=raw.replace(/```json|```/g,'').trim();

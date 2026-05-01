@@ -355,7 +355,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   /* Sidebar */
   .bottom-nav{
     position:static;transform:none;
-    width:220px;min-width:220px;
+    width:200px;min-width:200px;
     flex-direction:column;justify-content:flex-start;align-items:stretch;
     border-top:none;border-right:1px solid var(--border);
     padding:0;height:100vh;
@@ -364,21 +364,23 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   }
   .bottom-nav::before{
     content:'📒 記帳本';
-    display:block;font-size:16px;font-weight:700;
-    padding:28px 20px 20px;color:var(--text);
+    display:block;font-size:14px;font-weight:700;
+    padding:18px 14px 14px;color:var(--text);
     letter-spacing:-.3px;
-    border-bottom:1px solid var(--border);margin-bottom:8px;
+    border-bottom:1px solid var(--border);margin-bottom:6px;
   }
   .nav-item{
     flex-direction:row;justify-content:flex-start;
-    gap:12px;padding:11px 18px;
-    border-radius:10px;margin:2px 8px;
-    color:var(--text2);transition:background .15s,color .15s;
+    gap:8px;padding:6px 10px;
+    border-radius:6px;margin:1px 6px;
+    color:var(--text2);
+    transition:background .12s,color .12s;
+    font-size:13px;
   }
   .nav-item:hover{background:var(--bg3);color:var(--text)}
   .nav-item.active{background:rgba(245,200,66,0.1);color:var(--accent)}
-  .nav-icon{font-size:18px;line-height:1;flex-shrink:0}
-  .nav-label{font-size:14px;font-weight:500}
+  .nav-icon{font-size:15px;line-height:1;flex-shrink:0;width:18px;text-align:center}
+  .nav-label{font-size:13px;font-weight:400;letter-spacing:0}
 
   /* FAB becomes a sidebar button */
   .fab{
@@ -424,8 +426,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 }
 
 @media(min-width:1100px){
-  .bottom-nav{width:240px;min-width:240px}
-  .detail-screen{left:240px}
+  .bottom-nav{width:220px;min-width:220px}
+  .detail-screen{left:220px}
   .page-header{padding:36px 36px 14px}
   .card{margin:0 32px 14px}
   .net-worth-card{margin:16px 32px}
@@ -826,12 +828,13 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
       <div class="modal-title">📋 貼入 JSON 匯入</div>
       <button class="modal-close-btn" onclick="closeJsonImportModal()">✕</button>
     </div>
-    <p style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:6px">
-      你可以在這個對話視窗問 Claude：<br>
-      <span style="color:var(--blue);font-size:12px">「請給我台灣主要銀行活存利率的 JSON，格式為 {"banks":[{"name":"...","icon":"...","tiers":[{"upTo":null,"rate":0.00}]}]}」</span>
-    </p>
-    <p style="font-size:12px;color:var(--text3);margin-bottom:12px">取得 JSON 後貼到下方欄位：</p>
-    <textarea id="jsonImportInput" style="width:100%;height:160px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:12px;font-family:monospace;padding:12px;resize:vertical;line-height:1.5" placeholder='{"banks":[{"name":"玉山銀行","icon":"🦅","tiers":[{"upTo":null,"rate":0.80}]}]}'></textarea>
+    <p style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:8px">複製下方 prompt，貼到 Claude 或 ChatGPT，再把回傳的 JSON 貼到下面欄位：</p>
+    <div style="position:relative;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px">
+      <div id="jsonPromptText" style="font-size:12px;color:var(--blue);line-height:1.7;font-family:monospace;white-space:pre-wrap;word-break:break-all"></div>
+      <button onclick="copyJsonPrompt()" style="position:absolute;top:8px;right:8px;background:var(--bg4);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:11px;color:var(--text2);cursor:pointer;font-family:var(--font)" id="copyPromptBtn">複製</button>
+    </div>
+    <p style="font-size:12px;color:var(--text3);margin-bottom:8px">取得 JSON 後貼到下方：</p>
+    <textarea id="jsonImportInput" style="width:100%;height:140px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:12px;font-family:monospace;padding:12px;resize:vertical;line-height:1.5" placeholder='{"banks":[{"name":"玉山銀行","icon":"🦅","tiers":[{"upTo":null,"rate":0.80}]}]}'></textarea>
     <div id="jsonImportError" style="font-size:12px;color:var(--red);margin-top:6px;min-height:16px"></div>
     <button class="submit-btn" style="margin-top:12px" onclick="importFromJson()">匯入</button>
     <button style="width:100%;padding:12px;background:none;color:var(--text2);border:none;font-size:14px;font-family:var(--font);cursor:pointer;margin-top:6px" onclick="closeJsonImportModal()">取消</button>
@@ -1509,7 +1512,23 @@ window.deleteTx=function(id){const t=state.transactions.find(x=>x.id===id);if(!t
 window.openAccModal=function(){document.getElementById('accName').value='';document.getElementById('accBal').value='';document.getElementById('accModal').classList.add('open');updateAccGroup();};
 window.closeAccModal=function(e){if(!e||e.target===document.getElementById('accModal'))document.getElementById('accModal').classList.remove('open');};
 window.updateAccGroup=function(){const kind=document.getElementById('accKind').value;document.getElementById('accBalLabel').textContent=ACC_KIND_META[kind]?.group==='debt'?'目前欠款 (NT$)':'初始餘額 (NT$)';};
-window.addAccount=function(){const name=document.getElementById('accName').value.trim();if(!name)return;const kind=document.getElementById('accKind').value;const isDebt=ACC_KIND_META[kind]?.group==='debt';const raw=parseFloat(document.getElementById('accBal').value)||0;state.accounts.push({id:'a'+Date.now(),name,kind,balance:isDebt?-Math.abs(raw):raw,updatedAt:Date.now()});document.getElementById('accModal').classList.remove('open');state._localUpdateAt=Date.now();scheduleSave();renderAll();showToast('帳戶已新增');};
+window.addAccount=function(){
+  const name=document.getElementById('accName').value.trim();
+  if(!name)return;
+  const kind=document.getElementById('accKind').value;
+  const isDebt=ACC_KIND_META[kind]?.group==='debt';
+  const raw=parseFloat(document.getElementById('accBal').value)||0;
+  state.accounts.push({id:'a'+Date.now(),name,kind,balance:isDebt?-Math.abs(raw):raw,updatedAt:Date.now()});
+  // 只有銀行帳戶才同步到利率頁
+  if(kind==='asset_bank'){
+    const banks=getBankRates();
+    if(!banks.find(b=>b.name===name)){
+      banks.push({id:'b'+Date.now(),name,icon:'🏦',tiers:[],rateUpdatedAt:null,source:''});
+    }
+  }
+  document.getElementById('accModal').classList.remove('open');
+  state._localUpdateAt=Date.now();scheduleSave();renderAll();showToast('帳戶已新增');
+};
 
 // User modal
 window.openUserModal=()=>document.getElementById('userModal').classList.add('open');
@@ -1638,7 +1657,7 @@ function renderRatePage(){
   renderAllocation();
 }
 
-// 從帳戶同步銀行名稱到利率清單（只新增，不刪除）
+// 從帳戶同步銀行名稱到利率清單（只同步 asset_bank，不包含錢包等）
 function syncBanksFromAccounts(){
   const banks=getBankRates();
   const accs=state.accounts.filter(a=>a.kind==='asset_bank');
@@ -1715,10 +1734,29 @@ window.addBankRate=function(){
 // ── JSON Import ──
 let aiPendingRates=[];
 window.openJsonImportModal=function(){
+  const bankNames=getUniqueBankNames();
+  if(!bankNames.length){
+    showToast('請先在帳戶頁新增銀行帳戶');return;
+  }
+  const bankList=bankNames.join('、');
+  const prompt=`請給我以下台灣銀行的最新台幣活期存款（活存）年利率：${bankList}。
+只回傳 JSON，不要任何說明文字：
+{"banks":[{"name":"銀行名稱","icon":"emoji","tiers":[{"upTo":null,"rate":0.00}]}]}
+若有分級利率範例：[{"upTo":500000,"rate":1.50},{"upTo":null,"rate":0.80}]
+upTo 為存款上限（元），無上限填 null；rate 為年利率 %（例如 0.80）。`;
+  document.getElementById('jsonPromptText').textContent=prompt;
   document.getElementById('jsonImportInput').value='';
   document.getElementById('jsonImportError').textContent='';
+  document.getElementById('copyPromptBtn').textContent='複製 Prompt';
   document.getElementById('jsonImportModal').classList.add('open');
-  setTimeout(()=>document.getElementById('jsonImportInput').focus(),200);
+};
+window.copyJsonPrompt=function(){
+  const text=document.getElementById('jsonPromptText').textContent;
+  navigator.clipboard.writeText(text).then(()=>{
+    const btn=document.getElementById('copyPromptBtn');
+    btn.textContent='✓ 已複製';
+    setTimeout(()=>btn.textContent='複製',2000);
+  }).catch(()=>showToast('複製失敗，請手動選取'));
 };
 window.closeJsonImportModal=function(e){if(!e||e.target===document.getElementById('jsonImportModal'))document.getElementById('jsonImportModal').classList.remove('open');};
 window.importFromJson=function(){
@@ -1732,6 +1770,7 @@ window.importFromJson=function(){
     const banks2=parsed.banks||[];
     if(!banks2.length)throw new Error('banks 陣列是空的');
     aiPendingRates=banks2;
+    aiPendingFetchedDate='';
     renderAiConfirmModal();
     document.getElementById('jsonImportModal').classList.remove('open');
     document.getElementById('aiConfirmModal').classList.add('open');
@@ -1740,27 +1779,22 @@ window.importFromJson=function(){
   }
 };
 
-// ── Default rates (台灣主要銀行，一般牌告活存利率，僅供參考) ──
+// ── 載入預設：只載入帳戶裡的銀行 ──
 window.loadDefaultRates=function(){
-  if(!confirm('載入 13 家銀行預設利率（約 0.80%，請確認後自行調整為實際利率）？'))return;
-  const defaults=[
-    {name:'台灣銀行',icon:'🏛️',tiers:[{upTo:null,rate:0.80}]},
-    {name:'土地銀行',icon:'🏦',tiers:[{upTo:null,rate:0.80}]},
-    {name:'合作金庫',icon:'🏦',tiers:[{upTo:null,rate:0.80}]},
-    {name:'第一銀行',icon:'🏦',tiers:[{upTo:null,rate:0.80}]},
-    {name:'華南銀行',icon:'🏦',tiers:[{upTo:null,rate:0.80}]},
-    {name:'彰化銀行',icon:'🏦',tiers:[{upTo:null,rate:0.80}]},
-    {name:'玉山銀行',icon:'🦅',tiers:[{upTo:null,rate:0.80}]},
-    {name:'國泰世華',icon:'🐯',tiers:[{upTo:null,rate:0.80}]},
-    {name:'富邦銀行',icon:'🦁',tiers:[{upTo:null,rate:0.80}]},
-    {name:'中信銀行',icon:'🔵',tiers:[{upTo:null,rate:0.80}]},
-    {name:'台新銀行',icon:'🟢',tiers:[{upTo:null,rate:0.80}]},
-    {name:'永豐銀行',icon:'🏦',tiers:[{upTo:null,rate:0.80}]},
-    {name:'凱基銀行',icon:'🏦',tiers:[{upTo:null,rate:0.80}]},
-  ];
-  aiPendingRates=defaults;
-  renderAiConfirmModal();
-  document.getElementById('aiConfirmModal').classList.add('open');
+  const bankNames=getUniqueBankNames();
+  if(!bankNames.length){showToast('請先在帳戶頁新增銀行帳戶');return;}
+  const existing=getBankRates().map(b=>b.name);
+  const toAdd=bankNames.filter(n=>!existing.includes(n));
+  if(!toAdd.length){showToast('所有銀行帳戶都已有利率設定');return;}
+  if(!confirm(`為以下 ${toAdd.length} 家銀行建立利率欄位（預設 0%，請之後填入實際利率）：\n\n${toAdd.join('、')}`))return;
+  const banks=getBankRates();
+  const now=Date.now();
+  toAdd.forEach((name,i)=>{
+    banks.push({id:'b'+now+i,name,icon:'🏦',tiers:[{upTo:null,rate:0}],rateUpdatedAt:null,source:''});
+  });
+  state._localUpdateAt=Date.now();scheduleSave();
+  renderRatePage();
+  showToast(`已建立 ${toAdd.length} 家銀行利率欄位 ✓`);
 };
 // ── AI Auto Fetch (Gemini via Cloudflare Worker) ──
 window.fetchRatesWithAI=async function(){
@@ -1813,11 +1847,10 @@ upTo 為存款上限（元），無上限填 null。rate 為年利率 % 數字�
   }
 };
 
-// 從帳戶清單取得不重複的銀行名稱
+// 從帳戶取得不重複的銀行名稱（只取 asset_bank）
 function getUniqueBankNames(){
   const accs=state.accounts.filter(a=>a.kind==='asset_bank');
-  const names=[...new Set(accs.map(a=>a.name.trim()))];
-  return names;
+  return [...new Set(accs.map(a=>a.name.trim()))];
 }
 
 let aiPendingFetchedDate='';

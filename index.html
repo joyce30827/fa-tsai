@@ -965,6 +965,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.0/firebase-app-compat.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.0/firebase-firestore-compat.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.0/firebase-auth-compat.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
 
 const firebaseConfig = {
@@ -979,11 +980,57 @@ const fbApp=firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
 const auth=firebase.auth();
 const provider=new firebase.auth.GoogleAuthProvider();
-provider.addScope('https://www.googleapis.com/auth/gmail.readonly');
-// consent 確保每次登入都重新詢問 Gmail 授權，才能拿到 access_token
-provider.setCustomParameters({access_type:'offline',prompt:'consent'});
+provider.setCustomParameters({prompt:'select_account'});
 
 let gmailAccessToken=null;
+
+// ── Google Identity Services — 專門取得 Gmail token ──
+const GIS_CLIENT_ID='920733762276-skejmfkbi5ft1qk518q8et8ko9psc6e3.apps.googleusercontent.com';
+const GIS_SCOPE='https://www.googleapis.com/auth/gmail.readonly';
+let gisTokenClient=null;
+let gisResolve=null;
+
+function initGIS(){
+  if(typeof google==='undefined'||!google.accounts)return;
+  gisTokenClient=google.accounts.oauth2.initTokenClient({
+    client_id:GIS_CLIENT_ID,
+    scope:GIS_SCOPE,
+    callback:(resp)=>{
+      if(resp.error){
+        if(gisResolve)gisResolve({error:resp.error});
+        gisResolve=null;
+        return;
+      }
+      gmailAccessToken=resp.access_token;
+      sessionStorage.setItem('gmailToken',gmailAccessToken);
+      if(gisResolve)gisResolve({token:resp.access_token});
+      gisResolve=null;
+    }
+  });
+}
+
+async function requestGmailToken(){
+  // 先試 session storage
+  const cached=sessionStorage.getItem('gmailToken');
+  if(cached){gmailAccessToken=cached;return true;}
+  // 確保 GIS 已初始化
+  if(!gisTokenClient){
+    await new Promise(r=>{
+      if(typeof google!=='undefined'&&google.accounts){initGIS();r();}
+      else{
+        const t=setInterval(()=>{
+          if(typeof google!=='undefined'&&google.accounts){initGIS();clearInterval(t);r();}
+        },200);
+        setTimeout(()=>{clearInterval(t);r();},5000);
+      }
+    });
+  }
+  if(!gisTokenClient){showToast('Google 授權元件載入失敗，請重新整理');return false;}
+  return new Promise(resolve=>{
+    gisResolve=(result)=>resolve(!result.error);
+    gisTokenClient.requestAccessToken({prompt:'consent'});
+  });
+}
 
 // 銀行別名對應（Gmail 偵測到的名稱 → app 帳戶名稱）
 const BANK_ALIAS={
@@ -1852,20 +1899,9 @@ window.saveNewBill=function(){
 
 // Gmail 同步
 window.syncBillsFromGmail=async function(){
-  if(!gmailAccessToken)gmailAccessToken=sessionStorage.getItem('gmailToken');
-  if(!gmailAccessToken){
-    try{
-      showToast('需要 Gmail 授權，請在彈出視窗中允許...');
-      const result=await auth.signInWithPopup(provider);
-      const credential=firebase.auth.GoogleAuthProvider.credentialFromResult(result);
-      if(credential?.accessToken){
-        gmailAccessToken=credential.accessToken;
-        sessionStorage.setItem('gmailToken',gmailAccessToken);
-      } else {showToast('無法取得 Gmail 授權，請重新整理後再試');return;}
-    }catch(e){
-      showToast('Gmail 授權失敗：'+(e.code||e.message));return;
-    }
-  }
+  const ok=await requestGmailToken();
+  if(!ok){showToast('無法取得 Gmail 授權');return;}
+
   const btn=document.getElementById('syncBillsBtn');
   if(btn){btn.textContent='⏳';btn.disabled=true;}
   try{
@@ -1875,7 +1911,10 @@ window.syncBillsFromGmail=async function(){
       `https://www.googleapis.com/gmail/v1/users/me/messages?q=${q}&maxResults=50`,
       {headers:{Authorization:`Bearer ${gmailAccessToken}`}}
     );
-    if(listRes.status===401){gmailAccessToken=null;sessionStorage.removeItem('gmailToken');showToast('Gmail 授權已過期，請重新登入');return;}
+    if(listRes.status===401){
+      gmailAccessToken=null;sessionStorage.removeItem('gmailToken');
+      showToast('Gmail 授權已過期，請再按一次同步重新授權');return;
+    }
     const listData=await listRes.json();
     const messages=listData.messages||[];
 
@@ -1963,9 +2002,6 @@ window.syncBillsFromGmail=async function(){
     if(btn){btn.textContent='🔄';btn.disabled=false;}
   }
 };
-
-// 頁面載入時還原 token
-gmailAccessToken=sessionStorage.getItem('gmailToken');
 
 
 // ══════════════════════════════════════════════

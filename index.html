@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="記帳本">
+<meta name="apple-mobile-web-app-title" content="Joyce's Fortune Journal">
 <meta name="theme-color" content="#0f0f0f">
-<title>記帳本</title>
+<title>Joyce's Fortune Journal</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <style>
@@ -363,8 +363,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
     order:-1;
   }
   .bottom-nav::before{
-    content:'📒 記帳本';
-    display:block;font-size:14px;font-weight:700;
+    content:"Joyce's Fortune Journal";
+    display:block;font-size:13px;font-weight:700;
     padding:18px 14px 14px;color:var(--text);
     letter-spacing:-.3px;
     border-bottom:1px solid var(--border);margin-bottom:6px;
@@ -444,7 +444,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 
 <div class="login-screen" id="loginScreen">
   <div class="login-logo">💰</div>
-  <div class="login-title">記帳本</div>
+  <div class="login-title">Joyce's Fortune Journal</div>
   <div class="login-sub">登入後，所有裝置都能<br>看到同一份記帳資料</div>
   <button class="google-btn" onclick="signInWithGoogle()">
     <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
@@ -980,30 +980,29 @@ const db=firebase.firestore();
 const auth=firebase.auth();
 const provider=new firebase.auth.GoogleAuthProvider();
 provider.addScope('https://www.googleapis.com/auth/gmail.readonly');
-provider.setCustomParameters({access_type:'online',prompt:'select_account'});
+// consent 確保每次登入都重新詢問 Gmail 授權，才能拿到 access_token
+provider.setCustomParameters({access_type:'offline',prompt:'consent'});
 
 let gmailAccessToken=null;
 
-// 嘗試用 getRedirectResult 或 reauthenticate 取得 token
-async function tryGetGmailToken(){
-  try{
-    // 先看 session 有沒有存
-    const cached=sessionStorage.getItem('gmailToken');
-    if(cached){gmailAccessToken=cached;return;}
-    // 用 reauthenticateWithPopup 靜默取得（如果已登入）
-    const user=auth.currentUser;
-    if(!user)return;
-    const result=await user.reauthenticateWithPopup(provider);
-    const credential=firebase.auth.GoogleAuthProvider.credentialFromResult(result);
-    if(credential?.accessToken){
-      gmailAccessToken=credential.accessToken;
-      sessionStorage.setItem('gmailToken',gmailAccessToken);
-    }
-  }catch(e){
-    // 靜默失敗，等使用者手動按同步時再提示
-    console.log('tryGetGmailToken silent fail:',e.code);
-  }
-}
+// 銀行別名對應（Gmail 偵測到的名稱 → app 帳戶名稱）
+const BANK_ALIAS={
+  '中國信託':'中信銀行',
+  '中信':'中信銀行',
+  'LINE Bank':'連線銀行',
+  'LINE BANK':'連線銀行',
+  '將來銀行':'將來銀行',
+  '國泰':'國泰世華',
+  '台新':'台新銀行',
+  '永豐':'永豐銀行',
+  '合庫':'合作金庫',
+  '一銀':'第一銀行',
+  '華南':'華南銀行',
+  '玉山':'玉山銀行',
+  '富邦':'富邦銀行',
+  '元大':'元大銀行',
+};
+function normalizeBankName(name){return BANK_ALIAS[name]||name;}
 
 window.signInWithGoogle=async()=>{
   if(typeof firebase==='undefined'){showToast('Firebase 未載入，請重新整理');return;}
@@ -1014,6 +1013,8 @@ window.signInWithGoogle=async()=>{
       gmailAccessToken=credential.accessToken;
       sessionStorage.setItem('gmailToken',gmailAccessToken);
       console.log('Gmail token 取得成功');
+    } else {
+      console.warn('登入成功但未取得 Gmail token，可能需要重新授權');
     }
   }catch(e){
     console.error('signInWithPopup error:',e);
@@ -1039,23 +1040,7 @@ let selectedFilterTags=[];  // active tag filter (empty = show all)
 let _pendingFilterTags=[];  // tags selected inside modal before confirm
 let barChart=null,doughChart=null;
 
-window.signInWithGoogle=async()=>{
-  if(typeof firebase==='undefined'){showToast('Firebase 未載入，請重新整理');console.error('Firebase not loaded');return;}
-  if(!auth){showToast('Auth 未初始化');console.error('auth not ready');return;}
-  try{
-    const result=await auth.signInWithPopup(provider);
-    // 取得 Gmail access token
-    const credential=firebase.auth.GoogleAuthProvider.credentialFromResult(result);
-    if(credential&&credential.accessToken){
-      gmailAccessToken=credential.accessToken;
-      sessionStorage.setItem('gmailToken',gmailAccessToken);
-    }
-  }catch(e){
-    console.error('signInWithPopup error:',e);
-    showToast('登入失敗：'+e.code);
-  }
-};
-window.doSignOut=async()=>{if(unsubscribe)unsubscribe();await auth.signOut();closeUserModal();document.getElementById('mainApp').style.display='none';document.getElementById('loginScreen').style.display='flex';userId=null;};
+window.doSignOut=async()=>{if(unsubscribe)unsubscribe();await auth.signOut();closeUserModal();document.getElementById('mainApp').style.display='none';document.getElementById('loginScreen').style.display='flex';userId=null;gmailAccessToken=null;sessionStorage.removeItem('gmailToken');};
 
 
 auth.onAuthStateChanged(async user=>{
@@ -1798,11 +1783,12 @@ function renderBillsStatus(){
   const appBanks=getUniqueBankNames();
   const rows=[];
   appBanks.forEach(name=>{
-    const found=d.gmailBanks.find(b=>b.bankName===name||name.includes(b.bankName)||b.bankName.includes(name));
+    const found=d.gmailBanks.find(b=>normalizeBankName(b.bankName)===name||b.bankName===name);
     rows.push({name,status:found?'ok':'missing',lastDate:found?.lastDate||null});
   });
   d.gmailBanks.forEach(b=>{
-    const inApp=appBanks.find(n=>n===b.bankName||n.includes(b.bankName)||b.bankName.includes(n));
+    const normalized=normalizeBankName(b.bankName);
+    const inApp=appBanks.find(n=>n===normalized||n===b.bankName);
     if(!inApp)rows.push({name:b.bankName,status:'not_in_app',lastDate:b.lastDate});
   });
   el.innerHTML=rows.map(r=>{
@@ -1868,17 +1854,16 @@ window.saveNewBill=function(){
 window.syncBillsFromGmail=async function(){
   if(!gmailAccessToken)gmailAccessToken=sessionStorage.getItem('gmailToken');
   if(!gmailAccessToken){
-    // 自動彈出授權視窗
     try{
       showToast('需要 Gmail 授權，請在彈出視窗中允許...');
-      const result=await auth.currentUser.reauthenticateWithPopup(provider);
+      const result=await auth.signInWithPopup(provider);
       const credential=firebase.auth.GoogleAuthProvider.credentialFromResult(result);
       if(credential?.accessToken){
         gmailAccessToken=credential.accessToken;
         sessionStorage.setItem('gmailToken',gmailAccessToken);
-      } else {showToast('無法取得 Gmail 授權');return;}
+      } else {showToast('無法取得 Gmail 授權，請重新整理後再試');return;}
     }catch(e){
-      showToast('Gmail 授權失敗：'+e.code);return;
+      showToast('Gmail 授權失敗：'+(e.code||e.message));return;
     }
   }
   const btn=document.getElementById('syncBillsBtn');
@@ -1914,14 +1899,14 @@ window.syncBillsFromGmail=async function(){
       const snippet=msg.snippet||'';
       const ts=date?new Date(date).getTime():0;
 
-      // 找銀行名稱
+      // 找銀行名稱（從寄件者 email 對應，或從主旨猜測），並套用別名正規化
       let bankName=null;
       for(const[addr,name] of Object.entries(BILL_SENDER_MAP)){
-        if(from.includes(addr.toLowerCase())){bankName=name;break;}
+        if(from.includes(addr.toLowerCase())){bankName=normalizeBankName(name);break;}
       }
       if(!bankName){
-        for(const k of ['臺灣銀行','合作金庫','中信','國泰世華','台新','永豐','LINE Bank','將來銀行','中華電信']){
-          if(subject.includes(k)){bankName=k;break;}
+        for(const k of ['臺灣銀行','合作金庫','中國信託','中信','國泰世華','台新','永豐','LINE Bank','連線銀行','將來銀行','中華電信','玉山','富邦','元大']){
+          if(subject.includes(k)){bankName=normalizeBankName(k);break;}
         }
       }
       if(!bankName)return;
@@ -1945,7 +1930,7 @@ window.syncBillsFromGmail=async function(){
       }
 
       // 解析電信帳單
-      if(bankName==='中華電信'&&(subject.includes('費用')&&!subject.includes('繳費結果'))){
+      if(bankName==='中華電信'&&subject.includes('費用')&&!subject.includes('繳費結果')){
         const dueMatch=snippet.match(/繳費截止[：:日 　]*(\d{2,4}[\/\-]\d{1,2}[\/\-]\d{1,2})/);
         let dueDate=null;
         if(dueMatch){

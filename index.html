@@ -980,9 +980,46 @@ const db=firebase.firestore();
 const auth=firebase.auth();
 const provider=new firebase.auth.GoogleAuthProvider();
 provider.addScope('https://www.googleapis.com/auth/gmail.readonly');
-provider.setCustomParameters({access_type:'offline',prompt:'consent'});
+provider.setCustomParameters({access_type:'online',prompt:'select_account'});
 
-let gmailAccessToken=null; // 儲存 Gmail access token
+let gmailAccessToken=null;
+
+// 嘗試用 getRedirectResult 或 reauthenticate 取得 token
+async function tryGetGmailToken(){
+  try{
+    // 先看 session 有沒有存
+    const cached=sessionStorage.getItem('gmailToken');
+    if(cached){gmailAccessToken=cached;return;}
+    // 用 reauthenticateWithPopup 靜默取得（如果已登入）
+    const user=auth.currentUser;
+    if(!user)return;
+    const result=await user.reauthenticateWithPopup(provider);
+    const credential=firebase.auth.GoogleAuthProvider.credentialFromResult(result);
+    if(credential?.accessToken){
+      gmailAccessToken=credential.accessToken;
+      sessionStorage.setItem('gmailToken',gmailAccessToken);
+    }
+  }catch(e){
+    // 靜默失敗，等使用者手動按同步時再提示
+    console.log('tryGetGmailToken silent fail:',e.code);
+  }
+}
+
+window.signInWithGoogle=async()=>{
+  if(typeof firebase==='undefined'){showToast('Firebase 未載入，請重新整理');return;}
+  try{
+    const result=await auth.signInWithPopup(provider);
+    const credential=firebase.auth.GoogleAuthProvider.credentialFromResult(result);
+    if(credential?.accessToken){
+      gmailAccessToken=credential.accessToken;
+      sessionStorage.setItem('gmailToken',gmailAccessToken);
+      console.log('Gmail token 取得成功');
+    }
+  }catch(e){
+    console.error('signInWithPopup error:',e);
+    showToast('登入失敗：'+e.code);
+  }
+};
 
 const ACC_KIND_META={
   asset_bank:{label:'台幣活存',group:'asset',color:'#2ecc8e'},
@@ -1830,7 +1867,20 @@ window.saveNewBill=function(){
 // Gmail 同步
 window.syncBillsFromGmail=async function(){
   if(!gmailAccessToken)gmailAccessToken=sessionStorage.getItem('gmailToken');
-  if(!gmailAccessToken){showToast('請重新登入以授權 Gmail 存取');return;}
+  if(!gmailAccessToken){
+    // 自動彈出授權視窗
+    try{
+      showToast('需要 Gmail 授權，請在彈出視窗中允許...');
+      const result=await auth.currentUser.reauthenticateWithPopup(provider);
+      const credential=firebase.auth.GoogleAuthProvider.credentialFromResult(result);
+      if(credential?.accessToken){
+        gmailAccessToken=credential.accessToken;
+        sessionStorage.setItem('gmailToken',gmailAccessToken);
+      } else {showToast('無法取得 Gmail 授權');return;}
+    }catch(e){
+      showToast('Gmail 授權失敗：'+e.code);return;
+    }
+  }
   const btn=document.getElementById('syncBillsBtn');
   if(btn){btn.textContent='⏳';btn.disabled=true;}
   try{
@@ -1932,251 +1982,6 @@ window.syncBillsFromGmail=async function(){
 // 頁面載入時還原 token
 gmailAccessToken=sessionStorage.getItem('gmailToken');
 
-
-  '臺灣銀行':     ['bot_dpserve1@mail.bot.com.tw','bot26702@mail.bot.com.tw'],
-  '合作金庫':     ['TCBBANK@tcb-bank.com.tw'],
-  '中信銀行':     ['ebill@estats.ctbcbank.com'],
-  '國泰世華':     ['service@pxbillrc01.cathaybk.com.tw'],
-  '台新銀行':     ['webmaster@bhurecv.taishinbank.com.tw','TSB@mhurcv.taishinbank.com.tw'],
-  '永豐銀行':     ['ebillservice@newebill.banksinopac.com.tw'],
-  'LINE Bank':    ['ebillservice@myestatement.linebank.com.tw'],
-  '將來銀行':     ['no_reply@eblsdr.nextbank.com.tw'],
-};
-
-// PDF 密碼規則說明（顯示用）
-const BILL_PWD_HINTS = {
-  '臺灣銀行':  '身分證字號（英文大寫）',
-  '合作金庫':  '身分證字號（英文大寫）',
-  '中信銀行':  '身分證字號（英文大寫）',
-  '國泰世華':  '身分證字號（英文大寫）',
-  '台新銀行':  '身分證後2碼＋生日月日（共6碼）',
-  '永豐銀行':  '身分證字號（英文大寫）',
-  'LINE Bank': '無密碼（互動式帳單）',
-  '將來銀行':  '身分證字號（英文大寫）',
-};
-
-function getBillsState(){return state.billsData||(state.billsData={lastSync:null,gmailBanks:[],ccBills:[]});}
-
-function renderBillsPage(){
-  const d=getBillsState();
-  // 同步狀態文字
-  const syncEl=document.getElementById('billsLastSync');
-  if(syncEl)syncEl.textContent=d.lastSync?`上次同步：${new Date(d.lastSync).toLocaleString('zh-TW')}`:'尚未同步';
-  renderBillsStatus();
-  renderCcBills();
-}
-
-function renderBillsStatus(){
-  const d=getBillsState();
-  const el=document.getElementById('billsStatusList');
-  if(!el)return;
-  if(!d.lastSync){
-    el.innerHTML='<div class="alloc-empty">點「同步 Gmail」掃描你的帳單信件</div>';
-    return;
-  }
-
-  // 你 app 裡的銀行帳戶
-  const appBanks=getUniqueBankNames();
-  // Gmail 有收到的銀行
-  const gmailBanks=d.gmailBanks.map(b=>b.bankName);
-
-  const rows=[];
-
-  // ✅ app 有、Gmail 也有
-  appBanks.forEach(name=>{
-    const found=d.gmailBanks.find(b=>b.bankName===name||name.includes(b.bankName)||b.bankName.includes(name));
-    const status=found?'ok':'missing';
-    rows.push({name,status,lastDate:found?.lastDate||null,subject:found?.lastSubject||''});
-  });
-
-  // 📬 Gmail 有、app 沒設定
-  d.gmailBanks.forEach(b=>{
-    const inApp=appBanks.find(n=>n===b.bankName||n.includes(b.bankName)||b.bankName.includes(n));
-    if(!inApp)rows.push({name:b.bankName,status:'not_in_app',lastDate:b.lastDate,subject:b.lastSubject});
-  });
-
-  el.innerHTML=rows.map(r=>{
-    const icon=r.status==='ok'?'✅':r.status==='missing'?'⚠️':'📬';
-    const desc=r.status==='ok'
-      ?`最近帳單：${r.lastDate?new Date(r.lastDate).toLocaleDateString('zh-TW'):'-'}`
-      :r.status==='missing'?'未收到帳單，請確認是否有申請電子帳單'
-      :'Gmail 有收到帳單，但 app 尚未設定此帳戶';
-    const pwdHint=BILL_PWD_HINTS[r.name]?`<div style="font-size:10px;color:var(--text3);margin-top:2px">PDF密碼：${BILL_PWD_HINTS[r.name]}</div>`:'';
-    return`<div class="alloc-item">
-      <div style="font-size:20px;flex-shrink:0">${icon}</div>
-      <div class="alloc-info">
-        <div class="alloc-bank">${r.name}</div>
-        <div class="alloc-acc">${desc}</div>
-        ${pwdHint}
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function renderCcBills(){
-  const d=getBillsState();
-  const el=document.getElementById('ccBillsList');
-  if(!el)return;
-  if(!d.ccBills||!d.ccBills.length){
-    el.innerHTML='<div class="alloc-empty" style="padding:20px">同步後將顯示信用卡帳單資訊</div>';
-    return;
-  }
-  const now=Date.now();
-  el.innerHTML=d.ccBills.map(b=>{
-    const dueTs=b.dueDate?new Date(b.dueDate).getTime():null;
-    const daysLeft=dueTs?Math.ceil((dueTs-now)/86400000):null;
-    let urgency='';
-    if(daysLeft!==null){
-      if(daysLeft<0)urgency='<span style="color:var(--red);font-size:11px">已逾期</span>';
-      else if(daysLeft<=3)urgency=`<span style="color:var(--red);font-size:11px">⚠ 還有 ${daysLeft} 天到期</span>`;
-      else if(daysLeft<=7)urgency=`<span style="color:var(--accent);font-size:11px">還有 ${daysLeft} 天到期</span>`;
-      else urgency=`<span style="color:var(--text3);font-size:11px">還有 ${daysLeft} 天</span>`;
-    }
-    const autoDebit=b.autoDebit?`<span style="font-size:10px;color:var(--green);background:rgba(46,204,142,0.1);padding:1px 6px;border-radius:4px">自動扣款</span>`:'';
-    return`<div class="rate-bank-card" style="margin:0 16px 10px">
-      <div style="padding:14px 18px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-          <div style="font-size:15px;font-weight:600">${b.bankName} 信用卡</div>
-          <div style="font-size:16px;font-weight:700;color:var(--blue)">${b.amount?'NT$ '+Number(b.amount).toLocaleString():'—'}</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-          ${b.dueDate?`<span style="font-size:12px;color:var(--text2)">繳款截止：${new Date(b.dueDate).toLocaleDateString('zh-TW')}</span>`:''}
-          ${urgency}
-          ${autoDebit}
-        </div>
-        ${b.subject?`<div style="font-size:11px;color:var(--text3);margin-top:4px">${b.subject}</div>`:''}
-      </div>
-    </div>`;
-  }).join('');
-}
-
-// 同步 Gmail — 真正呼叫 Gmail API
-window.syncBillsFromGmail=async function(){
-  // 取得 token（session storage 或重新登入）
-  if(!gmailAccessToken)gmailAccessToken=sessionStorage.getItem('gmailToken');
-  if(!gmailAccessToken){
-    showToast('請重新登入以授權 Gmail 存取');
-    return;
-  }
-  const btn=document.getElementById('syncBillsBtn');
-  if(btn){btn.textContent='⏳';btn.disabled=true;}
-  try{
-    // 搜尋帳單信件（最近 90 天）
-    const q=encodeURIComponent('subject:(對帳單 OR 帳單 OR 信用卡 OR statement OR e-statement) newer_than:90d');
-    const listRes=await fetch(
-      `https://www.googleapis.com/gmail/v1/users/me/messages?q=${q}&maxResults=50`,
-      {headers:{Authorization:`Bearer ${gmailAccessToken}`}}
-    );
-    if(listRes.status===401){
-      gmailAccessToken=null;sessionStorage.removeItem('gmailToken');
-      showToast('Gmail 授權已過期，請重新登入');
-      if(btn){btn.textContent='🔄';btn.disabled=false;}
-      return;
-    }
-    const listData=await listRes.json();
-    const messages=listData.messages||[];
-
-    // 批次取得每封信的摘要（subject + snippet + sender + date）
-    const details=await Promise.all(
-      messages.slice(0,40).map(m=>
-        fetch(`https://www.googleapis.com/gmail/v1/users/me/messages/${m.id}?format=metadata&metadataHeaders=Subject&metadataHeaders=From&metadataHeaders=Date`,
-          {headers:{Authorization:`Bearer ${gmailAccessToken}`}}
-        ).then(r=>r.json())
-      )
-    );
-
-    // 解析郵件資料
-    const bankMap={}; // bankName -> {lastDate, lastSubject}
-    const ccBillMap={}; // bankName -> {amount, dueDate, autoDebit, subject}
-
-    // 已知帳單寄件者對應銀行
-    const senderMap={
-      'bot_dpserve1@mail.bot.com.tw':'臺灣銀行',
-      'bot26702@mail.bot.com.tw':'臺灣銀行',
-      'TCBBANK@tcb-bank.com.tw':'合作金庫',
-      'ebill@estats.ctbcbank.com':'中信銀行',
-      'service@pxbillrc01.cathaybk.com.tw':'國泰世華',
-      'webmaster@bhurecv.taishinbank.com.tw':'台新銀行',
-      'TSB@mhurcv.taishinbank.com.tw':'台新銀行',
-      'ebillservice@newebill.banksinopac.com.tw':'永豐銀行',
-      'NotifyService@sinopac.com':'永豐銀行',
-      'ebillservice@myestatement.linebank.com.tw':'LINE Bank',
-      'no_reply@eblsdr.nextbank.com.tw':'將來銀行',
-      'service@news.mybank.com.tw':'中國信託',
-    };
-
-    details.forEach(msg=>{
-      if(!msg.payload)return;
-      const headers=msg.payload.headers||[];
-      const subject=(headers.find(h=>h.name==='Subject')?.value||'').trim();
-      const from=(headers.find(h=>h.name==='From')?.value||'').toLowerCase();
-      const date=headers.find(h=>h.name==='Date')?.value;
-      const snippet=msg.snippet||'';
-      const ts=date?new Date(date).getTime():0;
-
-      // 找出銀行名稱
-      let bankName=null;
-      for(const[addr,name] of Object.entries(senderMap)){
-        if(from.includes(addr.toLowerCase())){bankName=name;break;}
-      }
-      // 若 senderMap 找不到，從 subject 猜測
-      if(!bankName){
-        const bankKeywords=['臺灣銀行','合作金庫','中信','國泰世華','台新','永豐','LINE Bank','將來銀行','玉山','富邦','元大'];
-        for(const k of bankKeywords){
-          if(subject.includes(k)||snippet.includes(k)){bankName=k;break;}
-        }
-      }
-      if(!bankName)return;
-
-      // 更新綜合對帳單記錄
-      if(!bankMap[bankName]||ts>new Date(bankMap[bankName].lastDate).getTime()){
-        bankMap[bankName]={lastDate:new Date(ts).toISOString().slice(0,10),lastSubject:subject};
-      }
-
-      // 解析信用卡帳單資訊
-      if(subject.includes('信用卡')&&(subject.includes('帳單')||subject.includes('對帳單'))){
-        // 解析金額
-        const amtMatch=snippet.match(/應繳總金額[　 ]*([0-9,]+)/);
-        const amount=amtMatch?parseInt(amtMatch[1].replace(/,/g,'')):null;
-        // 解析截止日
-        const dueMatch=snippet.match(/繳款截止日[　 ]*(\d{2,4}[\/\-]\d{1,2}[\/\-]\d{1,2})/);
-        let dueDate=null;
-        if(dueMatch){
-          // 民國年轉西元
-          const parts=dueMatch[1].split(/[\/\-]/);
-          if(parts[0].length<=3){
-            dueDate=`${parseInt(parts[0])+1911}-${parts[1].padStart(2,'0')}-${parts[2].padStart(2,'0')}`;
-          } else dueDate=dueMatch[1];
-        }
-        // 自動扣款
-        const autoDebit=snippet.includes('自動扣款')||snippet.includes('自扣')||snippet.includes('自動扣繳');
-        if(!ccBillMap[bankName]||ts>new Date(ccBillMap[bankName]._ts||0).getTime()){
-          ccBillMap[bankName]={bankName,amount,dueDate,autoDebit,subject,_ts:ts};
-        }
-      }
-    });
-
-    const gmailBanks=Object.entries(bankMap).map(([bankName,v])=>({bankName,...v}));
-    const ccBills=Object.values(ccBillMap)
-      .sort((a,b)=>(a.dueDate||'9999')>(b.dueDate||'9999')?1:-1);
-
-    const d=getBillsState();
-    d.lastSync=Date.now();
-    d.gmailBanks=gmailBanks;
-    d.ccBills=ccBills;
-    state._localUpdateAt=Date.now();scheduleSave();
-    renderBillsPage();
-    showToast(`同步完成，找到 ${gmailBanks.length} 家銀行帳單 ✓`);
-  }catch(e){
-    console.error('Gmail sync error:',e);
-    showToast('同步失敗：'+e.message);
-  }finally{
-    if(btn){btn.textContent='🔄';btn.disabled=false;}
-  }
-};
-
-// 頁面載入時從 sessionStorage 還原 token
-gmailAccessToken=sessionStorage.getItem('gmailToken');
 
 // ══════════════════════════════════════════════
 // Interest Rate & Allocation System

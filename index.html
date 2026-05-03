@@ -21,7 +21,7 @@
   --green:#10b981;--green-dim:rgba(16,185,129,0.1);
   --red:#ef4444;--red-dim:rgba(239,68,68,0.1);
   --blue:#3b82f6;--blue-dim:rgba(59,130,246,0.1);
-  --accent:var(--orange);
+  --accent:var(--orange);--accent-dim:var(--orange-dim);
   --radius:10px;--radius-sm:7px;--radius-xs:4px;
   --font:'DM Sans','Noto Sans TC',sans-serif;
   --font-mono:'DM Mono',monospace;
@@ -332,9 +332,28 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   .bottom-nav::before{display:none}
 }
 
+/* ── Settings aliases (match HTML class names) ── */
+.settings-icon{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.settings-row-title{font-size:13px;font-weight:500}
+.settings-chevron{color:var(--text3);font-size:16px;margin-left:4px}
+.tag-list{display:flex;flex-wrap:wrap;gap:6px;padding:14px 16px 10px}
+.tag-item{display:inline-flex;align-items:center;gap:5px;padding:5px 8px 5px 11px;background:var(--bg3);border:1px solid var(--border2);border-radius:20px;font-size:12px;font-weight:500;color:var(--text2)}
+.tag-del{background:none;border:none;color:var(--text3);cursor:pointer;font-size:12px;padding:0 2px;line-height:1;display:flex;align-items:center;transition:color .12s}
+.tag-del:hover{color:var(--red)}
+.add-tag-row{display:flex;gap:8px;padding:0 16px 14px;align-items:center}
+.add-tag-input{flex:1;padding:8px 12px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-size:13px;font-family:var(--font);outline:none;transition:border-color .15s}
+.add-tag-input:focus{border-color:var(--orange)}
+.add-tag-input::placeholder{color:var(--text4)}
+.add-tag-btn{padding:8px 14px;background:var(--orange);border:none;border-radius:var(--radius-sm);color:#fff;font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;flex-shrink:0;transition:opacity .15s}
+.add-tag-btn:active{opacity:.82}
+
 /* ── Empty state ── */
 .empty-state{text-align:center;color:var(--text3);font-size:12px;padding:40px 20px;line-height:1.7}
 .empty-icon{font-size:32px;margin-bottom:12px}
+
+/* ── Filter tag chips (in filter modal) ── */
+.filter-tag-chip{padding:6px 12px;border-radius:20px;background:var(--bg3);border:1px solid var(--border2);color:var(--text2);font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;font-family:var(--font)}
+.filter-tag-chip.selected{background:var(--orange-dim);border-color:var(--orange-line);color:var(--orange)}
 @keyframes slideInRight{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:translateX(0)}}
 @keyframes slideInLeft{from{opacity:0;transform:translateX(-24px)}to{opacity:1;transform:translateX(0)}}
 .slide-in-right{animation:slideInRight .2s cubic-bezier(.25,.46,.45,.94) both}

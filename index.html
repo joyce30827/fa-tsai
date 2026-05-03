@@ -51,13 +51,14 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .login-illus-bar{border-radius:4px 4px 0 0;flex:1;background:var(--bg4)}
 .login-illus-bar.active{background:linear-gradient(180deg,var(--orange) 0%,var(--orange2) 100%)}
 .login-illus-badge{position:absolute;top:-14px;right:-14px;background:var(--orange);border-radius:12px;padding:6px 10px;font-size:11px;font-weight:700;color:#fff;box-shadow:var(--shadow-orange);white-space:nowrap}
-.login-sheet{background:var(--bg2);border-radius:28px 28px 0 0;border:1px solid var(--border2);border-bottom:none;padding:32px 28px calc(env(safe-area-inset-bottom,0px) + 36px);width:100%;max-width:480px;box-shadow:0 -8px 40px rgba(0,0,0,0.5);position:relative;z-index:2}
-.login-eyebrow{font-size:10px;font-weight:700;color:var(--orange);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px}
-.login-title{font-size:32px;font-weight:700;letter-spacing:1px;line-height:1.2;margin-bottom:32px;text-transform:uppercase}
+.login-sheet{background:var(--bg2);border-radius:28px 28px 0 0;border:1px solid var(--border2);border-bottom:none;padding:32px 28px calc(env(safe-area-inset-bottom,0px) + 36px);width:100%;max-width:480px;box-shadow:0 -8px 40px rgba(0,0,0,0.5);position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;}
+.login-eyebrow{font-size:10px;font-weight:700;color:var(--orange);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;text-align:center}
+.login-title{font-size:32px;font-weight:700;letter-spacing:1px;line-height:1.2;margin-bottom:32px;text-transform:uppercase;text-align:center}
 .login-title span{color:var(--orange)}
-.google-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:13px 24px;background:transparent;color:var(--orange);border:1.5px solid var(--orange);border-radius:100px;font-size:13px;font-weight:700;font-family:var(--font);cursor:pointer;transition:all .2s;letter-spacing:.1px}
+.google-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:13px 24px;border:2px solid #f97316;border-radius:40px;background:transparent;margin:20px auto;color:#f97316;font-size:13px;font-weight:700;font-family:var(--font);cursor:pointer;transition:all .2s;letter-spacing:.1px}
 .google-btn:hover{background:var(--orange);color:#fff}
 .google-btn:active{opacity:.85}
+.login-legal{font-size:10px;color:var(--text4);text-align:center;line-height:1.7;margin-top:4px}
 .login-divider{display:flex;align-items:center;gap:12px;margin:20px 0;color:var(--text4);font-size:11px}
 .login-divider::before,.login-divider::after{content:'';flex:1;height:1px;background:var(--border)}
 .login-legal{font-size:10px;color:var(--text4);text-align:center;line-height:1.7;margin-top:16px}

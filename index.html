@@ -184,8 +184,21 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .tx-empty{text-align:center;color:var(--text3);padding:60px 20px;font-size:13px}
 .tx-empty-icon{font-size:36px;margin-bottom:12px}
 
-/* ── Account cards ── */
-.acc-group-header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px 4px;margin-top:4px}
+/* ── Account page bank group ── */
+.acc-bank-group{background:var(--bg2);border-radius:var(--radius);border:1px solid var(--border);margin:0 16px 8px;overflow:hidden;box-shadow:var(--shadow-card)}
+.acc-bank-group-header{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--bg3)}
+.acc-bank-group-icon{font-size:16px;width:20px;text-align:center;flex-shrink:0}
+.acc-bank-group-name{font-size:13px;font-weight:700;flex:1;letter-spacing:-.2px}
+.acc-bank-group-total{font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;flex-shrink:0}
+.acc-sub-row{display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s}
+.acc-sub-row:last-child{border-bottom:none}
+.acc-sub-row:hover{background:var(--bg3)}
+.acc-sub-row:active{background:var(--bg4)}
+.acc-sub-icon{width:32px;height:32px;border-radius:8px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.acc-sub-info{flex:1;min-width:0}
+.acc-sub-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.acc-sub-updated{font-size:10px;color:var(--text3);margin-top:2px}
+.acc-sub-balance{font-size:14px;font-weight:700;font-variant-numeric:tabular-nums;flex-shrink:0;text-align:right}
 .acc-group-label{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:1px}
 .acc-group-total{font-size:11px;font-weight:600;color:var(--text2);font-variant-numeric:tabular-nums}
 .acc-card{display:flex;align-items:center;padding:13px 16px;margin:0 16px 6px;background:var(--bg2);border-radius:var(--radius);border:1px solid var(--border);gap:12px;cursor:pointer;transition:all .15s;box-shadow:var(--shadow-card)}
@@ -475,6 +488,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   /* Content spacing */
   .page-header{padding:28px 28px 12px;background:rgba(10,10,11,0.88)}
   .page-title{font-size:19px}
+  .acc-bank-group{margin:0 24px 8px}
   .card{margin:0 24px 8px}
   .net-worth-card{margin:10px 24px}
   .rate-bank-group{margin:0 24px 10px}
@@ -504,6 +518,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   .bottom-nav{width:224px;min-width:224px}
   .detail-screen{left:224px}
   .page-header{padding:32px 32px 12px}
+  .acc-bank-group{margin:0 28px 8px}
   .card{margin:0 28px 8px}
   .net-worth-card{margin:12px 28px}
   .rate-bank-group{margin:0 28px 10px}
@@ -1283,8 +1298,10 @@ select.form-input{appearance:none;cursor:pointer}
 <div class="modal-overlay" id="accModal" onclick="closeAccModal(event)">
   <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-handle"></div>
-    <div class="modal-title">新增帳戶</div>
-    <div class="form-group"><label class="form-label">帳戶名稱</label><input class="form-input" id="accName" placeholder="e.g. 玉山活存"></div>
+    <div class="modal-header-row">
+      <div class="modal-title">新增帳戶</div>
+      <button class="modal-close-btn" onclick="closeAccModal()">✕</button>
+    </div>
     <div class="form-group">
       <label class="form-label">帳戶類型</label>
       <select class="form-input" id="accKind" onchange="updateAccGroup()">
@@ -1295,7 +1312,18 @@ select.form-input{appearance:none;cursor:pointer}
         <option value="debt_loan">貸款</option>
       </select>
     </div>
-    <div class="form-group"><label class="form-label" id="accBalLabel">初始餘額 (NT$)</label><input class="form-input" type="number" id="accBal" placeholder="0"></div>
+    <div class="form-group">
+      <label class="form-label">銀行名稱</label>
+      <input class="form-input" id="accName" placeholder="例：玉山銀行、將來銀行">
+    </div>
+    <div class="form-group" id="accSubNameGroup">
+      <label class="form-label">子帳戶名稱（選填）</label>
+      <input class="form-input" id="accSubName" placeholder="例：活期存款、夢想帳戶、五萬塊">
+    </div>
+    <div class="form-group">
+      <label class="form-label" id="accBalLabel">初始餘額 (NT$)</label>
+      <input class="form-input" type="number" id="accBal" placeholder="0">
+    </div>
     <button class="submit-btn" onclick="addAccount()">新增帳戶</button>
   </div>
 </div>
@@ -1676,23 +1704,93 @@ function renderCharts(){
 
 // Accounts
 function renderAccounts(){
-  function accHTML(a){const meta=ACC_KIND_META[a.kind]||{};const isDebt=meta.group==='debt';const updated=a.updatedAt?new Date(a.updatedAt).toLocaleDateString('zh-TW'):'—';return`<div class="acc-card" onclick="openDetail('${a.id}')"><div class="acc-top"><div class="acc-name">${a.name}</div><div class="acc-badge" style="border-color:${meta.color||'#555'};color:${meta.color||'#888'}">${meta.label||''}</div></div><div class="acc-balance" style="color:${isDebt?'var(--red)':'var(--green)'}">${isDebt&&a.balance!==0?'- ':''}NT$ ${Math.abs(a.balance).toLocaleString()}</div><div class="acc-updated">最後更新：${updated}</div></div>`;}
-
-  const subGroups=[
-    {kinds:['asset_bank','asset_foreign'],label:'台幣活存 / 外幣存款',emptyIcon:'🏦'},
-    {kinds:['asset_epay'],label:'電子票證',emptyIcon:'🪙'},
-    {kinds:['debt_cc'],label:'信用卡',emptyIcon:'💳'},
-    {kinds:['debt_loan'],label:'貸款',emptyIcon:'📋'},
-  ];
-  let html='';
-  subGroups.forEach(g=>{
-    const items=state.accounts.filter(a=>g.kinds.includes(a.kind));
-    if(!items.length)return;
-    html+=`<div class="group-label">${g.label}</div>`+items.map(accHTML).join('');
-  });
-  if(!html)html='<div class="group-label">資產</div><div class="empty-state"><div class="empty-icon">🏦</div>尚未新增帳戶<br>點右上角 ＋ 新增</div>';
-  document.getElementById('accGroupAssets').innerHTML=html;
+  const el=document.getElementById('accGroupAssets');
   document.getElementById('accGroupDebts').innerHTML='';
+
+  if(!state.accounts.length){
+    el.innerHTML='<div class="empty-state"><div class="empty-icon">🏦</div>尚未新增帳戶<br>點右上角 ＋ 新增</div>';
+    return;
+  }
+
+  // ── 銀行帳戶：按銀行名稱分組 ──
+  const bankAccs=state.accounts.filter(a=>a.kind==='asset_bank');
+  const otherAccs=state.accounts.filter(a=>a.kind!=='asset_bank');
+
+  let html='';
+
+  // 銀行分組
+  if(bankAccs.length){
+    // 找出不重複的銀行名稱（按第一次出現順序）
+    const bankNames=[...new Set(bankAccs.map(a=>a.name))];
+    html+=`<div class="group-label">銀行</div>`;
+    bankNames.forEach(bankName=>{
+      const accs=bankAccs.filter(a=>a.name===bankName);
+      const totalBal=accs.reduce((s,a)=>s+a.balance,0);
+      const isAllDebt=totalBal<0;
+      html+=`<div class="acc-bank-group">
+        <div class="acc-bank-group-header">
+          <div class="acc-bank-group-icon">${getBankIcon(bankName)}</div>
+          <div class="acc-bank-group-name">${bankName}</div>
+          <div class="acc-bank-group-total" style="color:${isAllDebt?'var(--red)':'var(--text2)'}">${isAllDebt?'- ':''}NT$ ${Math.abs(totalBal).toLocaleString()}</div>
+        </div>
+        ${accs.map(a=>{
+          const isDebt=a.balance<0;
+          const updated=a.updatedAt?new Date(a.updatedAt).toLocaleDateString('zh-TW'):'—';
+          const meta=ACC_KIND_META[a.kind]||{};
+          return`<div class="acc-sub-row" onclick="openDetail('${a.id}')">
+            <div class="acc-sub-icon">${meta.icon||'🏦'}</div>
+            <div class="acc-sub-info">
+              <div class="acc-sub-name">${a.subName||'活期存款'}</div>
+              <div class="acc-sub-updated">${updated}</div>
+            </div>
+            <div class="acc-sub-balance" style="color:${isDebt?'var(--red)':a.balance>0?'var(--green)':'var(--text3)'}">
+              ${isDebt?'- ':''}NT$ ${Math.abs(a.balance).toLocaleString()}
+            </div>
+          </div>`;
+        }).join('')}
+      </div>`;
+    });
+  }
+
+  // 其他資產（電子票證、外幣等）
+  const otherAssets=otherAccs.filter(a=>ACC_KIND_META[a.kind]?.group==='asset');
+  if(otherAssets.length){
+    html+=`<div class="group-label">其他資產</div>`;
+    otherAssets.forEach(a=>{
+      const meta=ACC_KIND_META[a.kind]||{};
+      const updated=a.updatedAt?new Date(a.updatedAt).toLocaleDateString('zh-TW'):'—';
+      html+=`<div class="acc-card" onclick="openDetail('${a.id}')">
+        <div class="acc-top"><div class="acc-name">${a.name}</div><div class="acc-badge" style="border-color:${meta.color||'#555'};color:${meta.color||'#888'}">${meta.label||''}</div></div>
+        <div class="acc-balance" style="color:var(--green)">NT$ ${a.balance.toLocaleString()}</div>
+        <div class="acc-updated">最後更新：${updated}</div>
+      </div>`;
+    });
+  }
+
+  // 負債
+  const debts=otherAccs.filter(a=>ACC_KIND_META[a.kind]?.group==='debt');
+  if(debts.length){
+    html+=`<div class="group-label">負債</div>`;
+    debts.forEach(a=>{
+      const meta=ACC_KIND_META[a.kind]||{};
+      const updated=a.updatedAt?new Date(a.updatedAt).toLocaleDateString('zh-TW'):'—';
+      html+=`<div class="acc-card" onclick="openDetail('${a.id}')">
+        <div class="acc-top"><div class="acc-name">${a.name}</div><div class="acc-badge" style="border-color:${meta.color||'#555'};color:${meta.color||'#888'}">${meta.label||''}</div></div>
+        <div class="acc-balance" style="color:var(--red)">- NT$ ${Math.abs(a.balance).toLocaleString()}</div>
+        <div class="acc-updated">最後更新：${updated}</div>
+      </div>`;
+    });
+  }
+
+  if(!html)html='<div class="empty-state"><div class="empty-icon">🏦</div>尚未新增帳戶<br>點右上角 ＋ 新增</div>';
+  el.innerHTML=html;
+}
+
+// 銀行 icon 對應（簡單 fallback）
+function getBankIcon(name){
+  const map={'玉山':'🟡','國泰':'🔵','台新':'🔴','永豐':'🟤','中信':'🔵','將來':'⚫','LINE':'🟢','合作金庫':'🟠','臺灣銀行':'🔵','台灣銀行':'🔵','元大':'🔴','富邦':'🟣','星展':'🔴','凱基':'🟠'};
+  for(const[k,v] of Object.entries(map)){if(name.includes(k))return v;}
+  return '🏦';
 }
 window.openDetail=function(id){
   detailAccId=id;const a=accById(id);if(!a)return;
@@ -2145,21 +2243,33 @@ window.addTransaction=function(){
 window.deleteTx=function(id){const t=state.transactions.find(x=>x.id===id);if(!t)return;const acc=accById(t.accountId);if(acc){acc.balance+=t.type==='income'?-t.amount:t.amount;acc.updatedAt=Date.now();}state.transactions=state.transactions.filter(x=>x.id!==id);state._localUpdateAt=Date.now();scheduleSave();renderAll();if(detailAccId)openDetail(detailAccId);};
 
 // Account modal
-window.openAccModal=function(){document.getElementById('accName').value='';document.getElementById('accBal').value='';document.getElementById('accModal').classList.add('open');updateAccGroup();};
+window.openAccModal=function(){
+  document.getElementById('accName').value='';
+  document.getElementById('accBal').value='';
+  if(document.getElementById('accSubName'))document.getElementById('accSubName').value='';
+  document.getElementById('accModal').classList.add('open');
+  updateAccGroup();
+};
 window.closeAccModal=function(e){if(!e||e.target===document.getElementById('accModal'))document.getElementById('accModal').classList.remove('open');};
-window.updateAccGroup=function(){const kind=document.getElementById('accKind').value;document.getElementById('accBalLabel').textContent=ACC_KIND_META[kind]?.group==='debt'?'目前欠款 (NT$)':'初始餘額 (NT$)';};
+window.updateAccGroup=function(){
+  const kind=document.getElementById('accKind').value;
+  document.getElementById('accBalLabel').textContent=ACC_KIND_META[kind]?.group==='debt'?'目前欠款 (NT$)':'初始餘額 (NT$)';
+  const sub=document.getElementById('accSubNameGroup');
+  if(sub)sub.style.display=kind==='asset_bank'?'block':'none';
+};
 window.addAccount=function(){
   const name=document.getElementById('accName').value.trim();
   if(!name)return;
   const kind=document.getElementById('accKind').value;
   const isDebt=ACC_KIND_META[kind]?.group==='debt';
   const raw=parseFloat(document.getElementById('accBal').value)||0;
-  state.accounts.push({id:'a'+Date.now(),name,kind,balance:isDebt?-Math.abs(raw):raw,updatedAt:Date.now()});
+  const subName=document.getElementById('accSubName')?.value.trim()||'';
+  state.accounts.push({id:'a'+Date.now(),name,subName,kind,balance:isDebt?-Math.abs(raw):raw,updatedAt:Date.now()});
   // 只有銀行帳戶才同步到利率頁
   if(kind==='asset_bank'){
     const banks=getBankRates();
     if(!banks.find(b=>b.name===name)){
-      banks.push({id:'b'+Date.now(),name,icon:'🏦',tiers:[],rateUpdatedAt:null,source:''});
+      banks.push({id:'b'+Date.now(),name,accounts:[]});
     }
   }
   document.getElementById('accModal').classList.remove('open');

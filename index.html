@@ -2704,12 +2704,37 @@ function renderRateBankList(){
 
 // ── Sync from accounts page ──
 function syncBanksFromAccounts(){
+  // 先做舊格式遷移：把 tiers 格式轉成 accounts 格式
+  migrateBankRates();
   const banks=getBankRates();
   state.accounts.filter(a=>a.kind==='asset_bank').forEach(acc=>{
     const name=acc.name.trim();
     if(!banks.find(b=>b.name===name)){
       banks.push({id:'b'+Date.now()+Math.random(),name,accounts:[]});
     }
+  });
+}
+
+// 遷移舊版 bankRates（tiers 格式）→ 新版（accounts 格式）
+function migrateBankRates(){
+  const banks=getBankRates();
+  banks.forEach((bank,i)=>{
+    // 舊格式：有 tiers 陣列，沒有 accounts 陣列
+    if(bank.tiers&&!bank.accounts){
+      bank.accounts=bank.tiers.map((t,ti)=>({
+        id:'migrated_'+i+'_'+ti,
+        name:t.upTo?`上限 ${Number(t.upTo).toLocaleString()} 元`:'一般帳戶',
+        rate:parseFloat(t.rate)||0,
+        rangeMin:'',
+        rangeMax:t.upTo||'',
+        expiry:bank.fetchedDate||'',
+        linkedAccId:'',
+        rateUpdatedAt:bank.rateUpdatedAt||null
+      }));
+      delete bank.tiers;
+    }
+    // 確保 accounts 存在
+    if(!bank.accounts)bank.accounts=[];
   });
 }
 

@@ -1186,11 +1186,15 @@ select.form-input{appearance:none;cursor:pointer}
         <div class="page-header-row">
           <div class="page-title">活存利率</div>
           <div class="header-actions">
+            <button class="icon-btn" onclick="showRateDiag()" title="診斷">🔍</button>
             <button class="icon-btn" onclick="openJsonImportModal()" title="JSON匯入">📋</button>
             <button class="icon-btn" onclick="openAddBankModal()" title="新增銀行">＋</button>
           </div>
         </div>
       </div>
+
+      <!-- 診斷區 -->
+      <div id="rateDiagBox" style="display:none;margin:0 16px 10px;padding:12px 14px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);font-size:11px;color:var(--text2);line-height:1.8;font-family:var(--font-mono)"></div>
 
       <!-- 到期提醒 -->
       <div id="rateAlertBar" style="display:none;margin:0 16px 10px;padding:10px 14px;background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.25);border-radius:var(--radius-sm)">
@@ -2596,8 +2600,21 @@ window.syncBillsFromGmail=async function(){
 // Interest Rate & Allocation System
 // ══════════════════════════════════════════════
 
-// ══════════════════════════════════════════════
-// Rate System — New Design (Bank > Accounts)
+window.showRateDiag=function(){
+  const box=document.getElementById('rateDiagBox');
+  if(box.style.display==='block'){box.style.display='none';return;}
+  const bankAccs=state.accounts.filter(a=>a.kind==='asset_bank');
+  const bankRates=state.bankRates||[];
+  const lines=[
+    `帳戶頁 asset_bank 數量：${bankAccs.length}`,
+    ...bankAccs.map(a=>`  ・${a.name}（id:${a.id}）`),
+    ``,
+    `bankRates 陣列數量：${bankRates.length}`,
+    ...bankRates.map(b=>`  ・${b.name}  accounts:${(b.accounts||[]).length}  tiers:${(b.tiers||[]).length}`),
+  ];
+  box.innerHTML=lines.join('<br>');
+  box.style.display='block';
+};
 // Data: state.bankRates = [{id, name, accounts:[{id,name,rate,rangeMin,rangeMax,expiry,linkedAccId,rateUpdatedAt}]}]
 // ══════════════════════════════════════════════
 

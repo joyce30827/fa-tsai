@@ -2600,21 +2600,6 @@ window.syncBillsFromGmail=async function(){
 // Interest Rate & Allocation System
 // ══════════════════════════════════════════════
 
-window.showRateDiag=function(){
-  const box=document.getElementById('rateDiagBox');
-  if(box.style.display==='block'){box.style.display='none';return;}
-  const bankAccs=state.accounts.filter(a=>a.kind==='asset_bank');
-  const bankRates=state.bankRates||[];
-  const lines=[
-    `帳戶頁 asset_bank 數量：${bankAccs.length}`,
-    ...bankAccs.map(a=>`  ・${a.name}（id:${a.id}）`),
-    ``,
-    `bankRates 陣列數量：${bankRates.length}`,
-    ...bankRates.map(b=>`  ・${b.name}  accounts:${(b.accounts||[]).length}  tiers:${(b.tiers||[]).length}`),
-  ];
-  box.innerHTML=lines.join('<br>');
-  box.style.display='block';
-};
 // Data: state.bankRates = [{id, name, accounts:[{id,name,rate,rangeMin,rangeMax,expiry,linkedAccId,rateUpdatedAt}]}]
 // ══════════════════════════════════════════════
 
@@ -2627,6 +2612,38 @@ function renderRatePage(){
   renderRateBankList();
   renderAllocation();
 }
+
+window.showRateDiag=function(){
+  const box=document.getElementById('rateDiagBox');
+  if(box.style.display==='block'){box.style.display='none';return;}
+  const bankAccs=state.accounts.filter(a=>a.kind==='asset_bank');
+  const bankRates=state.bankRates||[];
+  const el=document.getElementById('rateBankList');
+  const lines=[
+    `帳戶頁 asset_bank 數量：${bankAccs.length}`,
+    ...bankAccs.map(a=>`  ・${a.name}（id:${a.id}）`),
+    ``,
+    `bankRates 陣列數量：${bankRates.length}`,
+    ...bankRates.map(b=>`  ・${b.name}  accounts:${(b.accounts||[]).length}  tiers:${(b.tiers||[]).length}`),
+    ``,
+    `rateBankList innerHTML 長度：${el?el.innerHTML.length:'找不到元素'}`,
+    `rateBankList display：${el?getComputedStyle(el).display:'N/A'}`,
+    ``,
+    `<button onclick="forceSyncRates()" style="background:var(--orange);border:none;color:#fff;padding:6px 12px;border-radius:6px;cursor:pointer;font-family:var(--font);font-size:12px;font-weight:700">強制同步並儲存</button>`,
+  ];
+  box.innerHTML=lines.join('<br>');
+  box.style.display='block';
+};
+
+window.forceSyncRates=function(){
+  migrateBankRates();
+  syncBanksFromAccounts();
+  state._localUpdateAt=Date.now();
+  scheduleSave();
+  renderRateBankList();
+  showToast('已強制同步 ✓');
+  setTimeout(()=>window.showRateDiag&&showRateDiag(),500);
+};
 
 function renderRateAlert(){
   const banks=getBankRates();

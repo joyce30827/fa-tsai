@@ -2603,6 +2603,32 @@ window.syncBillsFromGmail=async function(){
 // Data: state.bankRates = [{id, name, accounts:[{id,name,rate,rangeMin,rangeMax,expiry,linkedAccId,rateUpdatedAt}]}]
 // ══════════════════════════════════════════════
 
+// 各銀行官網利率查詢連結
+const BANK_URLS={
+  '臺灣銀行':'https://www.bot.com.tw/zh/personal/deposits/demand-deposit',
+  '台灣銀行':'https://www.bot.com.tw/zh/personal/deposits/demand-deposit',
+  '土地銀行':'https://www.landbank.com.tw/tw/Personal/Interest',
+  '合作金庫':'https://www.tcb-bank.com.tw/personal/deposits/DemandDeposit',
+  '第一銀行':'https://www.firstbank.com.tw/rate/savings',
+  '華南銀行':'https://www.hncb.com.tw/wps/portal/HNCB/deposit/rate',
+  '彰化銀行':'https://www.bankchb.com/chb_web/deposit/depositinterest.jsp',
+  '玉山銀行':'https://www.esunbank.com/zh-tw/personal/deposit/rate',
+  '國泰世華':'https://www.cathaybk.com.tw/cathaybk/personal/deposit/products/saving-account/',
+  '富邦銀行':'https://www.fubon.com/banking/personal/deposit/demand_deposit/index.html',
+  '中信銀行':'https://www.ctbcbank.com/twrbo/zh/personal/deposits/rateTable.html',
+  '中國信託':'https://www.ctbcbank.com/twrbo/zh/personal/deposits/rateTable.html',
+  '台新銀行':'https://www.taishinbank.com.tw/TSB/personal/deposits/introduce/rateinfo/',
+  '元大銀行':'https://www.yuantabank.com.tw/bank/deposit/interestRates/',
+  '永豐銀行':'https://www.sinopac.com/sinopacBT/portal/bank/deposit/rate.html',
+  '凱基銀行':'https://www.kgibank.com/zh-tw/personal/deposit/rate',
+  '星展銀行':'https://www.dbs.com/tw/personal-zh/deposits/rates.page',
+  '連線銀行':'https://tw.linebank.com.tw/rates/',
+  'LINE Bank':'https://tw.linebank.com.tw/rates/',
+  '將來銀行':'https://www.nextbank.com.tw/',
+  '中華郵政':'https://www.post.gov.tw/post/internet/Postal/index.jsp?ID=1020302',
+  '郵局':'https://www.post.gov.tw/post/internet/Postal/index.jsp?ID=1020302',
+};
+
 function getBankRates(){return state.bankRates||(state.bankRates=[]);}
 
 // ── Rendering ──

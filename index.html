@@ -262,6 +262,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .detail-row-label{font-size:12px;color:var(--text3);font-weight:500}
 .detail-row-val{font-size:13px;font-weight:500}
 .detail-note{padding:16px;margin:12px 16px;background:var(--bg2);border-radius:var(--radius);border:1px solid var(--border);font-size:13px;color:var(--text2);line-height:1.6}
+.detail-edit-rate-btn{background:rgba(249,115,22,0.15);border:1px solid rgba(249,115,22,0.3);border-radius:6px;color:var(--orange);font-size:11px;font-weight:600;padding:4px 10px;cursor:pointer;font-family:var(--font);margin-left:auto;flex-shrink:0}
 .detail-edit-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:calc(100% - 32px);margin:16px auto;padding:12px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-size:13px;font-weight:600;font-family:var(--font);cursor:pointer;transition:all .15s}
 .detail-edit-btn:hover{border-color:var(--orange);color:var(--orange)}
 
@@ -1223,13 +1224,35 @@ select.form-input{appearance:none;cursor:pointer}
     <div class="detail-hero-top">
       <button class="back-btn" onclick="closeDetail()">‹</button>
       <div class="detail-hero-name" id="detailTitle"></div>
+      <button class="detail-edit-rate-btn" id="detailEditRateBtn" onclick="openDetailRateModal()" style="display:none">利率設定</button>
     </div>
     <div class="detail-hero-sub" id="detailSub"></div>
     <div class="detail-hero-bal-label">存款餘額</div>
     <div class="detail-hero-bal" id="detailBal">NT$ 0</div>
   </div>
+
+  <!-- 利率資訊區塊（僅 asset_bank 顯示） -->
+  <div id="detailRateSection" style="display:none;margin:14px 16px 0">
+    <div style="font-size:10px;font-weight:700;color:var(--orange);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">利率資訊</div>
+    <div id="detailRateCards" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px"></div>
+    <button onclick="openDetailRateModal()" style="width:100%;padding:9px;background:none;border:1px dashed rgba(249,115,22,0.3);border-radius:var(--radius-sm);color:var(--orange);font-size:12px;font-family:var(--font);cursor:pointer;margin-top:6px;font-weight:600">＋ 新增 / 編輯利率帳戶</button>
+  </div>
+
   <div class="detail-body">
     <div id="detailTxList"></div>
+  </div>
+</div>
+
+<!-- Detail Rate Modal -->
+<div class="modal-overlay" id="detailRateModal" onclick="closeDetailRateModal(event)">
+  <div class="modal" onclick="event.stopPropagation()" style="max-height:90vh">
+    <div class="modal-handle"></div>
+    <div class="modal-header-row">
+      <div class="modal-title" id="detailRateModalTitle">利率帳戶設定</div>
+      <button class="modal-close-btn" onclick="closeDetailRateModal()">✕</button>
+    </div>
+    <div id="detailRateAccList" style="padding:0 20px 8px"></div>
+    <button onclick="openAddRateAccFromDetail()" style="display:flex;align-items:center;justify-content:center;gap:6px;width:calc(100% - 40px);margin:0 20px 16px;padding:10px;background:none;border:1px dashed var(--border2);border-radius:var(--radius-sm);color:var(--text3);font-size:12px;font-family:var(--font);cursor:pointer">＋ 新增利率帳戶</button>
   </div>
 </div>
 
@@ -1800,12 +1823,47 @@ window.openDetail=function(id){
   detailAccId=id;const a=accById(id);if(!a)return;
   const meta=ACC_KIND_META[a.kind]||{};const isDebt=meta.group==='debt';
   // Hero header
-  document.getElementById('detailTitle').textContent=a.name;
-  document.getElementById('detailSub').textContent=meta.label||'';
+  document.getElementById('detailTitle').textContent=a.subName||a.name;
+  document.getElementById('detailSub').textContent=a.name+(meta.label?' · '+meta.label:'');
   const heroColor=meta.color||'#c0392b';
   document.getElementById('detailHero').style.background=`linear-gradient(160deg,${heroColor}cc 0%,${heroColor}99 100%)`;
   const bel=document.getElementById('detailBal');
   bel.textContent='$ '+(isDebt?'-':'')+Math.abs(a.balance).toLocaleString();
+
+  // 利率資訊（僅銀行帳戶）
+  const rateSection=document.getElementById('detailRateSection');
+  const rateCards=document.getElementById('detailRateCards');
+  const editBtn=document.getElementById('detailEditRateBtn');
+  if(a.kind==='asset_bank'){
+    rateSection.style.display='block';
+    editBtn.style.display='block';
+    // 找這個帳戶對應的銀行利率資料
+    const bank=getBankRates().find(b=>b.name===a.name);
+    const accs=bank?.accounts||[];
+    if(accs.length){
+      const now=Date.now();
+      rateCards.innerHTML=accs.map(ra=>{
+        const days=ra.expiry?Math.ceil((new Date(ra.expiry).getTime()-now)/86400000):null;
+        const rangeMax=ra.rangeMax?parseInt(ra.rangeMax):null;
+        const canAdd=rangeMax?rangeMax-a.balance:null;
+        const daysColor=days===null?'var(--text3)':days<=0?'var(--red)':days<=7?'var(--orange)':'var(--text3)';
+        const daysText=days===null?'—':days<=0?`已過期 ${-days} 天`:`${days} 天後到期`;
+        return`<div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px">
+          <div style="font-size:10px;color:var(--text3);margin-bottom:4px;font-weight:600">${ra.name||'帳戶'}</div>
+          <div style="font-size:18px;font-weight:700;color:var(--orange);font-variant-numeric:tabular-nums">${parseFloat(ra.rate||0).toFixed(3)}%</div>
+          ${ra.rangeMax?`<div style="font-size:10px;color:var(--text3);margin-top:3px">額度：${ra.rangeMin||'1'}～${Number(ra.rangeMax).toLocaleString()}</div>`:''}
+          ${canAdd!==null?`<div style="font-size:11px;color:${canAdd<0?'var(--red)':'var(--green)'};margin-top:2px;font-weight:600">還可放：${canAdd>0?'+':''}${Number(canAdd).toLocaleString()}</div>`:''}
+          ${ra.expiry?`<div style="font-size:10px;color:${daysColor};margin-top:2px">${daysText}</div>`:''}
+        </div>`;
+      }).join('');
+    } else {
+      rateCards.innerHTML='<div style="grid-column:1/-1;font-size:12px;color:var(--text3);padding:4px 0">尚未設定利率，點下方按鈕新增</div>';
+    }
+  } else {
+    rateSection.style.display='none';
+    editBtn.style.display='none';
+  }
+
   // Timeline tx list
   const txs=state.transactions.filter(t=>t.accountId===id).sort((a,b)=>b.date.localeCompare(a.date));
   const el=document.getElementById('detailTxList');
@@ -1843,6 +1901,60 @@ window.openDetail=function(id){
   document.getElementById('detailScreen').classList.add('open');
 };
 window.closeDetail=()=>{document.getElementById('detailScreen').classList.remove('open');detailAccId=null;};
+
+// ── Detail Rate Modal ──
+window.openDetailRateModal=function(){
+  const a=accById(detailAccId);
+  if(!a)return;
+  const bank=getBankRates().find(b=>b.name===a.name);
+  document.getElementById('detailRateModalTitle').textContent=a.name+' 利率設定';
+  const listEl=document.getElementById('detailRateAccList');
+  const accs=bank?.accounts||[];
+  listEl.innerHTML=accs.length?accs.map((ra,ai)=>{
+    const bankIdx=getBankRates().indexOf(bank);
+    return`<div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:8px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div style="font-size:13px;font-weight:600">${ra.name||'帳戶'}</div>
+        <div style="display:flex;gap:6px">
+          <button onclick="openEditRateAcc(${bankIdx},${ai});closeDetailRateModal()" style="background:none;border:1px solid var(--border2);border-radius:5px;padding:3px 9px;font-size:11px;color:var(--text2);cursor:pointer;font-family:var(--font)">編輯</button>
+          <button onclick="deleteRateAcc(${bankIdx},${ai})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px">✕</button>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px;color:var(--text3)">
+        <div>利率：<span style="color:var(--orange);font-weight:700">${parseFloat(ra.rate||0).toFixed(3)}%</span></div>
+        <div>額度：${ra.rangeMax?Number(ra.rangeMax).toLocaleString():'無上限'}</div>
+        <div>到期：${ra.expiry||'—'}</div>
+      </div>
+    </div>`;
+  }).join(''):'<div style="font-size:12px;color:var(--text3);padding:8px 0 12px">尚未設定利率帳戶</div>';
+  document.getElementById('detailRateModal').classList.add('open');
+};
+window.closeDetailRateModal=function(e){
+  if(!e||e.target===document.getElementById('detailRateModal'))
+    document.getElementById('detailRateModal').classList.remove('open');
+};
+window.openAddRateAccFromDetail=function(){
+  const a=accById(detailAccId);
+  if(!a)return;
+  // 確保銀行存在於 bankRates
+  const banks=getBankRates();
+  let bankIdx=banks.findIndex(b=>b.name===a.name);
+  if(bankIdx===-1){
+    banks.push({id:'b'+Date.now(),name:a.name,accounts:[]});
+    bankIdx=banks.length-1;
+  }
+  closeDetailRateModal();
+  openAddRateAcc(bankIdx);
+};
+window.deleteRateAcc=function(bi,ai){
+  const banks=getBankRates();
+  if(!banks[bi]||!confirm('確認刪除此利率帳戶？'))return;
+  banks[bi].accounts.splice(ai,1);
+  state._localUpdateAt=Date.now();scheduleSave();
+  closeDetailRateModal();
+  openDetail(detailAccId);
+  showToast('已刪除');
+};
 
 // Transactions
 let txSubtab='detail';
@@ -2892,7 +3004,10 @@ window.saveRateAcc=function(){
   }
   state._localUpdateAt=Date.now();scheduleSave();
   document.getElementById('addRateAccModal').classList.remove('open');
-  renderRatePage();showToast('已儲存 ✓');
+  renderRatePage();
+  // 如果帳戶詳情頁開著，也更新它
+  if(detailAccId)openDetail(detailAccId);
+  showToast('已儲存 ✓');
 };
 
 // ── JSON Import ──

@@ -13,8 +13,8 @@
 <style>
 :root{
   --bg:#0a0a0b;--bg2:#111113;--bg3:#18181b;--bg4:#1e1e22;--bg5:#26262c;
-  --text:#f4f4f5;--text2:#a1a1aa;--text3:#52525b;--text4:#3f3f46;
-  --border:rgba(255,255,255,0.05);--border2:rgba(255,255,255,0.09);--border3:rgba(255,255,255,0.14);
+  --text:#f4f4f5;--text2:#c4c4cc;--text3:#8b8b96;--text4:#6b6b76;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);--border3:rgba(255,255,255,0.18);
   --orange:#f97316;--orange2:#fb923c;--orange3:#fdba74;
   --orange-dim:rgba(249,115,22,0.12);--orange-glow:rgba(249,115,22,0.25);
   --orange-line:rgba(249,115,22,0.35);
@@ -303,11 +303,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .rate-bank-group-del{background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;padding:2px 4px;transition:color .12s}
 .rate-bank-group-del:hover{color:var(--red)}
 /* table header */
-.rate-table-head{display:grid;grid-template-columns:minmax(80px,1.4fr) 70px 90px 64px 90px 80px 70px;gap:0;border-bottom:1px solid var(--border);padding:6px 14px;align-items:center}
+.rate-table-head{display:grid;grid-template-columns:minmax(80px,1.4fr) 70px 90px 64px 90px 80px 70px 44px;gap:0;border-bottom:1px solid var(--border);padding:6px 14px;align-items:center}
 .rate-table-head-cell{font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.7px;text-align:right}
 .rate-table-head-cell:first-child{text-align:left}
 /* table row */
-.rate-acc-row{display:grid;grid-template-columns:minmax(80px,1.4fr) 70px 90px 64px 90px 80px 70px;gap:0;padding:10px 14px;border-bottom:1px solid var(--border);align-items:center;cursor:pointer;transition:background .1s}
+.rate-acc-row{display:grid;grid-template-columns:minmax(80px,1.4fr) 70px 90px 64px 90px 80px 70px 44px;gap:0;padding:10px 14px;border-bottom:1px solid var(--border);align-items:center;transition:background .1s}
 .rate-acc-row:last-child{border-bottom:none}
 .rate-acc-row:hover{background:var(--bg3)}
 .rate-acc-row.expiring{background:rgba(249,115,22,0.04)}
@@ -1189,7 +1189,6 @@ select.form-input{appearance:none;cursor:pointer}
           <div class="header-actions">
             <button class="icon-btn" onclick="showRateDiag()" title="診斷">🔍</button>
             <button class="icon-btn" onclick="openJsonImportModal()" title="JSON匯入">📋</button>
-            <button class="icon-btn" onclick="openAddBankModal()" title="新增銀行">＋</button>
           </div>
         </div>
       </div>
@@ -1204,8 +1203,8 @@ select.form-input{appearance:none;cursor:pointer}
       </div>
 
       <div id="rateBankList"></div>
-      <button class="rate-add-bank-btn" onclick="openAddBankModal()">＋ 新增銀行</button>
 
+      <!-- 資產配置建議 -->
       <div class="section-heading" style="margin-top:4px">📊 資產配置建議</div>
       <div class="alloc-card" id="allocCard">
         <div class="alloc-header">
@@ -1224,18 +1223,16 @@ select.form-input{appearance:none;cursor:pointer}
     <div class="detail-hero-top">
       <button class="back-btn" onclick="closeDetail()">‹</button>
       <div class="detail-hero-name" id="detailTitle"></div>
-      <button class="detail-edit-rate-btn" id="detailEditRateBtn" onclick="openDetailRateModal()" style="display:none">利率設定</button>
     </div>
     <div class="detail-hero-sub" id="detailSub"></div>
     <div class="detail-hero-bal-label">存款餘額</div>
     <div class="detail-hero-bal" id="detailBal">NT$ 0</div>
   </div>
 
-  <!-- 利率資訊區塊（僅 asset_bank 顯示） -->
+  <!-- 利率資訊區塊（僅 asset_bank 顯示，純顯示不提供編輯） -->
   <div id="detailRateSection" style="display:none;margin:14px 16px 0">
-    <div style="font-size:10px;font-weight:700;color:var(--orange);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">利率資訊</div>
-    <div id="detailRateCards" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px"></div>
-    <button onclick="openDetailRateModal()" style="width:100%;padding:9px;background:none;border:1px dashed rgba(249,115,22,0.3);border-radius:var(--radius-sm);color:var(--orange);font-size:12px;font-family:var(--font);cursor:pointer;margin-top:6px;font-weight:600">＋ 新增 / 編輯利率帳戶</button>
+    <div style="font-size:10px;font-weight:700;color:var(--orange);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">利率資訊 <span style="color:var(--text3);font-weight:400;letter-spacing:0;text-transform:none;font-size:10px">（在利率頁管理）</span></div>
+    <div id="detailRateCards" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div>
   </div>
 
   <div class="detail-body">
@@ -1833,10 +1830,8 @@ window.openDetail=function(id){
   // 利率資訊（僅銀行帳戶）
   const rateSection=document.getElementById('detailRateSection');
   const rateCards=document.getElementById('detailRateCards');
-  const editBtn=document.getElementById('detailEditRateBtn');
   if(a.kind==='asset_bank'){
     rateSection.style.display='block';
-    editBtn.style.display='block';
     // 找這個帳戶對應的銀行利率資料
     const bank=getBankRates().find(b=>b.name===a.name);
     const accs=bank?.accounts||[];
@@ -1861,7 +1856,6 @@ window.openDetail=function(id){
     }
   } else {
     rateSection.style.display='none';
-    editBtn.style.display='none';
   }
 
   // Timeline tx list
@@ -2849,15 +2843,17 @@ function renderRateBankList(){
         <div class="rate-acc-cell">${daysCell}</div>
         <div class="rate-acc-cell">${balStr}</div>
         <div class="rate-acc-cell">${canAddStr}</div>
+        <div class="rate-acc-cell" style="text-align:center">
+          <button onclick="event.stopPropagation();openEditRateAcc(${bi},${ai})" style="background:none;border:1px solid var(--border2);border-radius:4px;padding:2px 7px;font-size:10px;color:var(--text3);cursor:pointer;font-family:var(--font);transition:all .12s" onmouseover="this.style.borderColor='var(--orange)';this.style.color='var(--orange)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--text3)'">編輯</button>
+        </div>
       </div>`;
-    }).join(''):`<div class="rate-acc-row-empty">尚未新增帳戶，點「＋ 新增帳戶」</div>`;
+    }).join(''):`<div class="rate-acc-row-empty">尚未設定利率，到帳戶頁點入帳戶後新增</div>`;
 
     return`<div class="rate-bank-group">
       <div class="rate-bank-group-header">
         <div class="rate-bank-group-name">🏦 ${bank.name}${websiteLink}</div>
         <div class="rate-bank-group-actions">
-          <button class="rate-bank-group-add" onclick="openAddRateAcc(${bi})">＋ 新增帳戶</button>
-          <button class="rate-bank-group-del" onclick="deleteBank(${bi})" title="刪除銀行">✕</button>
+          <button class="rate-bank-group-add" onclick="openAddRateAcc(${bi})">＋ 新增利率帳戶</button>
         </div>
       </div>
       <div class="rate-table-head">
@@ -2868,6 +2864,7 @@ function renderRateBankList(){
         <div class="rate-table-head-cell">剩餘天數</div>
         <div class="rate-table-head-cell">目前餘額</div>
         <div class="rate-table-head-cell">還可以放</div>
+        <div class="rate-table-head-cell"></div>
       </div>
       ${accsHTML}
     </div>`;

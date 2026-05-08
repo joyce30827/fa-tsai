@@ -1103,6 +1103,21 @@ select.form-input{appearance:none;cursor:pointer}
           </div>
         </div>
       </div>
+      <div class="section-heading">危險操作</div>
+      <div class="settings-section">
+        <div class="settings-card">
+          <div class="settings-row" onclick="clearAllData()">
+            <div class="settings-row-left">
+              <div class="settings-icon" style="background:var(--red-dim)">🗑️</div>
+              <div>
+                <div class="settings-row-title" style="color:var(--red)">清除所有資料</div>
+                <div class="settings-row-sub">刪除所有帳戶、交易、利率、帳單設定</div>
+              </div>
+            </div>
+            <div class="settings-chevron" style="color:var(--red)">›</div>
+          </div>
+        </div>
+      </div>
     </div>
     <!-- TAB 5: 帳單 -->
     <div id="sec-bills" class="section">
@@ -1619,7 +1634,38 @@ let selectedFilterTags=[];  // active tag filter (empty = show all)
 let _pendingFilterTags=[];  // tags selected inside modal before confirm
 let barChart=null,doughChart=null;
 
-window.doSignOut=async()=>{if(unsubscribe)unsubscribe();await auth.signOut();closeUserModal();document.getElementById('mainApp').style.display='none';document.getElementById('loginScreen').style.display='flex';userId=null;gmailAccessToken=null;sessionStorage.removeItem('gmailToken');};
+window.clearAllData=async function(){
+  const first=confirm('⚠️ 確認清除所有資料？\n\n這將刪除：\n・所有帳戶\n・所有交易記錄\n・所有利率設定\n・所有帳單資料\n・所有分類與標籤\n\n此操作無法復原！');
+  if(!first)return;
+  const second=confirm('再次確認：真的要清除全部資料嗎？');
+  if(!second)return;
+
+  // Reset state
+  state.transactions=[];
+  state.accounts=[];
+  state.bankRates=[];
+  state.billsData={};
+  state.tags=['日常','工作','旅遊','家庭'];
+  state.expCats=['餐飲','交通','購物','娛樂','醫療','教育','住房','其他'];
+  state.incCats=['薪資','獎金','投資','其他'];
+  state._localUpdateAt=Date.now();
+
+  // Save to Firebase
+  if(userId){
+    try{
+      await db.collection('users').doc(userId).collection('data').doc('main').set({
+        transactions:[],accounts:[],bankRates:[],billsData:{},
+        tags:state.tags,expCats:state.expCats,incCats:state.incCats,
+        updatedAt:Date.now()
+      });
+    }catch(e){console.error('clearAllData save error',e);}
+  }
+
+  renderAll();
+  showToast('所有資料已清除');
+};
+
+window.doSignOut=async function(){if(unsubscribe)unsubscribe();await auth.signOut();closeUserModal();document.getElementById('mainApp').style.display='none';document.getElementById('loginScreen').style.display='flex';userId=null;gmailAccessToken=null;sessionStorage.removeItem('gmailToken');};
 
 
 auth.onAuthStateChanged(async user=>{

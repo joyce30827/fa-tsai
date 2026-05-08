@@ -1223,6 +1223,7 @@ select.form-input{appearance:none;cursor:pointer}
     <div class="detail-hero-top">
       <button class="back-btn" onclick="closeDetail()">‹</button>
       <div class="detail-hero-name" id="detailTitle"></div>
+      <button onclick="deleteAccount(detailAccId)" style="background:none;border:1px solid rgba(239,68,68,0.3);border-radius:6px;color:var(--red);font-size:11px;font-weight:600;padding:4px 10px;cursor:pointer;font-family:var(--font);margin-left:auto;flex-shrink:0">刪除帳戶</button>
     </div>
     <div class="detail-hero-sub" id="detailSub"></div>
     <div class="detail-hero-bal-label">存款餘額</div>
@@ -1895,6 +1896,17 @@ window.openDetail=function(id){
   document.getElementById('detailScreen').classList.add('open');
 };
 window.closeDetail=()=>{document.getElementById('detailScreen').classList.remove('open');detailAccId=null;};
+
+window.deleteAccount=function(id){
+  const a=accById(id);
+  if(!a)return;
+  if(!confirm(`確認刪除「${a.subName||a.name}」帳戶？\n此操作無法復原。`))return;
+  state.accounts=state.accounts.filter(acc=>acc.id!==id);
+  state._localUpdateAt=Date.now();scheduleSave();
+  closeDetail();
+  renderAll();
+  showToast('帳戶已刪除');
+};
 
 // ── Detail Rate Modal ──
 window.openDetailRateModal=function(){

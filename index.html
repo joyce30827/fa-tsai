@@ -1903,6 +1903,16 @@ window.deleteAccount=function(id){
   if(!a)return;
   if(!confirm(`確認刪除「${a.subName||a.name}」帳戶？\n此操作無法復原。`))return;
   state.accounts=state.accounts.filter(acc=>acc.id!==id);
+
+  // 如果是銀行帳戶，檢查這家銀行是否還有其他帳戶
+  // 沒有的話，同步從 bankRates 移除
+  if(a.kind==='asset_bank'){
+    const stillExists=state.accounts.some(acc=>acc.kind==='asset_bank'&&acc.name===a.name);
+    if(!stillExists){
+      state.bankRates=(state.bankRates||[]).filter(b=>b.name!==a.name);
+    }
+  }
+
   state._localUpdateAt=Date.now();scheduleSave();
   closeDetail();
   renderAll();

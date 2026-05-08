@@ -220,6 +220,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);z-index:200;display:none;align-items:flex-end;justify-content:center}
 .modal-overlay.open{display:flex}
 .modal{background:var(--bg2);border-radius:16px 16px 0 0;padding:0 0 env(safe-area-inset-bottom,0px);width:100%;max-width:480px;max-height:92vh;overflow-y:auto;border:1px solid var(--border2);border-bottom:none}
+.modal .submit-btn{margin:16px 20px 4px;width:calc(100% - 40px);}
 .modal-handle{width:36px;height:3px;background:var(--bg5);border-radius:2px;margin:10px auto 0}
 .modal-header-row{display:flex;align-items:center;justify-content:space-between;padding:14px 20px 0}
 .modal-title{font-size:16px;font-weight:700;letter-spacing:-.3px}
@@ -239,7 +240,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .cat-btn.active{border-color:var(--orange);background:var(--orange-dim)}
 .cat-btn-icon{font-size:20px}
 .cat-btn-label{font-size:9px;color:var(--text2);font-weight:500;text-align:center;line-height:1.2}
-.submit-btn{display:block;width:calc(100% - 40px);margin:16px 20px;padding:13px;background:var(--orange);border:none;border-radius:var(--radius-sm);color:#fff;font-size:14px;font-weight:700;font-family:var(--font);cursor:pointer;letter-spacing:.1px;transition:opacity .15s}
+.submit-btn{display:block;width:100%;margin:16px 0 0;padding:13px 20px;background:var(--orange);border:none;border-radius:var(--radius-sm);color:#fff;font-size:14px;font-weight:700;font-family:var(--font);cursor:pointer;letter-spacing:.1px;transition:opacity .15s;box-sizing:border-box}
 .submit-btn:active{opacity:.85}
 .form-hint{font-size:11px;color:var(--text3);padding:6px 20px 0}
 .tag-chips{display:flex;flex-wrap:wrap;gap:6px;padding:10px 20px 0}
@@ -789,8 +790,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .form-input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-size:14px;font-family:var(--font);padding:11px 14px;outline:none;transition:border-color .15s}
 .form-input:focus{border-color:var(--orange)}
 select.form-input{appearance:none;cursor:pointer}
-.submit-btn{width:100%;padding:13px;background:var(--orange);color:#fff;border:none;border-radius:var(--radius-sm);font-size:14px;font-weight:700;font-family:var(--font);cursor:pointer;margin-top:8px;transition:opacity .15s;letter-spacing:-.2px}
-.submit-btn:active{opacity:.85}
 .cat-manage-list{display:flex;flex-direction:column;gap:2px}
 .cat-manage-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg3);border-radius:var(--radius-sm);border:1px solid var(--border)}
 .cat-manage-icon{font-size:18px;width:28px;text-align:center}
@@ -804,8 +803,6 @@ select.form-input{appearance:none;cursor:pointer}
 .user-modal-email{font-size:11px;color:var(--text2);margin-top:2px}
 .logout-btn{width:100%;padding:12px;background:var(--red-dim);color:var(--red);border:1px solid rgba(255,77,109,0.3);border-radius:var(--radius-sm);font-size:13px;font-weight:600;font-family:var(--font);cursor:pointer}
 .cancel-btn{width:100%;padding:12px;background:none;color:var(--text2);border:none;font-size:13px;font-family:var(--font);cursor:pointer;margin-top:6px}
-.toast{position:fixed;top:52px;left:50%;transform:translateX(-50%);background:var(--bg3);color:var(--text);font-size:12px;font-weight:500;padding:7px 16px;border-radius:999px;z-index:999;opacity:0;transition:opacity .25s;pointer-events:none;border:1px solid var(--border2);white-space:nowrap;box-shadow:var(--shadow)}
-.toast.show{opacity:1}
 .breakdown-group-label{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.7px;padding:10px 0 4px}
 .breakdown-group-label:first-child{padding-top:2px}
 .breakdown-subtotal{display:flex;justify-content:space-between;align-items:center;padding:10px 0 2px;border-top:1px solid var(--border);margin-top:4px;font-size:12px;font-weight:600;color:var(--text2)}

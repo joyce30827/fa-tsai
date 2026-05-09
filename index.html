@@ -197,7 +197,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .acc-sub-icon{width:32px;height:32px;border-radius:8px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
 .acc-sub-info{flex:1;min-width:0}
 .acc-sub-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.acc-sub-updated{font-size:10px;color:var(--text3);margin-top:2px}
+.acc-sub-rate{font-size:11px;margin-top:2px;display:flex;align-items:center;gap:4px}
 .acc-sub-balance{font-size:14px;font-weight:700;font-variant-numeric:tabular-nums;flex-shrink:0;text-align:right}
 .acc-group-label{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:1px}
 .acc-group-total{font-size:11px;font-weight:600;color:var(--text2);font-variant-numeric:tabular-nums}
@@ -1804,39 +1804,39 @@ function renderAccounts(){
     return;
   }
 
-  // ── 銀行帳戶：按銀行名稱分組 ──
   const bankAccs=state.accounts.filter(a=>a.kind==='asset_bank');
   const otherAccs=state.accounts.filter(a=>a.kind!=='asset_bank');
-
   let html='';
 
-  // 銀行分組
+  // ── 銀行分組，每個子帳戶顯示利率 ──
   if(bankAccs.length){
-    // 找出不重複的銀行名稱（按第一次出現順序）
     const bankNames=[...new Set(bankAccs.map(a=>a.name))];
     html+=`<div class="group-label">銀行</div>`;
     bankNames.forEach(bankName=>{
       const accs=bankAccs.filter(a=>a.name===bankName);
       const totalBal=accs.reduce((s,a)=>s+a.balance,0);
       const isAllDebt=totalBal<0;
+      const bank=getBankRates().find(b=>b.name===bankName);
       html+=`<div class="acc-bank-group">
         <div class="acc-bank-group-header">
           <div class="acc-bank-group-icon">${getBankIcon(bankName)}</div>
           <div class="acc-bank-group-name">${bankName}</div>
-          <div class="acc-bank-group-total" style="color:${isAllDebt?'var(--red)':'var(--text2)'}">${isAllDebt?'- ':''}NT$ ${Math.abs(totalBal).toLocaleString()}</div>
+          <div class="acc-bank-group-total" style="color:${isAllDebt?'var(--red)':'var(--text2)'}">NT$ ${Math.abs(totalBal).toLocaleString()}</div>
         </div>
         ${accs.map(a=>{
           const isDebt=a.balance<0;
-          const updated=a.updatedAt?new Date(a.updatedAt).toLocaleDateString('zh-TW'):'—';
-          const meta=ACC_KIND_META[a.kind]||{};
+          const subName=a.subName||'活期存款';
+          // 找對應的利率設定
+          const rateAcc=bank?.accounts?.find(ra=>ra.linkedAccId===a.id||ra.name===subName);
+          const rateStr=rateAcc?`<span style="color:var(--orange);font-weight:700;font-size:11px">${parseFloat(rateAcc.rate||0).toFixed(2)}%</span>`:`<span style="color:var(--text3);font-size:11px">—</span>`;
           return`<div class="acc-sub-row" onclick="openDetail('${a.id}')">
-            <div class="acc-sub-icon">${meta.icon||'🏦'}</div>
+            <div class="acc-sub-icon">🏦</div>
             <div class="acc-sub-info">
-              <div class="acc-sub-name">${a.subName||'活期存款'}</div>
-              <div class="acc-sub-updated">${updated}</div>
+              <div class="acc-sub-name">${subName}</div>
+              <div class="acc-sub-rate">${rateStr}</div>
             </div>
-            <div class="acc-sub-balance" style="color:${isDebt?'var(--red)':a.balance>0?'var(--green)':'var(--text3)'}">
-              ${isDebt?'- ':''}NT$ ${Math.abs(a.balance).toLocaleString()}
+            <div class="acc-sub-balance" style="color:${isDebt?'var(--red)':a.balance>0?'var(--text)':'var(--text3)'}">
+              NT$ ${Math.abs(a.balance).toLocaleString()}
             </div>
           </div>`;
         }).join('')}
@@ -1844,17 +1844,21 @@ function renderAccounts(){
     });
   }
 
-  // 其他資產（電子票證、外幣等）
+  // 其他資產
   const otherAssets=otherAccs.filter(a=>ACC_KIND_META[a.kind]?.group==='asset');
   if(otherAssets.length){
     html+=`<div class="group-label">其他資產</div>`;
     otherAssets.forEach(a=>{
       const meta=ACC_KIND_META[a.kind]||{};
-      const updated=a.updatedAt?new Date(a.updatedAt).toLocaleDateString('zh-TW'):'—';
-      html+=`<div class="acc-card" onclick="openDetail('${a.id}')">
-        <div class="acc-top"><div class="acc-name">${a.name}</div><div class="acc-badge" style="border-color:${meta.color||'#555'};color:${meta.color||'#888'}">${meta.label||''}</div></div>
-        <div class="acc-balance" style="color:var(--green)">NT$ ${a.balance.toLocaleString()}</div>
-        <div class="acc-updated">最後更新：${updated}</div>
+      html+=`<div class="acc-sub-row" style="margin:0 16px 4px;border-radius:var(--radius-sm)" onclick="openDetail('${a.id}')">
+        <div class="acc-sub-icon">${meta.icon||'💰'}</div>
+        <div class="acc-sub-info">
+          <div class="acc-sub-name">${a.subName||a.name}</div>
+          <div class="acc-sub-rate" style="color:var(--text3);font-size:10px">${a.name} · ${meta.label||''}</div>
+        </div>
+        <div class="acc-sub-balance" style="color:${a.balance>0?'var(--text)':'var(--text3)'}">
+          NT$ ${Math.abs(a.balance).toLocaleString()}
+        </div>
       </div>`;
     });
   }
@@ -1865,11 +1869,15 @@ function renderAccounts(){
     html+=`<div class="group-label">負債</div>`;
     debts.forEach(a=>{
       const meta=ACC_KIND_META[a.kind]||{};
-      const updated=a.updatedAt?new Date(a.updatedAt).toLocaleDateString('zh-TW'):'—';
-      html+=`<div class="acc-card" onclick="openDetail('${a.id}')">
-        <div class="acc-top"><div class="acc-name">${a.name}</div><div class="acc-badge" style="border-color:${meta.color||'#555'};color:${meta.color||'#888'}">${meta.label||''}</div></div>
-        <div class="acc-balance" style="color:var(--red)">- NT$ ${Math.abs(a.balance).toLocaleString()}</div>
-        <div class="acc-updated">最後更新：${updated}</div>
+      html+=`<div class="acc-sub-row" style="margin:0 16px 4px;border-radius:var(--radius-sm)" onclick="openDetail('${a.id}')">
+        <div class="acc-sub-icon">${meta.icon||'💳'}</div>
+        <div class="acc-sub-info">
+          <div class="acc-sub-name">${a.subName||a.name}</div>
+          <div class="acc-sub-rate" style="color:var(--text3);font-size:10px">${a.name} · ${meta.label||''}</div>
+        </div>
+        <div class="acc-sub-balance" style="color:var(--red)">
+          - NT$ ${Math.abs(a.balance).toLocaleString()}
+        </div>
       </div>`;
     });
   }
@@ -1877,8 +1885,7 @@ function renderAccounts(){
   if(!html)html='<div class="empty-state"><div class="empty-icon">🏦</div>尚未新增帳戶<br>點右上角 ＋ 新增</div>';
   el.innerHTML=html;
 }
-
-// 銀行 icon 對應（簡單 fallback）
+// 銀行 icon 對應
 function getBankIcon(name){
   const map={'玉山':'🟡','國泰':'🔵','台新':'🔴','永豐':'🟤','中信':'🔵','將來':'⚫','LINE':'🟢','合作金庫':'🟠','臺灣銀行':'🔵','台灣銀行':'🔵','元大':'🔴','富邦':'🟣','星展':'🔴','凱基':'🟠'};
   for(const[k,v] of Object.entries(map)){if(name.includes(k))return v;}
@@ -3036,7 +3043,7 @@ function renderRateBankList(){
       <div class="rate-bank-group-header">
         <div class="rate-bank-group-name">🏦 ${bank.name}${websiteLink}</div>
         <div class="rate-bank-group-actions">
-          <button class="rate-bank-group-add" onclick="openAddRateAcc(${bi})">＋ 新增利率帳戶</button>
+          <button class="rate-bank-group-add" onclick="openAddRateAcc(${bi})">＋ 手動新增</button>
         </div>
       </div>
       <div class="rate-table-head">
@@ -3056,14 +3063,44 @@ function renderRateBankList(){
 
 // ── Sync from accounts page ──
 function syncBanksFromAccounts(){
-  // 先做舊格式遷移：把 tiers 格式轉成 accounts 格式
   migrateBankRates();
   const banks=getBankRates();
-  state.accounts.filter(a=>a.kind==='asset_bank').forEach(acc=>{
-    const name=acc.name.trim();
-    if(!banks.find(b=>b.name===name)){
-      banks.push({id:'b'+Date.now()+Math.random(),name,accounts:[]});
+  // 按銀行名稱分組帳戶
+  const bankMap={};
+  state.accounts.filter(a=>a.kind==='asset_bank').forEach(a=>{
+    if(!bankMap[a.name])bankMap[a.name]=[];
+    bankMap[a.name].push(a);
+  });
+  Object.entries(bankMap).forEach(([bankName,accs])=>{
+    // 確保銀行存在
+    let bank=banks.find(b=>b.name===bankName);
+    if(!bank){
+      bank={id:'b'+Date.now()+Math.random(),name:bankName,accounts:[]};
+      banks.push(bank);
     }
+    // 確保每個子帳戶在 bank.accounts 裡有對應記錄（以 linkedAccId 或名稱比對）
+    accs.forEach(a=>{
+      const subName=a.subName||'活期存款';
+      const existing=bank.accounts.find(ra=>ra.linkedAccId===a.id||ra.name===subName);
+      if(!existing){
+        bank.accounts.push({
+          id:'ra'+Date.now()+Math.random(),
+          name:subName,
+          rate:0,rangeMin:'',rangeMax:'',expiry:'',
+          linkedAccId:a.id,rateUpdatedAt:null
+        });
+      } else if(!existing.linkedAccId){
+        // 補上連結
+        existing.linkedAccId=a.id;
+      }
+    });
+  });
+  // 移除帳戶頁已刪除的銀行
+  const remainingBankNames=Object.keys(bankMap);
+  state.bankRates=(state.bankRates||[]).filter(b=>{
+    // 非銀行帳戶的利率設定保留（手動新增的）
+    return remainingBankNames.includes(b.name)||
+      !state.accounts.some(a=>a.kind==='asset_bank'); // 如果沒有任何銀行帳戶就全保留
   });
 }
 

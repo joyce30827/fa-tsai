@@ -1239,15 +1239,13 @@ select.form-input{appearance:none;cursor:pointer}
       <button onclick="deleteAccount(detailAccId)" style="background:none;border:1px solid rgba(239,68,68,0.3);border-radius:6px;color:var(--red);font-size:11px;font-weight:600;padding:4px 10px;cursor:pointer;font-family:var(--font);margin-left:auto;flex-shrink:0">刪除帳戶</button>
     </div>
     <div class="detail-hero-sub" id="detailSub"></div>
+    <div id="detailRateInline" style="display:none;font-size:12px;color:var(--orange);font-weight:600;text-align:right;margin-bottom:8px"></div>
     <div class="detail-hero-bal-label">存款餘額 <span style="font-size:9px;color:var(--orange);font-weight:600;letter-spacing:0;text-transform:none">點擊編輯名稱與餘額</span></div>
     <div class="detail-hero-bal" id="detailBal" onclick="openEditBalModal()" style="cursor:pointer">NT$ 0</div>
   </div>
 
-  <!-- 利率資訊區塊（僅 asset_bank 顯示，純顯示不提供編輯） -->
-  <div id="detailRateSection" style="display:none;margin:14px 16px 0">
-    <div style="font-size:10px;font-weight:700;color:var(--orange);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">利率資訊 <span style="color:var(--text3);font-weight:400;letter-spacing:0;text-transform:none;font-size:10px">（在利率頁管理）</span></div>
-    <div id="detailRateCards" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div>
-  </div>
+  <!-- 利率資訊（僅 asset_bank 顯示，純顯示不提供編輯） -->
+  <div id="detailRateSection" style="display:none"></div>
 
   <div class="detail-body">
     <div id="detailTxList"></div>
@@ -1701,7 +1699,7 @@ auth.onAuthStateChanged(async user=>{
     setSyncDot('syncing');
     try{
       const snap=await db.collection('users').doc(userId).collection('data').doc('main').get();
-      if(snap.exists){const d=snap.data();state.transactions=d.transactions||[];state.accounts=d.accounts||[];state.tags=d.tags||state.tags;state.expCats=d.expCats||state.expCats;state.incCats=d.incCats||state.incCats;state.bankRates=d.bankRates||[];state.billsData=d.billsData||{};}
+      if(snap.exists){const d=snap.data();state.transactions=d.transactions||[];state.accounts=d.accounts||[];state.tags=d.tags||state.tags;state.expCats=d.expCats||state.expCats;state.incCats=d.incCats||state.incCats;state.bankRates=d.bankRates||[];state.billsData=d.billsData||{};migrateCats();}
       setSyncDot('synced');
     }catch(e){
       console.error('Firestore load error:',e.code, e.message);
@@ -1902,42 +1900,34 @@ window.openDetail=function(id){
   const bel=document.getElementById('detailBal');
   bel.textContent='$ '+(isDebt?'-':'')+Math.abs(a.balance).toLocaleString();
 
-  // 利率資訊（僅銀行帳戶）
+  // 利率資訊：簡化為 hero 下方一行小字
   const rateSection=document.getElementById('detailRateSection');
-  const rateCards=document.getElementById('detailRateCards');
-  if(a.kind==='asset_bank'){
-    rateSection.style.display='block';
-    const bank=getBankRates().find(b=>b.name===a.name);
-    const accs=bank?.accounts||[];
-    // 找與這個子帳戶名稱匹配的利率設定
-    const matchedAcc=accs.find(ra=>ra.name===(a.subName||'一般帳戶')||ra.linkedAccId===a.id);
-    const bankIdx=getBankRates().indexOf(bank);
-    const accIdx=matchedAcc?accs.indexOf(matchedAcc):-1;
-
-    if(matchedAcc){
-      const now=Date.now();
-      const days=matchedAcc.expiry?Math.ceil((new Date(matchedAcc.expiry).getTime()-now)/86400000):null;
-      const rangeMax=matchedAcc.rangeMax?parseInt(matchedAcc.rangeMax):null;
-      const canAdd=rangeMax?rangeMax-a.balance:null;
-      const daysColor=days===null?'var(--text3)':days<=0?'var(--red)':days<=7?'var(--orange)':'var(--text3)';
-      const daysText=days===null?'':days<=0?` · 已過期 ${-days} 天`:` · 還有 ${days} 天`;
-      rateCards.innerHTML=`
-        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;position:relative;cursor:pointer" onclick="openEditRateAcc(${bankIdx},${accIdx})">
-          <div style="font-size:28px;font-weight:700;color:var(--orange);font-variant-numeric:tabular-nums">${parseFloat(matchedAcc.rate||0).toFixed(3)}<span style="font-size:14px">%</span></div>
-          ${rangeMax?`<div style="font-size:11px;color:var(--text2);margin-top:4px">額度上限 NT$ ${Number(rangeMax).toLocaleString()}</div>`:''}
-          ${canAdd!==null?`<div style="font-size:12px;color:${canAdd<0?'var(--red)':'var(--green)'};margin-top:3px;font-weight:600">還可放 ${canAdd>0?'+':''}${Number(canAdd).toLocaleString()}</div>`:''}
-          ${matchedAcc.expiry?`<div style="font-size:11px;color:${daysColor};margin-top:3px">${matchedAcc.expiry}${daysText}</div>`:''}
-          <div style="position:absolute;top:10px;right:10px;font-size:10px;color:var(--orange);font-weight:600">編輯 ›</div>
-        </div>`;
+  const rateInline=document.getElementById('detailRateInline');
+  if(rateSection)rateSection.style.display='none';
+  if(rateInline){
+    if(a.kind==='asset_bank'){
+      const bank=getBankRates().find(b=>b.name===a.name);
+      const subName=a.subName||'活期存款';
+      const matchedAcc=bank?.accounts?.find(ra=>ra.linkedAccId===a.id||ra.name===subName);
+      const bankIdx=getBankRates().indexOf(bank);
+      const accIdx=matchedAcc&&bank?bank.accounts.indexOf(matchedAcc):-1;
+      if(matchedAcc&&matchedAcc.rate){
+        const now=Date.now();
+        const days=matchedAcc.expiry?Math.ceil((new Date(matchedAcc.expiry).getTime()-now)/86400000):null;
+        const rangeMax=matchedAcc.rangeMax?parseInt(matchedAcc.rangeMax):null;
+        const canAdd=rangeMax?rangeMax-a.balance:null;
+        let parts=[`${parseFloat(matchedAcc.rate).toFixed(3)}%`];
+        if(canAdd!==null)parts.push(`還可放 ${Number(canAdd).toLocaleString()}`);
+        if(days!==null)parts.push(days<=0?`<span style="color:var(--red)">已過期 ${-days} 天</span>`:`${days} 天後到期`);
+        rateInline.innerHTML=`<span onclick="openEditRateAcc(${bankIdx},${accIdx})" style="cursor:pointer">${parts.join(' · ')} ›</span>`;
+        rateInline.style.display='block';
+      } else {
+        rateInline.innerHTML=`<span onclick="openAddRateAccForSubAcc('${a.id}')" style="cursor:pointer">尚無利率資料，點此設定 ›</span>`;
+        rateInline.style.display='block';
+      }
     } else {
-      // 尚無利率資料，提供快速設定按鈕
-      rateCards.innerHTML=`
-        <div style="grid-column:1/-1">
-          <button onclick="openAddRateAccForSubAcc('${a.id}')" style="width:100%;padding:10px;background:none;border:1px dashed rgba(249,115,22,0.3);border-radius:var(--radius-sm);color:var(--orange);font-size:12px;font-family:var(--font);cursor:pointer;font-weight:600">尚無資料，點此設定利率</button>
-        </div>`;
+      rateInline.style.display='none';
     }
-  } else {
-    rateSection.style.display='none';
   }
 
   // Timeline tx list
@@ -2341,7 +2331,25 @@ window.deleteTag=function(tag){state.tags=state.tags.filter(t=>t!==tag);state._l
 
 window.openCatModal=function(type){catModalType=type;document.getElementById('catModalTitle').textContent=type==='expense'?'支出分類管理':'收入分類管理';renderCatList();document.getElementById('catModal').classList.add('open');};
 window.closeCatModal=function(e){if(!e||e.target===document.getElementById('catModal'))document.getElementById('catModal').classList.remove('open');};
-function renderCatList(){const list=catModalType==='expense'?state.expCats:state.incCats;document.getElementById('catManageList').innerHTML=list.map(c=>`<div class="cat-manage-item"><div class="cat-manage-left"><span class="cat-manage-icon">${c.icon}</span><span class="cat-manage-name">${c.name}</span></div><button class="cat-manage-del" onclick="deleteCat('${c.name}')">✕</button></div>`).join('');}
+
+// 分類格式遷移：舊版是純字串陣列，新版是 [{name,icon}]
+function migrateCats(){
+  function fix(list,defs){
+    if(!list||!list.length)return JSON.parse(JSON.stringify(defs));
+    return list.map(c=>{
+      if(typeof c==='string'){const def=defs.find(d=>d.name===c)||{icon:'📦'};return{name:c,icon:def.icon||'📦'};}
+      return{name:c.name||'?',icon:c.icon||'📦'};
+    });
+  }
+  state.expCats=fix(state.expCats,DEF_EXP);
+  state.incCats=fix(state.incCats,DEF_INC);
+}
+
+function renderCatList(){
+  migrateCats();
+  const list=catModalType==='expense'?state.expCats:state.incCats;
+  document.getElementById('catManageList').innerHTML=list.map(c=>`<div class="cat-manage-item"><div class="cat-manage-left"><span class="cat-manage-icon">${c.icon||'📦'}</span><span class="cat-manage-name">${c.name}</span></div><button class="cat-manage-del" onclick="deleteCat('${c.name}')">✕</button></div>`).join('');
+}
 window.addCat=function(){const icon=document.getElementById('newCatIcon').value.trim()||'📦';const name=document.getElementById('newCatName').value.trim();if(!name)return;const list=catModalType==='expense'?state.expCats:state.incCats;if(list.find(c=>c.name===name))return showToast('已有此分類');list.push({name,icon});document.getElementById('newCatIcon').value='';document.getElementById('newCatName').value='';state._localUpdateAt=Date.now();scheduleSave();renderCatList();renderSettings();showToast('分類已新增');};
 window.deleteCat=function(name){if(catModalType==='expense')state.expCats=state.expCats.filter(c=>c.name!==name);else state.incCats=state.incCats.filter(c=>c.name!==name);state._localUpdateAt=Date.now();scheduleSave();renderCatList();renderSettings();};
 
@@ -3042,9 +3050,6 @@ function renderRateBankList(){
     return`<div class="rate-bank-group">
       <div class="rate-bank-group-header">
         <div class="rate-bank-group-name">🏦 ${bank.name}${websiteLink}</div>
-        <div class="rate-bank-group-actions">
-          <button class="rate-bank-group-add" onclick="openAddRateAcc(${bi})">＋ 手動新增</button>
-        </div>
       </div>
       <div class="rate-table-head">
         <div class="rate-table-head-cell" style="text-align:left">帳戶</div>

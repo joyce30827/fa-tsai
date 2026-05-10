@@ -235,11 +235,13 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .seg-btn{flex:1;padding:7px 4px;border:none;background:none;color:var(--text2);font-size:12px;font-weight:600;font-family:var(--font);border-radius:5px;cursor:pointer;transition:all .15s;letter-spacing:.1px}
 .seg-btn.active{background:var(--orange);color:#fff}
 .cat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:14px 20px}
-.cat-btn{display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 4px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;transition:all .15s}
-.cat-btn:hover{border-color:var(--border2)}
-.cat-btn.active{border-color:var(--orange);background:var(--orange-dim)}
+.cat-btn{display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 4px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);cursor:pointer;transition:all .15s;font-family:var(--font)}
+.cat-btn:hover{border-color:var(--border3);background:var(--bg4)}
+.cat-btn.active,.cat-btn.selected{border-color:var(--orange);background:var(--orange-dim)}
 .cat-btn-icon{font-size:20px}
-.cat-btn-label{font-size:9px;color:var(--text2);font-weight:500;text-align:center;line-height:1.2}
+.cat-btn-label{font-size:9px;color:var(--text);font-weight:500;text-align:center;line-height:1.2}
+.cat-btn span:first-child{font-size:20px}
+.cat-btn span:last-child,.cat-btn>:not(span:first-child){font-size:9px;color:var(--text);font-weight:500;text-align:center;line-height:1.2;word-break:break-all}
 .submit-btn{display:block;width:100%;margin:16px 0 0;padding:13px 20px;background:var(--orange);border:none;border-radius:var(--radius-sm);color:#fff;font-size:14px;font-weight:700;font-family:var(--font);cursor:pointer;letter-spacing:.1px;transition:opacity .15s;box-sizing:border-box}
 .submit-btn:active{opacity:.85}
 .form-hint{font-size:11px;color:var(--text3);padding:6px 20px 0}
@@ -1390,13 +1392,36 @@ select.form-input{appearance:none;cursor:pointer}
 <div class="modal-overlay" id="catModal" onclick="closeCatModal(event)">
   <div class="modal" onclick="event.stopPropagation()" style="max-height:85vh">
     <div class="modal-handle"></div>
-    <div class="modal-title" id="catModalTitle">分類管理</div>
-    <div id="catManageList"></div>
-    <div style="display:flex;gap:8px;margin-top:14px">
-      <input class="form-input" id="newCatIcon" placeholder="🍜" style="width:56px;text-align:center;font-size:18px;padding:8px">
+    <div class="modal-header-row">
+      <div class="modal-title" id="catModalTitle">分類管理</div>
+      <button class="modal-close-btn" onclick="closeCatModal()">✕</button>
+    </div>
+    <div id="catManageList" style="padding:8px 20px 0"></div>
+    <div style="display:flex;gap:8px;padding:12px 20px 4px;border-top:1px solid var(--border);margin-top:8px">
+      <input class="form-input" id="newCatIcon" placeholder="🍜" style="width:52px;text-align:center;font-size:18px;padding:8px;flex-shrink:0">
       <input class="form-input" id="newCatName" placeholder="分類名稱" style="flex:1">
       <button class="add-tag-btn" onclick="addCat()">新增</button>
     </div>
+  </div>
+</div>
+
+<!-- Edit Category Modal -->
+<div class="modal-overlay" id="editCatModal" onclick="closeEditCatModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-header-row">
+      <div class="modal-title">編輯分類</div>
+      <button class="modal-close-btn" onclick="closeEditCatModal()">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Icon</label>
+      <input class="form-input" id="editCatIcon" style="font-size:22px;text-align:center" maxlength="4">
+    </div>
+    <div class="form-group">
+      <label class="form-label">分類名稱</label>
+      <input class="form-input" id="editCatName" placeholder="分類名稱">
+    </div>
+    <button class="submit-btn" onclick="saveEditCat()">儲存</button>
   </div>
 </div>
 
@@ -2348,10 +2373,69 @@ function migrateCats(){
 function renderCatList(){
   migrateCats();
   const list=catModalType==='expense'?state.expCats:state.incCats;
-  document.getElementById('catManageList').innerHTML=list.map(c=>`<div class="cat-manage-item"><div class="cat-manage-left"><span class="cat-manage-icon">${c.icon||'📦'}</span><span class="cat-manage-name">${c.name}</span></div><button class="cat-manage-del" onclick="deleteCat('${c.name}')">✕</button></div>`).join('');
+  document.getElementById('catManageList').innerHTML=list.map((c,i)=>`
+    <div class="cat-manage-item">
+      <div class="cat-manage-left">
+        <span class="cat-manage-icon">${c.icon||'📦'}</span>
+        <span class="cat-manage-name">${c.name}</span>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <button onclick="openEditCatModal(${i})" style="background:none;border:1px solid var(--border2);border-radius:5px;padding:3px 9px;font-size:11px;color:var(--text2);cursor:pointer;font-family:var(--font)">編輯</button>
+        <button class="cat-manage-del" onclick="deleteCat('${c.name}')">✕</button>
+      </div>
+    </div>`).join('');
 }
-window.addCat=function(){const icon=document.getElementById('newCatIcon').value.trim()||'📦';const name=document.getElementById('newCatName').value.trim();if(!name)return;const list=catModalType==='expense'?state.expCats:state.incCats;if(list.find(c=>c.name===name))return showToast('已有此分類');list.push({name,icon});document.getElementById('newCatIcon').value='';document.getElementById('newCatName').value='';state._localUpdateAt=Date.now();scheduleSave();renderCatList();renderSettings();showToast('分類已新增');};
-window.deleteCat=function(name){if(catModalType==='expense')state.expCats=state.expCats.filter(c=>c.name!==name);else state.incCats=state.incCats.filter(c=>c.name!==name);state._localUpdateAt=Date.now();scheduleSave();renderCatList();renderSettings();};
+
+let _editCatIdx=-1;
+window.openEditCatModal=function(i){
+  _editCatIdx=i;
+  const list=catModalType==='expense'?state.expCats:state.incCats;
+  const c=list[i];
+  if(!c)return;
+  document.getElementById('editCatIcon').value=c.icon||'';
+  document.getElementById('editCatName').value=c.name||'';
+  document.getElementById('editCatModal').classList.add('open');
+  setTimeout(()=>document.getElementById('editCatName').focus(),200);
+};
+window.closeEditCatModal=function(e){
+  if(!e||e.target===document.getElementById('editCatModal'))
+    document.getElementById('editCatModal').classList.remove('open');
+};
+window.saveEditCat=function(){
+  const list=catModalType==='expense'?state.expCats:state.incCats;
+  if(_editCatIdx<0||_editCatIdx>=list.length)return;
+  const newIcon=document.getElementById('editCatIcon').value.trim()||'📦';
+  const newName=document.getElementById('editCatName').value.trim();
+  if(!newName)return showToast('請輸入分類名稱');
+  const oldName=list[_editCatIdx].name;
+  list[_editCatIdx]={name:newName,icon:newIcon};
+  // 同步更新已有交易記錄的分類名稱
+  if(oldName!==newName){
+    state.transactions.forEach(t=>{if(t.category===oldName)t.category=newName;});
+  }
+  state._localUpdateAt=Date.now();scheduleSave();
+  document.getElementById('editCatModal').classList.remove('open');
+  renderCatList();renderSettings();
+  showToast('已更新 ✓');
+};
+window.addCat=function(){
+  const icon=document.getElementById('newCatIcon').value.trim()||'📦';
+  const name=document.getElementById('newCatName').value.trim();
+  if(!name)return showToast('請輸入分類名稱');
+  const list=catModalType==='expense'?state.expCats:state.incCats;
+  if(list.find(c=>c.name===name))return showToast('已有此分類');
+  list.push({name,icon});
+  document.getElementById('newCatIcon').value='';
+  document.getElementById('newCatName').value='';
+  state._localUpdateAt=Date.now();scheduleSave();
+  renderCatList();renderSettings();showToast('分類已新增');
+};
+window.deleteCat=function(name){
+  if(catModalType==='expense')state.expCats=state.expCats.filter(c=>c.name!==name);
+  else state.incCats=state.incCats.filter(c=>c.name!==name);
+  state._localUpdateAt=Date.now();scheduleSave();
+  renderCatList();renderSettings();
+};
 
 // ── Transaction search ──
 window.openTxSearch=function(){
@@ -2501,7 +2585,12 @@ window.deleteQuickCat=function(name){
   renderQuickCatList();buildCatGrid();renderSettings();
 };
 window.setType=function(type){curType=type;document.getElementById('typeExpense').className='type-btn'+(type==='expense'?' active expense':'');document.getElementById('typeIncome').className='type-btn'+(type==='income'?' active income':'');document.getElementById('typeTransfer').className='type-btn'+(type==='transfer'?' active transfer':'');const isTransfer=type==='transfer';document.getElementById('catSection').style.display=isTransfer?'none':'block';document.getElementById('accNormalSection').style.display=isTransfer?'none':'block';document.getElementById('accTransferSection').style.display=isTransfer?'block':'none';if(!isTransfer){selCat='';buildCatGrid();}};
-function buildCatGrid(){const cats=curType==='expense'?state.expCats:state.incCats;if(!selCat&&cats.length)selCat=cats[0].name;document.getElementById('catGrid').innerHTML=cats.map(c=>`<button class="cat-btn${selCat===c.name?' selected':''}" onclick="window._selCat('${c.name}')"><span>${c.icon}</span>${c.name}</button>`).join('');}
+function buildCatGrid(){
+  migrateCats();
+  const cats=curType==='expense'?state.expCats:state.incCats;
+  if(!selCat&&cats.length)selCat=cats[0].name;
+  document.getElementById('catGrid').innerHTML=cats.map(c=>`<button class="cat-btn${selCat===c.name?' selected':''}" onclick="window._selCat('${c.name}')"><span style="font-size:20px">${c.icon||'📦'}</span><span style="font-size:9px;color:var(--text);font-weight:500;text-align:center;line-height:1.3">${c.name}</span></button>`).join('');
+}
 window._selCat=n=>{selCat=n;buildCatGrid();};
 window.addTransaction=function(){
   const amt=parseFloat(document.getElementById('txAmt').value);

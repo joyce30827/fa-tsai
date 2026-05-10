@@ -404,7 +404,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .settings-row-title{font-size:13px;font-weight:500}
 .settings-chevron{color:var(--text3);font-size:16px;margin-left:4px}
 .tag-list{display:flex;flex-wrap:wrap;gap:6px;padding:14px 16px 10px}
-.tag-item{display:inline-flex;align-items:center;gap:5px;padding:5px 8px 5px 11px;background:var(--bg3);border:1px solid var(--border2);border-radius:20px;font-size:12px;font-weight:500;color:var(--text2)}
+.tag-item{display:inline-flex;align-items:center;gap:4px;padding:5px 6px 5px 11px;background:var(--bg3);border:1px solid var(--border2);border-radius:20px;font-size:12px;font-weight:500;color:var(--text2)}
+.tag-edit{background:none;border:none;color:var(--text3);cursor:pointer;font-size:11px;padding:0 3px;line-height:1;display:flex;align-items:center;transition:color .12s}
+.tag-edit:hover{color:var(--orange)}
 .tag-del{background:none;border:none;color:var(--text3);cursor:pointer;font-size:12px;padding:0 2px;line-height:1;display:flex;align-items:center;transition:color .12s}
 .tag-del:hover{color:var(--red)}
 .add-tag-row{display:flex;gap:8px;padding:0 16px 14px;align-items:center}
@@ -1405,6 +1407,22 @@ select.form-input{appearance:none;cursor:pointer}
   </div>
 </div>
 
+<!-- Edit Tag Modal -->
+<div class="modal-overlay" id="editTagModal" onclick="closeEditTagModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-header-row">
+      <div class="modal-title">編輯標籤</div>
+      <button class="modal-close-btn" onclick="closeEditTagModal()">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">標籤名稱</label>
+      <input class="form-input" id="editTagInput" placeholder="標籤名稱" maxlength="12">
+    </div>
+    <button class="submit-btn" onclick="saveEditTag()">儲存</button>
+  </div>
+</div>
+
 <!-- Edit Category Modal -->
 <div class="modal-overlay" id="editCatModal" onclick="closeEditCatModal(event)">
   <div class="modal" onclick="event.stopPropagation()">
@@ -2357,10 +2375,35 @@ window.drillIntoMonth=function(ym){
 function renderSettings(){
   document.getElementById('expCatCount').textContent=state.expCats.length+' 個分類';
   document.getElementById('incCatCount').textContent=state.incCats.length+' 個分類';
-  document.getElementById('tagList').innerHTML=state.tags.map(tag=>`<div class="tag-item">${tag}<button class="tag-del" onclick="deleteTag('${tag}')">✕</button></div>`).join('');
+  document.getElementById('tagList').innerHTML=state.tags.map((tag,i)=>`<div class="tag-item">${tag}<button class="tag-edit" onclick="openEditTagModal(${i})" title="編輯">✎</button><button class="tag-del" onclick="deleteTag('${tag}')">✕</button></div>`).join('');
 }
-window.addTag=function(){const inp=document.getElementById('newTagInput');const v=inp.value.trim();if(!v||state.tags.includes(v))return;state.tags.push(v);inp.value='';state._localUpdateAt=Date.now();scheduleSave();renderSettings();showToast('標籤已新增');};
+window.addTag=function(){const inp=document.getElementById('newTagInput');const v=inp.value.trim();if(!v||state.tags.includes(v))return showToast('請輸入標籤名稱或標籤已存在');state.tags.push(v);inp.value='';state._localUpdateAt=Date.now();scheduleSave();renderSettings();showToast('標籤已新增');};
 window.deleteTag=function(tag){state.tags=state.tags.filter(t=>t!==tag);state._localUpdateAt=Date.now();scheduleSave();renderSettings();};
+
+let _editTagIdx=-1;
+window.openEditTagModal=function(i){
+  _editTagIdx=i;
+  document.getElementById('editTagInput').value=state.tags[i]||'';
+  document.getElementById('editTagModal').classList.add('open');
+  setTimeout(()=>document.getElementById('editTagInput').select(),200);
+};
+window.closeEditTagModal=function(e){
+  if(!e||e.target===document.getElementById('editTagModal'))
+    document.getElementById('editTagModal').classList.remove('open');
+};
+window.saveEditTag=function(){
+  const newName=document.getElementById('editTagInput').value.trim();
+  if(!newName)return showToast('請輸入標籤名稱');
+  if(_editTagIdx<0||_editTagIdx>=state.tags.length)return;
+  const oldName=state.tags[_editTagIdx];
+  if(newName!==oldName&&state.tags.includes(newName))return showToast('此標籤已存在');
+  // 同步更新交易記錄裡的標籤
+  state.transactions.forEach(t=>{if(t.tag===oldName)t.tag=newName;});
+  state.tags[_editTagIdx]=newName;
+  state._localUpdateAt=Date.now();scheduleSave();
+  document.getElementById('editTagModal').classList.remove('open');
+  renderSettings();showToast('標籤已更新 ✓');
+};
 
 window.openCatModal=function(type){catModalType=type;document.getElementById('catModalTitle').textContent=type==='expense'?'支出分類管理':'收入分類管理';renderCatList();document.getElementById('catModal').classList.add('open');};
 window.closeCatModal=function(e){if(!e||e.target===document.getElementById('catModal'))document.getElementById('catModal').classList.remove('open');};

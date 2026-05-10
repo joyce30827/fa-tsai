@@ -1763,23 +1763,31 @@ function renderOverview(){
   document.getElementById('totalAssets').textContent='NT$ '+totalA.toLocaleString();
   document.getElementById('totalDebts').textContent='NT$ '+totalD.toLocaleString();
 
-  // Asset breakdown grouped by sub-type
+  // Asset breakdown - 銀行合併為一列
   const ab=document.getElementById('assetBreakdown');
   if(!assets.length){ab.innerHTML='<div class="empty-state"><div class="empty-icon">🏦</div>尚未新增資產帳戶</div>';}
   else{
-    const assetGroups=[
-      {kinds:['asset_bank','asset_foreign'],label:'台幣活存 / 外幣存款'},
-      {kinds:['asset_epay'],label:'電子票證'},
-    ];
     let html='';
-    assetGroups.forEach(g=>{
-      const items=assets.filter(a=>g.kinds.includes(a.kind));
-      if(!items.length)return;
-      html+=`<div class="breakdown-group-label">${g.label}</div>`;
-      html+=items.map(a=>`<div class="breakdown-item"><div class="breakdown-left"><div class="breakdown-dot" style="background:${ACC_KIND_META[a.kind]?.color||'#888'}"></div><div><div class="breakdown-name">${a.name}</div></div></div><div class="breakdown-val" style="color:var(--green)">NT$ ${a.balance.toLocaleString()}</div></div>`).join('');
-    });
-    // subtotal row
-    html+=`<div class="breakdown-subtotal"><span>合計</span><span style="color:var(--green)">NT$ ${totalA.toLocaleString()}</span></div>`;
+    // 銀行帳戶：按銀行名稱合併
+    const bankAccs=assets.filter(a=>a.kind==='asset_bank');
+    if(bankAccs.length){
+      html+=`<div class="breakdown-group-label">台幣活存</div>`;
+      const bankMap={};
+      bankAccs.forEach(a=>{
+        if(!bankMap[a.name])bankMap[a.name]=0;
+        bankMap[a.name]+=a.balance;
+      });
+      html+=Object.entries(bankMap).map(([name,bal])=>
+        `<div class="breakdown-item"><div class="breakdown-left"><div class="breakdown-dot" style="background:${ACC_KIND_META.asset_bank?.color||'#888'}"></div><div><div class="breakdown-name">${name}</div></div></div><div class="breakdown-val" style="color:${bal>=0?'var(--text)':'var(--red)'}">NT$ ${bal.toLocaleString()}</div></div>`
+      ).join('');
+    }
+    // 其他資產：各自一列
+    const otherAssets=assets.filter(a=>a.kind!=='asset_bank');
+    if(otherAssets.length){
+      html+=`<div class="breakdown-group-label">其他資產</div>`;
+      html+=otherAssets.map(a=>`<div class="breakdown-item"><div class="breakdown-left"><div class="breakdown-dot" style="background:${ACC_KIND_META[a.kind]?.color||'#888'}"></div><div><div class="breakdown-name">${a.subName||a.name}</div></div></div><div class="breakdown-val" style="color:var(--text)">NT$ ${a.balance.toLocaleString()}</div></div>`).join('');
+    }
+    html+=`<div class="breakdown-subtotal"><span>合計</span><span style="color:var(--text)">NT$ ${totalA.toLocaleString()}</span></div>`;
     ab.innerHTML=html;
   }
 
@@ -2500,7 +2508,12 @@ window.openTxModal=function(){
   document.getElementById('accTransferSection').style.display='none';
   selCat=state.expCats[0]?.name||'';
   buildCatGrid();
-  const accOpts=state.accounts.map(a=>`<option value="${a.id}">${a.name}</option>`).join('');
+  const accOpts=state.accounts.map(a=>{
+    const label=a.kind==='asset_bank'
+      ?`${a.name}${a.subName?' - '+a.subName:''}`
+      :`${a.subName||a.name}`;
+    return `<option value="${a.id}">${label}</option>`;
+  }).join('');
   document.getElementById('txAccSel').innerHTML=accOpts;
   document.getElementById('txAccFrom').innerHTML=accOpts;
   document.getElementById('txAccTo').innerHTML=accOpts;

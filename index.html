@@ -1063,6 +1063,21 @@ select.form-input{appearance:none;cursor:pointer}
       <div class="page-header">
         <div class="page-header-row"><div class="page-title">設定</div></div>
       </div>
+      <div class="section-heading">資料匯入</div>
+      <div class="settings-section">
+        <div class="settings-card">
+          <div class="settings-row" onclick="openCarrierImportModal()">
+            <div class="settings-row-left">
+              <div class="settings-icon" style="background:rgba(91,164,245,0.12)">🧾</div>
+              <div>
+                <div class="settings-row-title">匯入載具消費明細</div>
+                <div class="settings-row-sub">從財政部電子發票平台下載的 CSV</div>
+              </div>
+            </div>
+            <div class="settings-chevron">›</div>
+          </div>
+        </div>
+      </div>
       <div class="section-heading">分類管理</div>
       <div class="settings-section">
         <div class="settings-card">
@@ -1403,6 +1418,90 @@ select.form-input{appearance:none;cursor:pointer}
       <input class="form-input" id="newCatIcon" placeholder="🍜" style="width:52px;text-align:center;font-size:18px;padding:8px;flex-shrink:0">
       <input class="form-input" id="newCatName" placeholder="分類名稱" style="flex:1">
       <button class="add-tag-btn" onclick="addCat()">新增</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Transaction Modal -->
+<div class="modal-overlay" id="editTxModal" onclick="closeEditTxModal(event)">
+  <div class="modal" onclick="event.stopPropagation()" style="max-height:92vh">
+    <div class="modal-handle"></div>
+    <div class="modal-header-row">
+      <div class="modal-title">編輯明細</div>
+      <button class="modal-close-btn" onclick="closeEditTxModal()">✕</button>
+    </div>
+    <!-- Type seg -->
+    <div class="form-group">
+      <div class="seg-ctrl" id="editTxTypeSeg">
+        <button class="seg-btn active" onclick="setEditTxType('expense',this)">支出</button>
+        <button class="seg-btn" onclick="setEditTxType('income',this)">收入</button>
+        <button class="seg-btn" onclick="setEditTxType('transfer',this)">轉帳</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">金額</label>
+      <input class="form-input" type="number" id="editTxAmount" placeholder="0" min="0">
+    </div>
+    <div class="form-group">
+      <label class="form-label">名稱</label>
+      <input class="form-input" id="editTxTitle" placeholder="消費名稱">
+    </div>
+    <div class="form-group" id="editTxCatGroup">
+      <label class="form-label">分類</label>
+      <div class="cat-grid" id="editTxCatGrid" style="padding:8px 0 0"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">日期</label>
+      <input class="form-input" type="date" id="editTxDate">
+    </div>
+    <div class="form-group">
+      <label class="form-label">帳戶</label>
+      <select class="form-input" id="editTxAcc"></select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">標籤</label>
+      <select class="form-input" id="editTxTag">
+        <option value="">無標籤</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">備註</label>
+      <input class="form-input" id="editTxNote" placeholder="備註（選填）">
+    </div>
+    <div style="display:flex;gap:8px;padding:16px 20px 4px">
+      <button onclick="deleteEditTx()" style="flex:0 0 auto;padding:11px 16px;background:none;border:1px solid rgba(239,68,68,0.3);border-radius:var(--radius-sm);color:var(--red);font-size:13px;font-weight:600;font-family:var(--font);cursor:pointer">刪除</button>
+      <button onclick="saveEditTx()" style="flex:1;padding:11px;background:var(--orange);border:none;border-radius:var(--radius-sm);color:#fff;font-size:13px;font-weight:700;font-family:var(--font);cursor:pointer">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Carrier CSV Import Modal -->
+<div class="modal-overlay" id="carrierImportModal" onclick="closeCarrierImportModal(event)">
+  <div class="modal" onclick="event.stopPropagation()" style="max-height:90vh">
+    <div class="modal-handle"></div>
+    <div class="modal-header-row">
+      <div class="modal-title">🧾 匯入載具消費明細</div>
+      <button class="modal-close-btn" onclick="closeCarrierImportModal()">✕</button>
+    </div>
+    <div style="padding:10px 20px 0;font-size:12px;color:var(--text2);line-height:1.7">
+      <div style="margin-bottom:8px">請先到 <a href="https://www.einvoice.nat.gov.tw" target="_blank" style="color:var(--orange)">財政部電子發票平台</a> 下載載具消費明細 CSV。</div>
+      <div style="background:var(--bg3);border-radius:var(--radius-sm);border:1px solid var(--border);padding:10px 12px;margin-bottom:12px;font-size:11px;color:var(--text3)">
+        下載路徑：登入 → 查詢載具 → 雲端發票明細 → 下載 CSV
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">選擇帳戶（消費記錄將記在此帳戶）</label>
+      <select class="form-input" id="carrierAccSel"></select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">選擇 CSV 檔案</label>
+      <input type="file" id="carrierCsvFile" accept=".csv" style="width:100%;padding:8px 12px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-size:13px;font-family:var(--font)">
+    </div>
+    <div id="carrierPreview" style="display:none;margin:0 20px;padding:12px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);font-size:12px;max-height:200px;overflow-y:auto"></div>
+    <div id="carrierImportError" style="font-size:11px;color:var(--red);padding:6px 20px 0"></div>
+    <div style="display:flex;gap:8px;padding:16px 20px 4px">
+      <button onclick="previewCarrierCSV()" style="flex:1;padding:11px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-size:13px;font-weight:600;font-family:var(--font);cursor:pointer">預覽</button>
+      <button onclick="importCarrierCSV()" style="flex:1;padding:11px;background:var(--orange);border:none;border-radius:var(--radius-sm);color:#fff;font-size:13px;font-weight:700;font-family:var(--font);cursor:pointer">匯入</button>
     </div>
   </div>
 </div>
@@ -2229,14 +2328,13 @@ window.changeMonth=function(d){const[y,m]=state.currentMonth.split('-').map(Numb
 function tlCardHTML(t){
   const acc=accById(t.accountId);
   const amtCls=t.type==='income'?'income':t.type==='expense'?'expense':'neutral';
-  const catCls=amtCls;
   const badgeColor=acc?(ACC_KIND_META[acc.kind]?.color||'#555'):'#555';
-  const accBadge=acc?`<span class="tl-acc-badge" style="background:${badgeColor}">${acc.name.slice(0,4)}</span>`:'';
+  const accBadge=acc?`<span class="tl-acc-badge" style="background:${badgeColor}">${acc.subName||acc.name.slice(0,4)}</span>`:'';
   const tagBadge=t.tag?`<span class="tl-tag-badge">${t.tag}</span>`:'';
   const amtStr=t.type==='income'?`$ ${t.amount.toLocaleString()}`:`$ -${t.amount.toLocaleString()}`;
-  return`<div class="tl-row">
+  return`<div class="tl-row" onclick="openEditTxModal('${t.id}')">
     <div class="tl-info">
-      <div class="tl-cat ${catCls}">${t.category}</div>
+      <div class="tl-cat ${amtCls}">${t.category}</div>
       <div class="tl-desc">${t.title||t.note||t.category}</div>
       <div class="tl-badges">${accBadge}${tagBadge}</div>
     </div>
@@ -3045,8 +3143,247 @@ window.syncBillsFromGmail=async function(){
 };
 
 
+// ── Edit Transaction Modal ──
+let _editTxId=null;
+let _editTxType='expense';
+
+window.openEditTxModal=function(id){
+  const t=state.transactions.find(tx=>tx.id===id);
+  if(!t)return;
+  _editTxId=id;
+  _editTxType=t.type||'expense';
+  // Type seg
+  document.querySelectorAll('#editTxTypeSeg .seg-btn').forEach((b,i)=>{
+    const types=['expense','income','transfer'];
+    b.classList.toggle('active',types[i]===_editTxType);
+  });
+  document.getElementById('editTxAmount').value=t.amount||'';
+  document.getElementById('editTxTitle').value=t.title||'';
+  document.getElementById('editTxDate').value=t.date||'';
+  document.getElementById('editTxNote').value=t.note||'';
+  // Account selector
+  const accOpts=state.accounts.map(a=>{
+    const label=a.kind==='asset_bank'?`${a.name}${a.subName?' - '+a.subName:''}`:(a.subName||a.name);
+    return`<option value="${a.id}"${a.id===t.accountId?' selected':''}>${label}</option>`;
+  }).join('');
+  document.getElementById('editTxAcc').innerHTML=accOpts;
+  // Tag selector
+  document.getElementById('editTxTag').innerHTML=`<option value="">無標籤</option>`+
+    state.tags.map(tag=>`<option value="${tag}"${tag===t.tag?' selected':''}>${tag}</option>`).join('');
+  // Category grid
+  buildEditCatGrid(t.category);
+  // Cat group visibility
+  document.getElementById('editTxCatGroup').style.display=_editTxType==='transfer'?'none':'block';
+  document.getElementById('editTxModal').classList.add('open');
+};
+
+window.closeEditTxModal=function(e){
+  if(!e||e.target===document.getElementById('editTxModal'))
+    document.getElementById('editTxModal').classList.remove('open');
+};
+
+window.setEditTxType=function(type,btn){
+  _editTxType=type;
+  document.querySelectorAll('#editTxTypeSeg .seg-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('editTxCatGroup').style.display=type==='transfer'?'none':'block';
+  buildEditCatGrid();
+};
+
+let _editSelCat='';
+function buildEditCatGrid(selCat){
+  migrateCats();
+  if(selCat!==undefined)_editSelCat=selCat;
+  const cats=_editTxType==='income'?state.incCats:state.expCats;
+  if(!_editSelCat&&cats.length)_editSelCat=cats[0].name;
+  document.getElementById('editTxCatGrid').innerHTML=cats.map(c=>
+    `<button class="cat-btn${_editSelCat===c.name?' selected':''}" onclick="window._editSelCatFn('${c.name}')">
+      <span style="font-size:20px">${c.icon||'📦'}</span>
+      <span style="font-size:9px;color:var(--text);font-weight:500;text-align:center;line-height:1.3">${c.name}</span>
+    </button>`
+  ).join('');
+}
+window._editSelCatFn=function(name){_editSelCat=name;buildEditCatGrid();};
+
+window.saveEditTx=function(){
+  const t=state.transactions.find(tx=>tx.id===_editTxId);
+  if(!t)return;
+  const amount=parseFloat(document.getElementById('editTxAmount').value)||0;
+  if(!amount)return showToast('請輸入金額');
+  t.type=_editTxType;
+  t.amount=amount;
+  t.title=document.getElementById('editTxTitle').value.trim();
+  t.date=document.getElementById('editTxDate').value;
+  t.accountId=document.getElementById('editTxAcc').value;
+  t.tag=document.getElementById('editTxTag').value;
+  t.note=document.getElementById('editTxNote').value.trim();
+  t.category=_editTxType==='transfer'?'轉帳':(_editSelCat||t.category);
+  state._localUpdateAt=Date.now();scheduleSave();
+  document.getElementById('editTxModal').classList.remove('open');
+  renderAll();showToast('明細已更新 ✓');
+};
+
+window.deleteEditTx=function(){
+  if(!confirm('確認刪除此明細？'))return;
+  state.transactions=state.transactions.filter(tx=>tx.id!==_editTxId);
+  state._localUpdateAt=Date.now();scheduleSave();
+  document.getElementById('editTxModal').classList.remove('open');
+  renderAll();showToast('已刪除');
+};
 // ══════════════════════════════════════════════
-// Interest Rate & Allocation System
+
+let _carrierParsed=[];
+
+window.openCarrierImportModal=function(){
+  // 填入帳戶選項
+  const sel=document.getElementById('carrierAccSel');
+  sel.innerHTML=state.accounts.map(a=>{
+    const label=a.kind==='asset_bank'?`${a.name}${a.subName?' - '+a.subName:''}`:(a.subName||a.name);
+    return`<option value="${a.id}">${label}</option>`;
+  }).join('');
+  document.getElementById('carrierCsvFile').value='';
+  document.getElementById('carrierPreview').style.display='none';
+  document.getElementById('carrierImportError').textContent='';
+  _carrierParsed=[];
+  document.getElementById('carrierImportModal').classList.add('open');
+};
+window.closeCarrierImportModal=function(e){
+  if(!e||e.target===document.getElementById('carrierImportModal'))
+    document.getElementById('carrierImportModal').classList.remove('open');
+};
+
+function parseCarrierCSV(text){
+  const lines=text.split('\n').map(l=>l.trim()).filter(l=>l&&!l.startsWith('捐贈')&&!l.startsWith('注意'));
+  if(!lines.length)throw new Error('CSV 內容為空');
+  // 跳過 header（第一行）
+  const rows=lines.slice(1).map(l=>{
+    // 處理 CSV 欄位（考慮欄位內有逗號）
+    const cols=[];let cur='';let inQ=false;
+    for(const ch of l){
+      if(ch==='"'){inQ=!inQ;}
+      else if(ch===','&&!inQ){cols.push(cur.trim());cur='';}
+      else cur+=ch;
+    }
+    cols.push(cur.trim());
+    return cols;
+  }).filter(c=>c.length>=4);
+
+  // 欄位：0=載具名稱, 1=發票日期, 2=發票號碼, 3=發票金額, 4=發票狀態, 5=折讓, 6=賣方統編, 7=賣方名稱, 8=賣方地址, 9=買方統編, 10=數量, 11=單價, 12=金額, 13=品名
+  // 按發票號碼合併
+  const invoiceMap={};
+  rows.forEach(c=>{
+    const invNo=c[2]?.trim();
+    const dateRaw=c[1]?.trim(); // YYYYMMDD
+    const amount=parseFloat(c[3])||0;
+    const sellerName=c[7]?.trim()||'未知商家';
+    const itemName=c[13]?.trim()||'';
+    const status=c[4]?.trim()||'';
+    if(!invNo||invNo.length<8)return;
+    if(!invoiceMap[invNo]){
+      invoiceMap[invNo]={
+        invNo,date:dateRaw,sellerName,amount:0,items:[],status
+      };
+    }
+    invoiceMap[invNo].amount+=amount;
+    if(itemName&&amount>0)invoiceMap[invNo].items.push(`${itemName}(${amount})`);
+  });
+
+  // 轉成交易記錄格式，過濾掉金額為0或負的（純折扣發票）
+  return Object.values(invoiceMap)
+    .filter(inv=>inv.amount>0)
+    .map(inv=>{
+      const d=inv.date;
+      const dateStr=d.length===8?`${d.slice(0,4)}-${d.slice(4,6)}-${d.slice(6,8)}`:d;
+      return{
+        invNo:inv.invNo,
+        date:dateStr,
+        title:inv.sellerName,
+        note:inv.items.slice(0,3).join('、')+(inv.items.length>3?`…等${inv.items.length}項`:''),
+        amount:Math.round(inv.amount),
+        category:'購物',
+        type:'expense',
+        sellerName:inv.sellerName
+      };
+    })
+    .sort((a,b)=>b.date.localeCompare(a.date));
+}
+
+window.previewCarrierCSV=async function(){
+  const file=document.getElementById('carrierCsvFile').files[0];
+  const errEl=document.getElementById('carrierImportError');
+  const previewEl=document.getElementById('carrierPreview');
+  errEl.textContent='';
+  if(!file){errEl.textContent='請選擇 CSV 檔案';return;}
+  try{
+    const text=await file.text();
+    _carrierParsed=parseCarrierCSV(text);
+    if(!_carrierParsed.length){errEl.textContent='沒有找到有效的消費記錄';return;}
+    // 計算已存在的發票（重複檢查）
+    const existing=new Set(state.transactions.map(t=>t.invNo).filter(Boolean));
+    const newOnes=_carrierParsed.filter(r=>!existing.has(r.invNo));
+    const dupCount=_carrierParsed.length-newOnes.length;
+    previewEl.style.display='block';
+    previewEl.innerHTML=`<div style="color:var(--text2);margin-bottom:8px">找到 <strong style="color:var(--text)">${_carrierParsed.length}</strong> 筆發票${dupCount?`，其中 <strong style="color:var(--orange)">${dupCount}</strong> 筆已存在（將略過）`:''}</div>`+
+      _carrierParsed.slice(0,8).map(r=>{
+        const isDup=existing.has(r.invNo);
+        return`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);opacity:${isDup?'.4':'1'}">
+          <div><div style="font-size:11px;font-weight:500">${r.title}</div><div style="font-size:10px;color:var(--text3)">${r.date} · ${r.invNo}${isDup?' · 已存在':''}</div></div>
+          <div style="font-size:12px;font-weight:700;color:var(--red);flex-shrink:0;margin-left:8px">-${r.amount.toLocaleString()}</div>
+        </div>`;
+      }).join('')+(_carrierParsed.length>8?`<div style="font-size:11px;color:var(--text3);padding-top:6px">…還有 ${_carrierParsed.length-8} 筆</div>`:'');
+  }catch(e){errEl.textContent='解析失敗：'+e.message;}
+};
+
+window.importCarrierCSV=async function(){
+  const file=document.getElementById('carrierCsvFile').files[0];
+  const accId=document.getElementById('carrierAccSel').value;
+  const errEl=document.getElementById('carrierImportError');
+  errEl.textContent='';
+  if(!file){errEl.textContent='請選擇 CSV 檔案';return;}
+  if(!accId){errEl.textContent='請選擇帳戶';return;}
+  if(!_carrierParsed.length){
+    try{const text=await file.text();_carrierParsed=parseCarrierCSV(text);}
+    catch(e){errEl.textContent='解析失敗：'+e.message;return;}
+  }
+  const existing=new Set(state.transactions.map(t=>t.invNo).filter(Boolean));
+  let count=0;
+  _carrierParsed.forEach(r=>{
+    if(existing.has(r.invNo))return; // 跳過重複
+    state.transactions.push({
+      id:'tx'+Date.now()+Math.random(),
+      date:r.date,
+      type:'expense',
+      amount:r.amount,
+      category:guessCategory(r.sellerName,r.note),
+      title:r.title,
+      note:r.note,
+      accountId:accId,
+      invNo:r.invNo,
+      tag:'',
+    });
+    count++;
+  });
+  state._localUpdateAt=Date.now();scheduleSave();
+  document.getElementById('carrierImportModal').classList.remove('open');
+  renderAll();
+  showToast(`已匯入 ${count} 筆消費記錄 ✓`);
+};
+
+// 根據商家名稱和品名猜測分類
+function guessCategory(seller,note){
+  const text=(seller+note).toLowerCase();
+  if(/全聯|家樂福|大潤發|愛買|pxmart/.test(text))return'購物';
+  if(/便利商店|7-eleven|全家|萊爾富|ok便利/.test(text))return'餐飲';
+  if(/餐|飲|食|cafe|coffee|飯|麵|鍋|燒烤|壽司|pizza/.test(text))return'餐飲';
+  if(/交通|捷運|公車|計程|uber|taxi|油|加油/.test(text))return'交通';
+  if(/醫|藥|診|健|hospital/.test(text))return'醫療';
+  if(/電影|娛樂|遊戲|ktv|netflix/.test(text))return'娛樂';
+  if(/學|教|書|文具|課/.test(text))return'教育';
+  if(/水電|瓦斯|電信|中華電信|寬頻/.test(text))return'居家';
+  if(/蝦皮|momo|shopee|amazon|pchome/.test(text))return'購物';
+  if(/宜家|ikea/.test(text))return'居家';
+  return'購物';
+}
 // ══════════════════════════════════════════════
 
 // Data: state.bankRates = [{id, name, accounts:[{id,name,rate,rangeMin,rangeMax,expiry,linkedAccId,rateUpdatedAt}]}]

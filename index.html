@@ -234,7 +234,15 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .seg-ctrl{display:flex;background:var(--bg3);border-radius:var(--radius-sm);padding:3px;gap:3px;border:1px solid var(--border)}
 .seg-btn{flex:1;padding:7px 4px;border:none;background:none;color:var(--text2);font-size:12px;font-weight:600;font-family:var(--font);border-radius:5px;cursor:pointer;transition:all .15s;letter-spacing:.1px}
 .seg-btn.active{background:var(--orange);color:#fff}
-.cat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:14px 20px}
+/* ── Category list style (horizontal scroll, left icon + right text) ── */
+.cat-list{display:flex;flex-direction:column;gap:2px;max-height:180px;overflow-y:auto;border-radius:var(--radius-sm);border:1px solid var(--border)}
+.cat-list-item{display:flex;align-items:center;gap:10px;padding:8px 12px;background:none;border:none;border-bottom:1px solid var(--border);color:var(--text);font-family:var(--font);cursor:pointer;transition:background .12s;text-align:left;width:100%;font-size:13px}
+.cat-list-item:last-child{border-bottom:none}
+.cat-list-item:hover{background:var(--bg3)}
+.cat-list-item.selected{background:var(--orange-dim);color:var(--orange)}
+.cat-list-item.selected .cat-list-name{color:var(--orange);font-weight:600}
+.cat-list-icon{font-size:18px;flex-shrink:0;width:24px;text-align:center}
+.cat-list-name{font-size:13px;font-weight:400}
 .cat-btn{display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 4px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);cursor:pointer;transition:all .15s;font-family:var(--font)}
 .cat-btn:hover{border-color:var(--border3);background:var(--bg4)}
 .cat-btn.active,.cat-btn.selected{border-color:var(--orange);background:var(--orange-dim)}
@@ -1318,23 +1326,30 @@ select.form-input{appearance:none;cursor:pointer}
       <button class="type-btn income" id="typeIncome" onclick="setType('income')">收入</button>
       <button class="type-btn transfer" id="typeTransfer" onclick="setType('transfer')">移轉</button>
     </div>
+    <!-- 1. 分類 -->
     <div class="form-group" id="catSection">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
         <label class="form-label" style="margin-bottom:0">分類</label>
         <button class="icon-btn" style="width:28px;height:28px;font-size:14px" onclick="openQuickCatModal()">⚙️</button>
       </div>
-      <div class="cat-grid" id="catGrid"></div>
+      <div class="cat-list" id="catGrid"></div>
     </div>
+    <!-- 2. 金額 -->
     <div class="form-group"><label class="form-label">金額 (NT$)</label><input class="form-input amount-input" type="number" id="txAmt" placeholder="0" inputmode="decimal"></div>
-    <div class="form-group"><label class="form-label">明細標題</label><input class="form-input" type="text" id="txTitle" placeholder="例：午餐、加油、薪資"></div>
-    <div class="form-group"><label class="form-label">標籤（選填）</label><select class="form-input" id="txTagSel"><option value="">無標籤</option></select></div>
+    <!-- 3. 名稱 -->
+    <div class="form-group"><label class="form-label">名稱</label><input class="form-input" type="text" id="txTitle" placeholder="例：午餐、加油、薪資"></div>
+    <!-- 4. 日期 -->
     <div class="form-group"><label class="form-label">日期</label><input class="form-input" type="date" id="txDate"></div>
+    <!-- 5. 帳戶 -->
     <div class="form-group" id="accNormalSection"><label class="form-label">帳戶</label><select class="form-input" id="txAccSel"></select></div>
     <div id="accTransferSection" style="display:none">
       <div class="form-group"><label class="form-label">從帳戶</label><select class="form-input" id="txAccFrom"></select></div>
       <div class="form-group"><label class="form-label">到帳戶</label><select class="form-input" id="txAccTo"></select></div>
     </div>
-    <div class="form-group"><label class="form-label">明細內容（選填）</label><input class="form-input" type="text" id="txNote" placeholder="補充說明..."></div>
+    <!-- 6. 標籤 -->
+    <div class="form-group"><label class="form-label">標籤（選填）</label><select class="form-input" id="txTagSel"><option value="">無標籤</option></select></div>
+    <!-- 7. 備註 -->
+    <div class="form-group"><label class="form-label">備註（選填）</label><input class="form-input" type="text" id="txNote" placeholder="補充說明..."></div>
     <button class="submit-btn" onclick="addTransaction()">記帳</button>
   </div>
 </div>
@@ -1448,7 +1463,7 @@ select.form-input{appearance:none;cursor:pointer}
     </div>
     <div class="form-group" id="editTxCatGroup">
       <label class="form-label">分類</label>
-      <div class="cat-grid" id="editTxCatGrid" style="padding:8px 0 0"></div>
+      <div class="cat-list" id="editTxCatGrid"></div>
     </div>
     <div class="form-group">
       <label class="form-label">日期</label>
@@ -1555,26 +1570,6 @@ select.form-input{appearance:none;cursor:pointer}
   </div>
 </div>
 
-<!-- JSON Import Modal -->
-<div class="modal-overlay" id="jsonImportModal" onclick="closeJsonImportModal(event)">
-  <div class="modal" onclick="event.stopPropagation()" style="max-height:88vh">
-    <div class="modal-handle"></div>
-    <div class="modal-header-row">
-      <div class="modal-title">📋 貼入 JSON 匯入</div>
-      <button class="modal-close-btn" onclick="closeJsonImportModal()">✕</button>
-    </div>
-    <p style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:8px">複製下方 prompt，貼到 Claude 或 ChatGPT，再把回傳的 JSON 貼到下面欄位：</p>
-    <div style="position:relative;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px">
-      <div id="jsonPromptText" style="font-size:12px;color:var(--blue);line-height:1.7;font-family:monospace;white-space:pre-wrap;word-break:break-all"></div>
-      <button onclick="copyJsonPrompt()" style="position:absolute;top:8px;right:8px;background:var(--bg4);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:11px;color:var(--text2);cursor:pointer;font-family:var(--font)" id="copyPromptBtn">複製</button>
-    </div>
-    <p style="font-size:12px;color:var(--text3);margin-bottom:8px">取得 JSON 後貼到下方：</p>
-    <textarea id="jsonImportInput" style="width:100%;height:140px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:12px;font-family:monospace;padding:12px;resize:vertical;line-height:1.5" placeholder='{"banks":[{"name":"玉山銀行","icon":"🦅","tiers":[{"upTo":null,"rate":0.80}]}]}'></textarea>
-    <div id="jsonImportError" style="font-size:12px;color:var(--red);margin-top:6px;min-height:16px"></div>
-    <button class="submit-btn" style="margin-top:12px" onclick="importFromJson()">匯入</button>
-    <button style="width:100%;padding:12px;background:none;color:var(--text2);border:none;font-size:14px;font-family:var(--font);cursor:pointer;margin-top:6px" onclick="closeJsonImportModal()">取消</button>
-  </div>
-</div>
 
 <!-- Add Bank Modal -->
 <div class="modal-overlay" id="addBankModal" onclick="closeAddBankModal(event)">
@@ -2743,7 +2738,12 @@ function buildCatGrid(){
   migrateCats();
   const cats=curType==='expense'?state.expCats:state.incCats;
   if(!selCat&&cats.length)selCat=cats[0].name;
-  document.getElementById('catGrid').innerHTML=cats.map(c=>`<button class="cat-btn${selCat===c.name?' selected':''}" onclick="window._selCat('${c.name}')"><span style="font-size:20px">${c.icon||'📦'}</span><span style="font-size:9px;color:var(--text);font-weight:500;text-align:center;line-height:1.3">${c.name}</span></button>`).join('');
+  document.getElementById('catGrid').innerHTML=cats.map(c=>
+    `<button class="cat-list-item${selCat===c.name?' selected':''}" onclick="window._selCat('${c.name}')">
+      <span class="cat-list-icon">${c.icon||'📦'}</span>
+      <span class="cat-list-name">${c.name}</span>
+    </button>`
+  ).join('');
 }
 window._selCat=n=>{selCat=n;buildCatGrid();};
 window.addTransaction=function(){
@@ -2933,27 +2933,38 @@ function renderBillsByCategory(cat,elId){
     const dueTs=b.dueDate?new Date(b.dueDate).getTime():null;
     const days=dueTs?Math.ceil((dueTs-now)/86400000):null;
     let urgencyColor='var(--text3)';
-    let urgencyText=days!==null?`${days<0?'已逾期':days===0?'今天到期':`還有 ${days} 天`}`:'';
-    if(days!==null){
+    let urgencyText='';
+    if(b.isPaid){
+      urgencyText='已繳清';urgencyColor='var(--green)';
+    } else if(days!==null){
+      urgencyText=days<0?'已逾期':days===0?'今天到期':`還有 ${days} 天`;
       if(days<0)urgencyColor='var(--red)';
       else if(days<=3)urgencyColor='var(--red)';
       else if(days<=7)urgencyColor='var(--accent)';
     }
     const autoDebit=b.autoDebitAcc?
-      `<span style="font-size:10px;color:var(--green);background:rgba(46,204,142,0.1);padding:1px 6px;border-radius:4px;margin-left:4px">自動扣 ${b.autoDebitAcc}</span>`:'';
-    const pwd=BILL_PDF_PWD[b.name]?`<div style="font-size:10px;color:var(--text3);margin-top:3px">PDF密碼：${BILL_PDF_PWD[b.name]}</div>`:'';
-    return`<div class="rate-bank-card" style="margin:0 16px 8px">
+      `<span style="font-size:10px;color:var(--green);background:rgba(46,204,142,0.1);padding:1px 6px;border-radius:4px">自動扣 ${b.autoDebitAcc}</span>`:'';
+    const paidBadge=b.isPaid?
+      `<span style="font-size:10px;color:var(--green);background:rgba(46,204,142,0.1);border:1px solid rgba(46,204,142,0.2);padding:1px 7px;border-radius:10px">✓ 已繳清</span>`:'';
+    const gmailLink=b.gmailThreadId?
+      `<a href="https://mail.google.com/mail/#inbox/${b.gmailThreadId}" target="_blank" style="font-size:11px;color:var(--orange);text-decoration:none;font-weight:600">查看帳單 ›</a>`:'';
+    const pwd=BILL_PDF_PWD[b.name]?`<div style="font-size:10px;color:var(--text3);margin-top:3px">🔑 PDF密碼：${BILL_PDF_PWD[b.name]}</div>`:'';
+    return`<div class="rate-bank-card" style="margin:0 16px 8px;cursor:${b.gmailThreadId?'pointer':'default'}" onclick="${b.gmailThreadId?`window.open('https://mail.google.com/mail/#inbox/${b.gmailThreadId}','_blank')`:''}">
       <div style="padding:12px 16px">
         <div style="display:flex;align-items:center;justify-content:space-between">
-          <div style="font-size:14px;font-weight:600">${b.name}${autoDebit}</div>
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+            <span style="font-size:14px;font-weight:600">${b.name}</span>
+            ${autoDebit}${paidBadge}
+          </div>
           <div style="display:flex;align-items:center;gap:8px">
-            <div style="font-size:15px;font-weight:700;color:var(--blue)">${b.amount?'NT$ '+Number(b.amount).toLocaleString():'—'}</div>
-            <button onclick="deleteBill(${i},'${cat}')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;padding:2px">✕</button>
+            <div style="font-size:15px;font-weight:700;color:${b.isPaid?'var(--green)':'var(--blue)'}">${b.amount!=null?'NT$ '+Number(b.amount).toLocaleString():'—'}</div>
+            <button onclick="event.stopPropagation();deleteBill(${i},'${cat}')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;padding:2px">✕</button>
           </div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;margin-top:5px;flex-wrap:wrap">
           ${b.dueDate?`<span style="font-size:12px;color:var(--text2)">截止：${new Date(b.dueDate).toLocaleDateString('zh-TW')}</span>`:''}
-          ${urgencyText?`<span style="font-size:11px;color:${urgencyColor};font-weight:500">${urgencyText}</span>`:''}
+          ${urgencyText?`<span style="font-size:11px;color:${urgencyColor};font-weight:600">${urgencyText}</span>`:''}
+          ${gmailLink}
         </div>
         ${pwd}
       </div>
@@ -3197,9 +3208,9 @@ function buildEditCatGrid(selCat){
   const cats=_editTxType==='income'?state.incCats:state.expCats;
   if(!_editSelCat&&cats.length)_editSelCat=cats[0].name;
   document.getElementById('editTxCatGrid').innerHTML=cats.map(c=>
-    `<button class="cat-btn${_editSelCat===c.name?' selected':''}" onclick="window._editSelCatFn('${c.name}')">
-      <span style="font-size:20px">${c.icon||'📦'}</span>
-      <span style="font-size:9px;color:var(--text);font-weight:500;text-align:center;line-height:1.3">${c.name}</span>
+    `<button class="cat-list-item${_editSelCat===c.name?' selected':''}" onclick="window._editSelCatFn('${c.name}')">
+      <span class="cat-list-icon">${c.icon||'📦'}</span>
+      <span class="cat-list-name">${c.name}</span>
     </button>`
   ).join('');
 }

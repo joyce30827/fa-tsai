@@ -3078,6 +3078,7 @@ window.syncBillsFromGmail=async function(){
 
     const bankMap={};
     const newBills=[];
+    const paidMap={}; // bankName -> true/amount，代表已繳清
 
     details.forEach(msg=>{
       if(!msg.payload)return;

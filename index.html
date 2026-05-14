@@ -3056,7 +3056,7 @@ window.syncBillsFromGmail=async function(){
   if(btn){btn.textContent='⏳';btn.disabled=true;}
   try{
     // 搜尋帳單信件
-    const q=encodeURIComponent('subject:(對帳單 OR 帳單 OR 信用卡 OR 電信費 OR statement) newer_than:90d');
+    const q=encodeURIComponent('subject:(對帳單 OR 帳單 OR 信用卡 OR 電信費 OR 繳款入帳 OR 繳款成功 OR statement) newer_than:90d');
     const listRes=await fetch(
       `https://www.googleapis.com/gmail/v1/users/me/messages?q=${q}&maxResults=50`,
       {headers:{Authorization:`Bearer ${gmailAccessToken}`}}
@@ -3105,9 +3105,16 @@ window.syncBillsFromGmail=async function(){
         bankMap[bankName]={bankName,lastDate:new Date(ts).toISOString().slice(0,10),lastSubject:subject};
       }
 
-      // 解析信用卡帳單
+      // ✅ 偵測已繳款：「繳款入帳彙整通知」才是真正已繳清
+      if(subject.includes('繳款入帳')||subject.includes('繳款成功')||subject.includes('繳款紀錄')){
+        const amtMatch=snippet.match(/金額[　 ]*([0-9,]+)/);
+        const paidAmt=amtMatch?parseInt(amtMatch[1].replace(/,/g,'')):null;
+        if(paidMap[bankName]===undefined||paidAmt)paidMap[bankName]=paidAmt||true;
+      }
+
+      // 解析信用卡帳單（含 threadId 供點擊查看）
       if(subject.includes('信用卡')&&(subject.includes('帳單')||subject.includes('對帳單'))){
-        const amtMatch=snippet.match(/應繳總金額[　 ]*([0-9,]+)/);
+        const amtMatch=snippet.match(/應繳總金額[　 ]*([0-9,]+)/)||snippet.match(/本期應繳總金額[　 ]*([0-9,]+)/);
         const amount=amtMatch?parseInt(amtMatch[1].replace(/,/g,'')):null;
         const dueMatch=snippet.match(/繳款截止日[　 ]*(\d{2,4}[\/\-]\d{1,2}[\/\-]\d{1,2})/);
         let dueDate=null;
@@ -3115,10 +3122,10 @@ window.syncBillsFromGmail=async function(){
           const parts=dueMatch[1].split(/[\/\-]/);
           dueDate=parts[0].length<=3?`${parseInt(parts[0])+1911}-${parts[1].padStart(2,'0')}-${parts[2].padStart(2,'0')}`:dueMatch[1];
         }
-        newBills.push({id:'bill'+ts,name:bankName,category:'credit_card',amount,dueDate,autoDebitAcc:null,source:'gmail',gmailSubject:subject,_ts:ts});
+        newBills.push({id:'bill'+ts,name:bankName,category:'credit_card',amount,dueDate,autoDebitAcc:null,source:'gmail',gmailSubject:subject,gmailThreadId:msg.id,isPaid:false,_ts:ts});
       }
 
-      // 解析電信帳單
+      // 解析電信帳單（含 threadId）
       if(bankName==='中華電信'&&subject.includes('費用')&&!subject.includes('繳費結果')){
         const dueMatch=snippet.match(/繳費截止[：:日 　]*(\d{2,4}[\/\-]\d{1,2}[\/\-]\d{1,2})/);
         let dueDate=null;
@@ -3126,20 +3133,23 @@ window.syncBillsFromGmail=async function(){
           const parts=dueMatch[1].split(/[\/\-]/);
           dueDate=parts[0].length<=3?`${parseInt(parts[0])+1911}-${parts[1].padStart(2,'0')}-${parts[2].padStart(2,'0')}`:dueMatch[1];
         }
-        newBills.push({id:'bill_cht_'+ts,name:'中華電信',category:'telco',amount:null,dueDate,autoDebitAcc:null,source:'gmail',gmailSubject:subject,_ts:ts});
+        newBills.push({id:'bill_cht_'+ts,name:'中華電信',category:'telco',amount:null,dueDate,autoDebitAcc:null,source:'gmail',gmailSubject:subject,gmailThreadId:msg.id,isPaid:false,_ts:ts});
       }
     });
 
     // 合併：只更新 gmail 來源的帳單，保留手動新增的
     const d=getBillsState();
     d.gmailBanks=Object.values(bankMap);
-    // 移除舊的 gmail 帳單，保留手動的
     d.bills=d.bills.filter(b=>b.source!=='gmail');
-    // 每個 bankName + category 只取最新一筆
     const seen={};
     newBills.sort((a,b)=>b._ts-a._ts).forEach(b=>{
       const key=b.name+'_'+b.category;
-      if(!seen[key]){seen[key]=true;d.bills.push(b);}
+      if(!seen[key]){
+        seen[key]=true;
+        // 套用已繳款標記
+        if(paidMap[b.name]!==undefined)b.isPaid=true;
+        d.bills.push(b);
+      }
     });
     d.lastSync=Date.now();
     state._localUpdateAt=Date.now();scheduleSave();

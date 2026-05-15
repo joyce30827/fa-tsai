@@ -2902,8 +2902,10 @@ function renderBillsAlert(){
   const d=getBillsState();
   const now=Date.now();
   const urgent=d.bills.filter(b=>{
+    if(b.isPaid)return false; // 已繳清不顯示
     if(!b.dueDate)return false;
     const days=Math.ceil((new Date(b.dueDate).getTime()-now)/86400000);
+    if(days<-14)return false; // 逾期超過 14 天不顯示（可能已手動繳清）
     return days<=3;
   }).sort((a,b)=>a.dueDate>b.dueDate?1:-1);
   const bar=document.getElementById('billsAlertBar');

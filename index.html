@@ -32,7 +32,9 @@
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font);overflow:hidden}
 
-/* ── Login ── */
+/* ── SVG Icon System ── */
+.icon{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+.icon svg{display:block}
 .login-screen{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:flex-end;z-index:999;padding:0;overflow:hidden}
 .login-bg{position:absolute;inset:0;pointer-events:none;overflow:hidden}
 .login-bg-circle1{position:absolute;top:-120px;right:-80px;width:320px;height:320px;border-radius:50%;background:radial-gradient(circle,rgba(249,115,22,0.18) 0%,transparent 70%)}
@@ -923,19 +925,19 @@ select.form-input{appearance:none;cursor:pointer}
 <div class="app" id="mainApp" style="display:none">
   <nav class="bottom-nav">
     <div class="sidebar-logo">
-      <div class="sidebar-logo-icon">💰</div>
+      <div class="sidebar-logo-icon" style="display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
       <div class="sidebar-logo-text">Joyce's Fortune Journal</div>
     </div>
     <div class="sidebar-nav-section">主選單</div>
-    <button class="nav-item active" onclick="switchTab('overview',0)"><span class="nav-icon">📊</span><span class="nav-label">總覽</span></button>
-    <button class="nav-item" onclick="switchTab('accounts',1)"><span class="nav-icon">🏦</span><span class="nav-label">帳戶</span></button>
-    <button class="nav-item" onclick="switchTab('transactions',2)"><span class="nav-icon">📋</span><span class="nav-label">明細</span></button>
+    <button class="nav-item active" onclick="switchTab('overview',0)"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span><span class="nav-label">總覽</span></button>
+    <button class="nav-item" onclick="switchTab('accounts',1)"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span><span class="nav-label">帳戶</span></button>
+    <button class="nav-item" onclick="switchTab('transactions',2)"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3" cy="6" r="1"/><circle cx="3" cy="12" r="1"/><circle cx="3" cy="18" r="1"/></svg></span><span class="nav-label">明細</span></button>
     <div class="sidebar-nav-section">財務管理</div>
-    <button class="nav-item" onclick="switchTab('bills',3)"><span class="nav-icon">📬</span><span class="nav-label">帳單</span></button>
-    <button class="nav-item" onclick="switchTab('rates',4)"><span class="nav-icon">💹</span><span class="nav-label">利率</span></button>
+    <button class="nav-item" onclick="switchTab('bills',3)"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span><span class="nav-label">帳單</span></button>
+    <button class="nav-item" onclick="switchTab('rates',4)"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span><span class="nav-label">利率</span></button>
     <div class="sidebar-nav-section">其他</div>
-    <button class="nav-item" onclick="switchTab('settings',5)"><span class="nav-icon">⚙️</span><span class="nav-label">設定</span></button>
-    <button class="fab" onclick="openTxModal()">＋</button>
+    <button class="nav-item" onclick="switchTab('settings',5)"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span><span class="nav-label">設定</span></button>
+    <button class="fab" onclick="openTxModal()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> 新增收支</button>
   </nav>
   <div class="scroll-body" id="scrollBody">
 
@@ -946,7 +948,7 @@ select.form-input{appearance:none;cursor:pointer}
           <div class="page-title">總覽</div>
           <div class="header-actions">
             <div class="sync-dot" id="syncDot"></div>
-            <button class="icon-btn" id="avatarBtn" onclick="openUserModal()">👤</button>
+            <button class="icon-btn" id="avatarBtn" onclick="openUserModal()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></button>
           </div>
         </div>
       </div>
@@ -1076,7 +1078,7 @@ select.form-input{appearance:none;cursor:pointer}
         <div class="settings-card">
           <div class="settings-row" onclick="openCarrierImportModal()">
             <div class="settings-row-left">
-              <div class="settings-icon" style="background:rgba(91,164,245,0.12)">🧾</div>
+              <div class="settings-icon" style="background:rgba(91,164,245,0.12);display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z"/><line x1="16" y1="8" x2="8" y2="8"/><line x1="16" y1="12" x2="8" y2="12"/><line x1="12" y1="16" x2="8" y2="16"/></svg></div>
               <div>
                 <div class="settings-row-title">匯入載具消費明細</div>
                 <div class="settings-row-sub">從財政部電子發票平台下載的 CSV</div>
@@ -1120,7 +1122,7 @@ select.form-input{appearance:none;cursor:pointer}
         <div class="settings-card">
           <div class="settings-row" onclick="openUserModal()">
             <div class="settings-row-left">
-              <div class="settings-icon" style="background:var(--accent-dim)">👤</div>
+              <div class="settings-icon" style="background:var(--accent-dim);display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
               <div><div class="settings-row-title" id="settingsUserName">未登入</div><div class="settings-row-sub" id="settingsUserEmail"></div></div>
             </div>
             <div class="settings-chevron">›</div>
@@ -1132,7 +1134,7 @@ select.form-input{appearance:none;cursor:pointer}
         <div class="settings-card">
           <div class="settings-row" onclick="clearAllData()">
             <div class="settings-row-left">
-              <div class="settings-icon" style="background:var(--red-dim)">🗑️</div>
+              <div class="settings-icon" style="background:var(--red-dim);display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></div>
               <div>
                 <div class="settings-row-title" style="color:var(--red)">清除所有資料</div>
                 <div class="settings-row-sub">刪除所有帳戶、交易、利率、帳單設定</div>
@@ -1149,7 +1151,7 @@ select.form-input{appearance:none;cursor:pointer}
         <div class="page-header-row">
           <div class="page-title">帳單</div>
           <div class="header-actions">
-            <button class="icon-btn" id="syncBillsBtn" onclick="syncBillsFromGmail()" title="同步 Gmail">🔄</button>
+            <button class="icon-btn" id="syncBillsBtn" onclick="syncBillsFromGmail()" title="同步 Gmail"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
             <button class="icon-btn" onclick="openAddBillModal()" title="手動新增">＋</button>
           </div>
         </div>
@@ -1196,7 +1198,7 @@ select.form-input{appearance:none;cursor:pointer}
         <div class="form-group">
           <label class="form-label">類別</label>
           <select class="form-input" id="newBillCategory">
-            <option value="credit_card">💳 信用卡</option>
+            <option value="credit_card">信用卡</option>
             <option value="telco">📱 電信</option>
             <option value="utility">💡 水電瓦斯</option>
             <option value="subscription">🔄 訂閱服務</option>
@@ -1227,8 +1229,8 @@ select.form-input{appearance:none;cursor:pointer}
         <div class="page-header-row">
           <div class="page-title">活存利率</div>
           <div class="header-actions">
-            <button class="icon-btn" onclick="showRateDiag()" title="診斷">🔍</button>
-            <button class="icon-btn" onclick="openJsonImportModal()" title="JSON匯入">📋</button>
+            <button class="icon-btn" onclick="showRateDiag()" title="診斷"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></button>
+            <button class="icon-btn" onclick="openJsonImportModal()" title="JSON匯入"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z"/><line x1="16" y1="8" x2="8" y2="8"/><line x1="16" y1="12" x2="8" y2="12"/><line x1="12" y1="16" x2="8" y2="16"/></svg></button>
           </div>
         </div>
       </div>
@@ -1330,7 +1332,7 @@ select.form-input{appearance:none;cursor:pointer}
     <div class="form-group" id="catSection">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
         <label class="form-label" style="margin-bottom:0">分類</label>
-        <button class="icon-btn" style="width:28px;height:28px;font-size:14px" onclick="openQuickCatModal()">⚙️</button>
+        <button class="icon-btn" style="width:28px;height:28px;font-size:14px" onclick="openQuickCatModal()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
       </div>
       <div class="cat-list" id="catGrid"></div>
     </div>
@@ -1396,12 +1398,12 @@ select.form-input{appearance:none;cursor:pointer}
     <div class="form-group">
       <label class="form-label">帳戶類型</label>
       <select class="form-input" id="accKind" onchange="updateAccGroup()">
-        <option value="asset_bank">🏦 台幣活存</option>
-        <option value="asset_foreign">💱 外幣存款</option>
-        <option value="asset_epay">🪙 電子票證</option>
-        <option value="asset_manual">👛 手動管理（錢包、其他）</option>
-        <option value="debt_cc">💳 信用卡</option>
-        <option value="debt_loan">📋 貸款</option>
+        <option value="asset_bank">台幣活存</option>
+        <option value="asset_foreign">外幣存款</option>
+        <option value="asset_epay">電子票證</option>
+        <option value="asset_manual">手動管理（錢包、其他）</option>
+        <option value="debt_cc">信用卡</option>
+        <option value="debt_loan">貸款</option>
       </select>
     </div>
     <div class="form-group" id="accNameGroup">
@@ -1734,6 +1736,34 @@ async function requestGmailToken(){
 }
 
 // 銀行別名對應（Gmail 偵測到的名稱 → app 帳戶名稱）
+// ── SVG Icon Library (Lucide-style, stroke-based) ──
+const ICONS={
+  overview:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>`,
+  accounts:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`,
+  transactions:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3" cy="6" r="1"/><circle cx="3" cy="12" r="1"/><circle cx="3" cy="18" r="1"/></svg>`,
+  bills:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`,
+  rates:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`,
+  settings:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`,
+  bank:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg>`,
+  wallet:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-6"/><path d="M16 12h4a2 2 0 0 1 0 4h-4a2 2 0 0 1 0-4z"/></svg>`,
+  creditcard:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>`,
+  receipt:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z"/><line x1="16" y1="8" x2="8" y2="8"/><line x1="16" y1="12" x2="8" y2="12"/><line x1="12" y1="16" x2="8" y2="16"/></svg>`,
+  user:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
+  logout:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`,
+  trash:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>`,
+  warning:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+  sync:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>`,
+  plus:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`,
+  search:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`,
+  filter:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>`,
+  chart:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>`,
+  back:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>`,
+};
+function icon(name,size=16){
+  const s=ICONS[name]||ICONS.bank;
+  return`<span class="icon" style="width:${size}px;height:${size}px">${s}</span>`;
+}
+
 const BANK_ALIAS={
   '中國信託':'中信銀行',
   '中信':'中信銀行',
@@ -1771,13 +1801,19 @@ window.signInWithGoogle=async()=>{
 };
 
 const ACC_KIND_META={
-  asset_bank:{label:'台幣活存',group:'asset',color:'#2ecc8e',icon:'🏦'},
-  asset_foreign:{label:'外幣存款',group:'asset',color:'#5ba4f5',icon:'💱'},
-  asset_epay:{label:'電子票證',group:'asset',color:'#f5c842',icon:'🪙'},
-  asset_manual:{label:'手動管理',group:'asset',color:'#f97316',icon:'👛'},
-  debt_cc:{label:'信用卡',group:'debt',color:'#f0614a',icon:'💳'},
-  debt_loan:{label:'貸款',group:'debt',color:'#c875f0',icon:'📋'},
+  asset_bank:{label:'台幣活存',group:'asset',color:'#5ba4f5',icon:'bank'},
+  asset_foreign:{label:'外幣存款',group:'asset',color:'#f5c842',icon:'wallet'},
+  asset_epay:{label:'電子票證',group:'asset',color:'#f97316',icon:'creditcard'},
+  asset_manual:{label:'手動管理',group:'asset',color:'#a78bfa',icon:'wallet'},
+  debt_cc:{label:'信用卡',group:'debt',color:'#ef4444',icon:'creditcard'},
+  debt_loan:{label:'貸款',group:'debt',color:'#c875f0',icon:'receipt'},
 };
+function getAccIcon(kind,size=16){
+  const meta=ACC_KIND_META[kind]||{};
+  const name=meta.icon||'bank';
+  const color=meta.color||'var(--text3)';
+  return`<span style="display:flex;align-items:center;justify-content:center;color:${color}">${ICONS[name]?.replace(/viewBox/,`width="${size}" height="${size}" viewBox`)}</span>`;
+}
 const COLORS=['#2ecc8e','#f5c842','#f0614a','#5ba4f5','#c875f0','#ff8c42','#4ecdc4','#a8e063','#ff6b9d'];
 const DEF_EXP=[{name:'餐飲',icon:'🍜'},{name:'交通',icon:'🚌'},{name:'購物',icon:'🛍'},{name:'娛樂',icon:'🎮'},{name:'醫療',icon:'💊'},{name:'教育',icon:'📚'},{name:'居家',icon:'🏠'},{name:'訂閱',icon:'📱'},{name:'其他',icon:'📦'}];
 const DEF_INC=[{name:'薪資',icon:'💼'},{name:'獎金',icon:'🎉'},{name:'投資',icon:'📈'},{name:'兼職',icon:'💻'},{name:'其他',icon:'💰'}];
@@ -1973,7 +2009,7 @@ function renderAccounts(){
           const rateAcc=bank?.accounts?.find(ra=>ra.linkedAccId===a.id||ra.name===subName);
           const rateStr=rateAcc?`<span style="color:var(--orange);font-weight:700;font-size:11px">${parseFloat(rateAcc.rate||0).toFixed(2)}%</span>`:`<span style="color:var(--text3);font-size:11px">—</span>`;
           return`<div class="acc-sub-row" onclick="openDetail('${a.id}')">
-            <div class="acc-sub-icon">🏦</div>
+            <div class="acc-sub-icon" style="color:var(--text3)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg></div>
             <div class="acc-sub-info">
               <div class="acc-sub-name">${subName}</div>
               <div class="acc-sub-rate">${rateStr}</div>
@@ -1994,7 +2030,7 @@ function renderAccounts(){
     otherAssets.forEach(a=>{
       const meta=ACC_KIND_META[a.kind]||{};
       html+=`<div class="acc-sub-row" style="margin:0 16px 4px;border-radius:var(--radius-sm)" onclick="openDetail('${a.id}')">
-        <div class="acc-sub-icon">${meta.icon||'💰'}</div>
+        <div class="acc-sub-icon" style="color:var(--text3)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-6"/><path d="M16 12h4a2 2 0 0 1 0 4h-4a2 2 0 0 1 0-4z"/></svg></div>
         <div class="acc-sub-info">
           <div class="acc-sub-name">${a.subName||a.name}</div>
           <div class="acc-sub-rate" style="color:var(--text3);font-size:10px">${a.name} · ${meta.label||''}</div>
@@ -2013,7 +2049,7 @@ function renderAccounts(){
     debts.forEach(a=>{
       const meta=ACC_KIND_META[a.kind]||{};
       html+=`<div class="acc-sub-row" style="margin:0 16px 4px;border-radius:var(--radius-sm)" onclick="openDetail('${a.id}')">
-        <div class="acc-sub-icon">${meta.icon||'💳'}</div>
+        <div class="acc-sub-icon" style="color:var(--text3)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div>
         <div class="acc-sub-info">
           <div class="acc-sub-name">${a.subName||a.name}</div>
           <div class="acc-sub-rate" style="color:var(--text3);font-size:10px">${a.name} · ${meta.label||''}</div>
@@ -2030,9 +2066,7 @@ function renderAccounts(){
 }
 // 銀行 icon 對應
 function getBankIcon(name){
-  const map={'玉山':'🟡','國泰':'🔵','台新':'🔴','永豐':'🟤','中信':'🔵','將來':'⚫','LINE':'🟢','合作金庫':'🟠','臺灣銀行':'🔵','台灣銀行':'🔵','元大':'🔴','富邦':'🟣','星展':'🔴','凱基':'🟠'};
-  for(const[k,v] of Object.entries(map)){if(name.includes(k))return v;}
-  return '🏦';
+  return `<span style="color:var(--text3)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg></span>`;
 }
 window.openDetail=function(id){
   detailAccId=id;const a=accById(id);if(!a)return;
@@ -2468,7 +2502,7 @@ window.drillIntoMonth=function(ym){
 function renderSettings(){
   document.getElementById('expCatCount').textContent=state.expCats.length+' 個分類';
   document.getElementById('incCatCount').textContent=state.incCats.length+' 個分類';
-  document.getElementById('tagList').innerHTML=state.tags.map((tag,i)=>`<div class="tag-item">${tag}<button class="tag-edit" onclick="openEditTagModal(${i})" title="編輯">✎</button><button class="tag-del" onclick="deleteTag('${tag}')">✕</button></div>`).join('');
+  document.getElementById('tagList').innerHTML=state.tags.map((tag,i)=>`<div class="tag-item">${tag}<button class="tag-edit" onclick="openEditTagModal(${i})" title="編輯"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="tag-del" onclick="deleteTag('${tag}')">✕</button></div>`).join('');
 }
 window.addTag=function(){const inp=document.getElementById('newTagInput');const v=inp.value.trim();if(!v||state.tags.includes(v))return showToast('請輸入標籤名稱或標籤已存在');state.tags.push(v);inp.value='';state._localUpdateAt=Date.now();scheduleSave();renderSettings();showToast('標籤已新增');};
 window.deleteTag=function(tag){state.tags=state.tags.filter(t=>t!==tag);state._localUpdateAt=Date.now();scheduleSave();renderSettings();};
@@ -3555,7 +3589,7 @@ function renderRateBankList(){
 
     return`<div class="rate-bank-group">
       <div class="rate-bank-group-header">
-        <div class="rate-bank-group-name">🏦 ${bank.name}${websiteLink}</div>
+        <div class="rate-bank-group-name"><span style="color:var(--text3)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg></span> ${bank.name}${websiteLink}</div>
       </div>
       <div class="rate-table-head">
         <div class="rate-table-head-cell" style="text-align:left">帳戶</div>

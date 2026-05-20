@@ -1095,8 +1095,22 @@ select.form-input{appearance:none;cursor:pointer}
           </div>
         </div>
       </div>
-      <div class="section-heading">分類管理</div>
+      <div class="section-heading">銀行管理</div>
       <div class="settings-section">
+        <div class="settings-card">
+          <div class="settings-row" onclick="openBankMgrModal()">
+            <div class="settings-row-left">
+              <div class="settings-icon" style="background:rgba(91,164,245,0.12);display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg></div>
+              <div>
+                <div class="settings-row-title">銀行清單管理</div>
+                <div class="settings-row-sub" id="bankMgrSubtitle">管理新增帳戶時的銀行選單</div>
+              </div>
+            </div>
+            <div class="settings-chevron">›</div>
+          </div>
+        </div>
+      </div>
+      <div class="section-heading">分類管理</div>      <div class="settings-section">
         <div class="settings-card">
           <div class="settings-row" onclick="openCatModal('expense')">
             <div class="settings-row-left">
@@ -1415,6 +1429,7 @@ select.form-input{appearance:none;cursor:pointer}
     </div>
     <div class="form-group" id="accNameGroup">
       <label class="form-label" id="accNameLabel">銀行名稱</label>
+      <select class="form-input" id="accNameSel" style="display:none"></select>
       <input class="form-input" id="accName" placeholder="例：玉山銀行、將來銀行">
     </div>
     <div class="form-group" id="accSubNameGroup">
@@ -1526,6 +1541,22 @@ select.form-input{appearance:none;cursor:pointer}
     <div style="display:flex;gap:8px;padding:16px 20px 4px">
       <button onclick="previewCarrierCSV()" style="flex:1;padding:11px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-size:13px;font-weight:600;font-family:var(--font);cursor:pointer">預覽</button>
       <button onclick="importCarrierCSV()" style="flex:1;padding:11px;background:var(--orange);border:none;border-radius:var(--radius-sm);color:#fff;font-size:13px;font-weight:700;font-family:var(--font);cursor:pointer">匯入</button>
+    </div>
+  </div>
+</div>
+
+<!-- Bank Manager Modal -->
+<div class="modal-overlay" id="bankMgrModal" onclick="closeBankMgrModal(event)">
+  <div class="modal" onclick="event.stopPropagation()" style="max-height:88vh">
+    <div class="modal-handle"></div>
+    <div class="modal-header-row">
+      <div class="modal-title">銀行清單管理</div>
+      <button class="modal-close-btn" onclick="closeBankMgrModal()">✕</button>
+    </div>
+    <div class="cat-manage-grid" id="bankMgrList" style="padding:10px 20px 4px"></div>
+    <div style="display:flex;gap:8px;padding:10px 20px 4px;border-top:1px solid var(--border);margin-top:4px">
+      <input class="form-input" id="newBankInput" placeholder="新增銀行名稱" style="flex:1">
+      <button class="add-tag-btn" onclick="addBankToList()">新增</button>
     </div>
   </div>
 </div>
@@ -1771,6 +1802,53 @@ function icon(name,size=16){
   return`<span class="icon" style="width:${size}px;height:${size}px">${s}</span>`;
 }
 
+const DEF_BANKS=['永豐銀行','將來銀行','臺灣銀行','中華郵政','中國信託','合作金庫','台新銀行','連線銀行','國泰世華','玉山銀行'];
+
+function getBankList(){
+  if(!state.bankList||!state.bankList.length)state.bankList=[...DEF_BANKS];
+  return state.bankList;
+}
+
+// ── Bank Manager ──
+window.openBankMgrModal=function(){
+  renderBankMgrList();
+  document.getElementById('newBankInput').value='';
+  document.getElementById('bankMgrModal').classList.add('open');
+};
+window.closeBankMgrModal=function(e){
+  if(!e||e.target===document.getElementById('bankMgrModal'))
+    document.getElementById('bankMgrModal').classList.remove('open');
+};
+function renderBankMgrList(){
+  const banks=getBankList();
+  document.getElementById('bankMgrList').innerHTML=banks.map((b,i)=>
+    `<div class="cat-manage-badge">
+      <span class="cat-manage-badge-name">${b}</span>
+      <button class="cat-manage-badge-del" onclick="deleteBankFromList(${i})" title="刪除"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>`
+  ).join('');
+  // Update subtitle
+  const sub=document.getElementById('bankMgrSubtitle');
+  if(sub)sub.textContent=`已設定 ${banks.length} 家銀行`;
+}
+window.addBankToList=function(){
+  const name=document.getElementById('newBankInput').value.trim();
+  if(!name)return showToast('請輸入銀行名稱');
+  const banks=getBankList();
+  if(banks.includes(name))return showToast('此銀行已存在');
+  banks.push(name);
+  state._localUpdateAt=Date.now();scheduleSave();
+  renderBankMgrList();showToast('已新增 ✓');
+  document.getElementById('newBankInput').value='';
+};
+window.deleteBankFromList=function(i){
+  const banks=getBankList();
+  if(!confirm(`確認刪除「${banks[i]}」？`))return;
+  banks.splice(i,1);
+  state._localUpdateAt=Date.now();scheduleSave();
+  renderBankMgrList();
+};
+
 const BANK_ALIAS={
   '中國信託':'中信銀行',
   '中信':'中信銀行',
@@ -1879,7 +1957,7 @@ auth.onAuthStateChanged(async user=>{
     setSyncDot('syncing');
     try{
       const snap=await db.collection('users').doc(userId).collection('data').doc('main').get();
-      if(snap.exists){const d=snap.data();state.transactions=d.transactions||[];state.accounts=d.accounts||[];state.tags=d.tags||state.tags;state.expCats=d.expCats||state.expCats;state.incCats=d.incCats||state.incCats;state.bankRates=d.bankRates||[];state.billsData=d.billsData||{};migrateCats();}
+      if(snap.exists){const d=snap.data();state.transactions=d.transactions||[];state.accounts=d.accounts||[];state.tags=d.tags||state.tags;state.expCats=d.expCats||state.expCats;state.incCats=d.incCats||state.incCats;state.bankRates=d.bankRates||[];state.billsData=d.billsData||{};state.bankList=d.bankList||[];migrateCats();}
       setSyncDot('synced');
     }catch(e){
       console.error('Firestore load error:',e.code, e.message);
@@ -2012,14 +2090,14 @@ function renderAccounts(){
         ${accs.map(a=>{
           const isDebt=a.balance<0;
           const subName=a.subName||'活期存款';
-          // 找對應的利率設定
           const rateAcc=bank?.accounts?.find(ra=>ra.linkedAccId===a.id||ra.name===subName);
           const rateStr=rateAcc?`<span style="color:var(--orange);font-weight:700;font-size:11px">${parseFloat(rateAcc.rate||0).toFixed(2)}%</span>`:`<span style="color:var(--text3);font-size:11px">—</span>`;
+          const updatedStr=a.updatedAt?`<span style="color:var(--text3);font-size:10px;margin-left:6px">${new Date(a.updatedAt).toLocaleDateString('zh-TW')}</span>`:'';
           return`<div class="acc-sub-row" onclick="openDetail('${a.id}')">
             <div class="acc-sub-icon" style="color:var(--text3)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg></div>
             <div class="acc-sub-info">
               <div class="acc-sub-name">${subName}</div>
-              <div class="acc-sub-rate">${rateStr}</div>
+              <div class="acc-sub-rate">${rateStr}${updatedStr}</div>
             </div>
             <div class="acc-sub-balance" style="color:${isDebt?'var(--red)':a.balance>0?'var(--text)':'var(--text3)'}">
               NT$ ${Math.abs(a.balance).toLocaleString()}
@@ -2814,7 +2892,6 @@ window.deleteTx=function(id){const t=state.transactions.find(x=>x.id===id);if(!t
 
 // Account modal
 window.openAccModal=function(){
-  document.getElementById('accName').value='';
   document.getElementById('accBal').value='';
   if(document.getElementById('accSubName'))document.getElementById('accSubName').value='';
   document.getElementById('accModal').classList.add('open');
@@ -2824,36 +2901,51 @@ window.closeAccModal=function(e){if(!e||e.target===document.getElementById('accM
 window.updateAccGroup=function(){
   const kind=document.getElementById('accKind').value;
   const isDebt=ACC_KIND_META[kind]?.group==='debt';
-  const isManual=kind==='asset_manual';
   const isBank=kind==='asset_bank';
+  const isManual=kind==='asset_manual';
   document.getElementById('accBalLabel').textContent=isDebt?'目前欠款 (NT$)':'初始餘額 (NT$)';
-  // 手動管理類型：name 欄位改為「項目名稱」
+  const nameGroup=document.getElementById('accNameGroup');
   const nameLabel=document.getElementById('accNameLabel');
-  const namePlaceholder=document.getElementById('accName');
+  const nameSel=document.getElementById('accNameSel');
+  const nameInput=document.getElementById('accName');
   const subGroup=document.getElementById('accSubNameGroup');
-  if(isManual){
-    if(nameLabel)nameLabel.textContent='項目名稱';
-    if(namePlaceholder)namePlaceholder.placeholder='例：現金錢包、儲蓄撲滿';
-    if(subGroup)subGroup.style.display='none';
-  } else if(isBank){
+  if(isBank){
+    // 顯示下拉選單
     if(nameLabel)nameLabel.textContent='銀行名稱';
-    if(namePlaceholder)namePlaceholder.placeholder='例：玉山銀行、將來銀行';
+    if(nameSel){
+      nameSel.style.display='block';
+      const banks=getBankList();
+      nameSel.innerHTML=banks.map(b=>`<option value="${b}">${b}</option>`).join('');
+    }
+    if(nameInput)nameInput.style.display='none';
     if(subGroup)subGroup.style.display='block';
+  } else if(isManual){
+    if(nameLabel)nameLabel.textContent='項目名稱';
+    if(nameSel)nameSel.style.display='none';
+    if(nameInput){nameInput.style.display='block';nameInput.placeholder='例：現金錢包、儲蓄撲滿';nameInput.value='';}
+    if(subGroup)subGroup.style.display='none';
   } else {
     if(nameLabel)nameLabel.textContent='帳戶名稱';
-    if(namePlaceholder)namePlaceholder.placeholder='例：玉山外幣、悠遊卡';
+    if(nameSel)nameSel.style.display='none';
+    if(nameInput){nameInput.style.display='block';nameInput.placeholder='例：玉山外幣、悠遊卡';nameInput.value='';}
     if(subGroup)subGroup.style.display='none';
   }
 };
 window.addAccount=function(){
-  const name=document.getElementById('accName').value.trim();
-  if(!name)return;
   const kind=document.getElementById('accKind').value;
   const isDebt=ACC_KIND_META[kind]?.group==='debt';
+  const isBank=kind==='asset_bank';
+  // 銀行類型從下拉選單取值，其他從文字輸入取值
+  let name='';
+  if(isBank){
+    name=document.getElementById('accNameSel')?.value||'';
+  } else {
+    name=document.getElementById('accName')?.value.trim()||'';
+  }
+  if(!name)return showToast('請輸入帳戶名稱');
   const raw=parseFloat(document.getElementById('accBal').value)||0;
   const subName=document.getElementById('accSubName')?.value.trim()||'';
   state.accounts.push({id:'a'+Date.now(),name,subName,kind,balance:isDebt?-Math.abs(raw):raw,updatedAt:Date.now()});
-  // 只有銀行帳戶才同步到利率頁
   if(kind==='asset_bank'){
     const banks=getBankRates();
     if(!banks.find(b=>b.name===name)){
@@ -3935,7 +4027,7 @@ saveToFirebase=async function(){
     await db.collection('users').doc(userId).collection('data').doc('main').set({
       transactions:state.transactions,accounts:state.accounts,tags:state.tags,
       expCats:state.expCats,incCats:state.incCats,bankRates:state.bankRates||[],
-      billsData:state.billsData||{},
+      billsData:state.billsData||{},bankList:state.bankList||[],
       updatedAt:Date.now()
     });setSyncDot('synced');
   }catch(e){setSyncDot('error');showToast('同步失敗');}

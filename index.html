@@ -715,7 +715,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .tl-tag-badge{font-size:9px;padding:2px 6px;border-radius:4px;background:var(--bg3);border:1px solid var(--border);color:var(--text2)}
 .tl-amount{font-size:14px;font-weight:700;text-align:right;flex-shrink:0;padding-top:2px}
 .tl-amount.income{color:var(--green)}.tl-amount.expense{color:var(--text)}.tl-amount.neutral{color:var(--text2)}
-.tl-del{background:none;border:none;color:var(--text3);font-size:14px;padding:2px 6px;cursor:pointer;margin-left:2px;flex-shrink:0;align-self:center}
 .cat-row{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid var(--border)}
 .cat-row:last-child{border-bottom:none}
 .cat-row-left{display:flex;align-items:center;gap:10px}
@@ -2486,10 +2485,7 @@ function tlCardHTML(t){
       <div class="tl-desc">${t.title||t.note||t.category}</div>
       <div class="tl-badges">${accBadge}${tagBadge}</div>
     </div>
-    <div style="display:flex;align-items:center;gap:2px">
-      <div class="tl-amount ${amtCls}">${amtStr}</div>
-      <button class="tl-del" onclick="deleteTx('${t.id}');event.stopPropagation()">✕</button>
-    </div>
+    <div class="tl-amount ${amtCls}">${amtStr}</div>
   </div>`;
 }
 function renderTransactions(){

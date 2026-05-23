@@ -1730,7 +1730,10 @@ select.form-input{appearance:none;cursor:pointer}
         <option value="">不連結</option>
       </select>
     </div>
-    <button class="submit-btn" onclick="saveRateAcc()">儲存</button>
+    <div style="display:flex;gap:8px;padding:16px 20px 4px">
+      <button id="rateAccDelBtn" onclick="deleteRateAccFromModal()" style="display:none;flex:0 0 auto;padding:11px 16px;background:none;border:1px solid rgba(239,68,68,0.3);border-radius:var(--radius-sm);color:var(--red);font-size:13px;font-weight:600;font-family:var(--font);cursor:pointer">刪除</button>
+      <button class="submit-btn" onclick="saveRateAcc()" style="flex:1;margin-top:0">儲存</button>
+    </div>
   </div>
 </div>
 
@@ -4215,6 +4218,7 @@ window.openAddRateAcc=function(bi){
     const selected=a.name===bankName?'selected':'';
     sel.innerHTML+=`<option value="${a.id}" ${selected}>${a.name}</option>`;
   });
+  document.getElementById('rateAccDelBtn').style.display='none';
   document.getElementById('addRateAccModal').classList.add('open');
   setTimeout(()=>document.getElementById('rateAccName').focus(),200);
 };
@@ -4234,7 +4238,19 @@ window.openEditRateAcc=function(bi,ai){
     const selected=a.id===acc.linkedAccId?'selected':'';
     sel.innerHTML+=`<option value="${a.id}" ${selected}>${a.name}</option>`;
   });
+  document.getElementById('rateAccDelBtn').style.display='block';
   document.getElementById('addRateAccModal').classList.add('open');
+};
+
+window.deleteRateAccFromModal=function(){
+  const banks=getBankRates();
+  if(_editingAccIdx===null||!banks[_editingBankIdx])return;
+  const name=banks[_editingBankIdx].accounts[_editingAccIdx]?.name||'帳戶';
+  if(!confirm(`確認刪除「${name}」的利率設定？`))return;
+  banks[_editingBankIdx].accounts.splice(_editingAccIdx,1);
+  state._localUpdateAt=Date.now();scheduleSave();
+  document.getElementById('addRateAccModal').classList.remove('open');
+  renderRatePage();showToast('已刪除');
 };
 
 window.closeAddRateAccModal=function(e){

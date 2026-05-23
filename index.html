@@ -943,7 +943,7 @@ select.form-input{appearance:none;cursor:pointer}
     <button class="nav-item" onclick="switchTab('rates',4)"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span><span class="nav-label">利率</span></button>
     <div class="sidebar-nav-section">其他</div>
     <button class="nav-item" onclick="switchTab('settings',5)"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span><span class="nav-label">設定</span></button>
-    <button class="fab" onclick="openTxModal()"></button>
+    <button class="fab" onclick="openTxModal()">＋</button>
   </nav>
   <div class="scroll-body" id="scrollBody">
 
@@ -1200,6 +1200,64 @@ select.form-input{appearance:none;cursor:pointer}
         </div>
         <div id="billsStatusList"><div class="alloc-empty">點同步後顯示比對結果</div></div>
         <div id="billsLastSync" style="font-size:11px;color:var(--text3);text-align:right;padding:6px 16px 10px"></div>
+      </div>
+    </div>
+
+    <!-- PDF 帳單解析 Modal (Step 1) -->
+    <div class="modal-overlay" id="pdfImportModal" onclick="closePdfImportModal(event)">
+      <div class="modal" onclick="event.stopPropagation()" style="max-height:90vh;display:flex;flex-direction:column">
+        <div class="modal-handle"></div>
+        <div class="modal-header-row" style="flex-shrink:0">
+          <div class="modal-title" id="pdfImportTitle">上傳信用卡帳單</div>
+          <button class="modal-close-btn" onclick="closePdfImportModal()">✕</button>
+        </div>
+        <div id="pdfStep1" style="padding:0 20px 20px">
+          <div id="pdfDropZone" onclick="document.getElementById('pdfFileInput').click()"
+            style="border:2px dashed var(--border2);border-radius:var(--radius-sm);padding:32px 20px;text-align:center;cursor:pointer;transition:border-color .15s;margin-bottom:16px">
+            <div style="font-size:28px;margin-bottom:8px">📄</div>
+            <div style="font-size:13px;font-weight:600;color:var(--text2)">點擊或拖曳上傳 PDF</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:4px" id="pdfHintPwd"></div>
+          </div>
+          <input type="file" id="pdfFileInput" accept=".pdf" style="display:none" onchange="onPdfSelected(this)">
+          <div id="pdfFileName" style="font-size:12px;color:var(--text3);text-align:center;min-height:18px"></div>
+          <div id="pdfParseError" style="font-size:12px;color:var(--red);text-align:center;margin-top:8px;display:none"></div>
+          <button class="submit-btn" id="pdfParseBtn" onclick="parsePdfWithAI()" style="margin-top:16px;display:none">🤖 AI 解析明細</button>
+          <div id="pdfParsing" style="display:none;text-align:center;padding:20px;color:var(--text3);font-size:13px">
+            <div style="margin-bottom:8px">⏳ AI 解析中，請稍候…</div>
+          </div>
+        </div>
+        <div id="pdfStep2" style="display:none;flex-direction:column">
+          <div style="padding:0 20px 10px;flex-shrink:0">
+            <div style="font-size:12px;color:var(--text3);margin-bottom:4px" id="pdfParseInfo"></div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <button onclick="pdfToggleAll(true)" style="font-size:11px;color:var(--orange);background:none;border:none;cursor:pointer;padding:0">全選</button>
+              <span style="color:var(--border2)">|</span>
+              <button onclick="pdfToggleAll(false)" style="font-size:11px;color:var(--text3);background:none;border:none;cursor:pointer;padding:0">全不選</button>
+              <span style="font-size:11px;color:var(--text3);margin-left:auto" id="pdfSelectedCount"></span>
+            </div>
+          </div>
+          <div id="pdfItemList" style="overflow-y:auto;padding:0 20px;max-height:340px"></div>
+          <div style="padding:16px 20px 20px;flex-shrink:0;border-top:1px solid var(--border)">
+            <button class="submit-btn" onclick="goToReconcile()">下一步：與明細比對 →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 比對確認 Modal (Step 2) -->
+    <div class="modal-overlay" id="reconcileModal" onclick="closeReconcileModal(event)">
+      <div class="modal" onclick="event.stopPropagation()" style="max-height:92vh;display:flex;flex-direction:column">
+        <div class="modal-handle"></div>
+        <div class="modal-header-row" style="flex-shrink:0">
+          <div class="modal-title">與現有明細比對</div>
+          <button class="modal-close-btn" onclick="closeReconcileModal()">✕</button>
+        </div>
+        <div style="font-size:12px;color:var(--text3);padding:0 20px 10px;flex-shrink:0" id="reconcileSubtitle"></div>
+        <div id="reconcileBody" style="flex:1;overflow-y:auto;padding:0 20px;max-height:440px"></div>
+        <div style="padding:16px 20px 20px;flex-shrink:0;border-top:1px solid var(--border);display:flex;gap:10px">
+          <button onclick="closeReconcileModal()" style="flex:1;padding:12px;background:none;border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text2);font-size:13px;font-family:var(--font);cursor:pointer">取消</button>
+          <button class="submit-btn" onclick="importReconciled()" style="flex:2;margin-top:0">匯入未記帳項目</button>
+        </div>
       </div>
     </div>
 
@@ -1505,6 +1563,17 @@ select.form-input{appearance:none;cursor:pointer}
     <div class="form-group">
       <label class="form-label">備註</label>
       <input class="form-input" id="editTxNote" placeholder="備註（選填）">
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-top:1px solid var(--border);margin-top:4px">
+      <div>
+        <div style="font-size:13px;font-weight:600;color:var(--text)">排除收支統計</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px">僅記錄用，不計入當月統計</div>
+      </div>
+      <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0">
+        <input type="checkbox" id="editTxExclude" style="opacity:0;width:0;height:0">
+        <span onclick="document.getElementById('editTxExclude').click()" style="position:absolute;inset:0;background:var(--border2);border-radius:12px;cursor:pointer;transition:background .2s" id="editTxExcludeTrack"></span>
+        <span onclick="document.getElementById('editTxExclude').click()" style="position:absolute;top:3px;left:3px;width:18px;height:18px;background:#fff;border-radius:50%;cursor:pointer;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.3)" id="editTxExcludeThumb"></span>
+      </label>
     </div>
     <div style="display:flex;gap:8px;padding:16px 20px 4px">
       <button onclick="deleteEditTx()" style="flex:0 0 auto;padding:11px 16px;background:none;border:1px solid rgba(239,68,68,0.3);border-radius:var(--radius-sm);color:var(--red);font-size:13px;font-weight:600;font-family:var(--font);cursor:pointer">刪除</button>
@@ -2010,7 +2079,7 @@ function scheduleSave(){clearTimeout(saveTimeout);saveTimeout=setTimeout(saveToF
 function setupSync(){if(unsubscribe)unsubscribe();unsubscribe=db.collection('users').doc(userId).collection('data').doc('main').onSnapshot(snap=>{if(!snap.exists)return;const d=snap.data();if(d.updatedAt>(state._localUpdateAt||0)){state.transactions=d.transactions||[];state.accounts=d.accounts||[];state.tags=d.tags||state.tags;state.expCats=d.expCats||state.expCats;state.incCats=d.incCats||state.incCats;state.bankRates=d.bankRates||[];state.billsData=d.billsData||{};renderAll();setSyncDot('synced');}},()=>setSyncDot('error'));}
 
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
-function monthTx(m){return state.transactions.filter(t=>t.date.startsWith(m||state.currentMonth)&&(selectedFilterTags.length===0||selectedFilterTags.includes(t.tag)));}
+function monthTx(m,inclExcluded=false){return state.transactions.filter(t=>t.date.startsWith(m||state.currentMonth)&&(selectedFilterTags.length===0||selectedFilterTags.includes(t.tag))&&(inclExcluded||!t.excludeFromStats));}
 function accById(id){return state.accounts.find(a=>a.id===id);}
 function catIcon(name,type){const l=type==='income'?state.incCats:state.expCats;return(l.find(c=>c.name===name)||{icon:'📦'}).icon;}
 
@@ -2080,8 +2149,8 @@ function renderOverview(){
 function renderCharts(){
   const [y,m]=state.currentMonth.split('-').map(Number);
   const months=[];for(let i=5;i>=0;i--){const dt=new Date(y,m-1-i,1);months.push(dt.toISOString().slice(0,7));}
-  const inc=months.map(mo=>state.transactions.filter(t=>t.type==='income'&&t.date.startsWith(mo)).reduce((s,t)=>s+t.amount,0));
-  const exp=months.map(mo=>state.transactions.filter(t=>t.type==='expense'&&t.date.startsWith(mo)).reduce((s,t)=>s+t.amount,0));
+  const inc=months.map(mo=>state.transactions.filter(t=>t.type==='income'&&t.date.startsWith(mo)&&!t.excludeFromStats).reduce((s,t)=>s+t.amount,0));
+  const exp=months.map(mo=>state.transactions.filter(t=>t.type==='expense'&&t.date.startsWith(mo)&&!t.excludeFromStats).reduce((s,t)=>s+t.amount,0));
   const labels=months.map(mo=>parseInt(mo.split('-')[1])+'月');
   if(barChart)barChart.destroy();
   barChart=new Chart(document.getElementById('monthChart'),{type:'bar',data:{labels,datasets:[{label:'收入',data:inc,backgroundColor:'rgba(46,204,142,0.8)',borderRadius:5,borderSkipped:false},{label:'支出',data:exp,backgroundColor:'rgba(240,97,74,0.8)',borderRadius:5,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#666',font:{size:11},boxWidth:10}}},scales:{x:{ticks:{color:'#555'},grid:{color:'rgba(255,255,255,0.04)'}},y:{ticks:{color:'#555',callback:v=>`${(v/1000).toFixed(0)}K`},grid:{color:'rgba(255,255,255,0.04)'}}}}});
@@ -2479,13 +2548,15 @@ function tlCardHTML(t){
   const accBadge=acc?`<span class="tl-acc-badge" style="background:${badgeColor}">${acc.subName||acc.name.slice(0,4)}</span>`:'';
   const tagBadge=t.tag?`<span class="tl-tag-badge">${t.tag}</span>`:'';
   const amtStr=t.type==='income'?`$ ${t.amount.toLocaleString()}`:`$ -${t.amount.toLocaleString()}`;
-  return`<div class="tl-row" onclick="openEditTxModal('${t.id}')">
+  const excludeStyle=t.excludeFromStats?'opacity:.38;filter:grayscale(1)':'';
+  const excludeBadge=t.excludeFromStats?`<span style="font-size:10px;color:var(--text3);background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:0 5px;line-height:18px">不計統計</span>`:'';
+  return`<div class="tl-row" style="${excludeStyle}" onclick="openEditTxModal('${t.id}')">
     <div class="tl-info">
-      <div class="tl-cat ${amtCls}">${t.category}</div>
+      <div class="tl-cat ${t.excludeFromStats?'':''+amtCls}">${t.category}</div>
       <div class="tl-desc">${t.title||t.note||t.category}</div>
-      <div class="tl-badges">${accBadge}${tagBadge}</div>
+      <div class="tl-badges">${accBadge}${tagBadge}${excludeBadge}</div>
     </div>
-    <div class="tl-amount ${amtCls}">${amtStr}</div>
+    <div class="tl-amount ${t.excludeFromStats?'neutral':amtCls}">${amtStr}</div>
   </div>`;
 }
 function renderTransactions(){
@@ -2495,9 +2566,10 @@ function renderTransactions(){
     return;
   }
   updateMonthLabel();
-  const tx=monthTx();
-  const inc=tx.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
-  const exp=tx.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const tx=monthTx(null,true);          // 列表顯示：含排除的
+  const statTx=tx.filter(t=>!t.excludeFromStats); // 統計：不含排除的
+  const inc=statTx.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const exp=statTx.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
   document.getElementById('txIncome').textContent='$ '+inc.toLocaleString();
   document.getElementById('txExpense').textContent='$ '+exp.toLocaleString();
 
@@ -2515,7 +2587,7 @@ function renderTransactions(){
 
   if(txSubtab==='cat'){
     // Category breakdown view
-    const expTx=tx.filter(t=>t.type==='expense');
+    const expTx=statTx.filter(t=>t.type==='expense');
     const totalExp=expTx.reduce((s,t)=>s+t.amount,0);
     const catMap={};
     expTx.forEach(t=>{if(!catMap[t.category])catMap[t.category]={amount:0,count:0,icon:'📦'};catMap[t.category].amount+=t.amount;catMap[t.category].count++;});
@@ -2563,8 +2635,8 @@ function renderYearView(){
     el.classList.add(animCls);
   }
   const yearTx=state.transactions.filter(t=>t.date.startsWith(currentYear+'')&&(selectedFilterTags.length===0||selectedFilterTags.includes(t.tag)));
-  const yearInc=yearTx.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
-  const yearExp=yearTx.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const yearInc=yearTx.filter(t=>t.type==='income'&&!t.excludeFromStats).reduce((s,t)=>s+t.amount,0);
+  const yearExp=yearTx.filter(t=>t.type==='expense'&&!t.excludeFromStats).reduce((s,t)=>s+t.amount,0);
   document.getElementById('txIncome').textContent='$ '+yearInc.toLocaleString();
   document.getElementById('txExpense').textContent='$ '+yearExp.toLocaleString();
 
@@ -2585,8 +2657,8 @@ function renderYearView(){
 
   el.innerHTML=Object.entries(months).reverse().map(([ym,txs])=>{
     const[y,m]=ym.split('-').map(Number);
-    const inc=txs.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
-    const exp=txs.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+    const inc=txs.filter(t=>t.type==='income'&&!t.excludeFromStats).reduce((s,t)=>s+t.amount,0);
+    const exp=txs.filter(t=>t.type==='expense'&&!t.excludeFromStats).reduce((s,t)=>s+t.amount,0);
     if(!txs.length)return''; // skip empty months
     return`<div class="yr-month-block" onclick="drillIntoMonth('${ym}')">
       <div class="yr-month-header">
@@ -3126,6 +3198,7 @@ function renderBillsByCategory(cat,elId){
           ${b.dueDate?`<span style="font-size:12px;color:var(--text2)">截止：${new Date(b.dueDate).toLocaleDateString('zh-TW')}</span>`:''}
           ${urgencyText?`<span style="font-size:11px;color:${urgencyColor};font-weight:600">${urgencyText}</span>`:''}
           ${gmailLink}
+          ${cat==='credit_card'?`<button onclick="event.stopPropagation();openPdfImport('${b.name.replace(/'/g,"\\'")}','${b.id||''}')" style="font-size:11px;color:var(--orange);background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.25);border-radius:5px;padding:2px 8px;cursor:pointer;font-family:var(--font);font-weight:600">📄 上傳對帳</button>`:''}
         </div>
         ${pwd}
       </div>
@@ -3164,6 +3237,321 @@ function renderBillsStatus(){
     </div>`;
   }).join('');
 }
+
+
+// ══════════════════════════════════════════
+// PDF 帳單解析 & 對帳功能
+// ══════════════════════════════════════════
+let _pdfBillName='';
+let _pdfBillId='';
+let _pdfBase64='';
+let _pdfParsedItems=[];   // [{date,desc,amount,checked}]
+let _reconcileItems=[];   // 進入比對頁的項目
+
+window.openPdfImport=function(billName,billId){
+  _pdfBillName=billName||'';
+  _pdfBillId=billId||'';
+  _pdfBase64='';
+  _pdfParsedItems=[];
+  // Reset UI
+  document.getElementById('pdfImportTitle').textContent=(_pdfBillName||'信用卡')+' · 上傳帳單';
+  document.getElementById('pdfStep1').style.display='block';
+  document.getElementById('pdfStep2').style.display='none';
+  document.getElementById('pdfFileName').textContent='';
+  document.getElementById('pdfParseBtn').style.display='none';
+  document.getElementById('pdfParsing').style.display='none';
+  document.getElementById('pdfParseError').style.display='none';
+  document.getElementById('pdfFileInput').value='';
+  // 顯示 PDF 密碼提示
+  const pwd=BILL_PDF_PWD[_pdfBillName];
+  document.getElementById('pdfHintPwd').textContent=pwd?'🔑 此銀行帳單密碼：'+pwd:'';
+  document.getElementById('pdfImportModal').classList.add('open');
+};
+window.closePdfImportModal=function(e){
+  if(!e||e.target===document.getElementById('pdfImportModal'))
+    document.getElementById('pdfImportModal').classList.remove('open');
+};
+
+window.onPdfSelected=function(input){
+  const file=input.files[0];
+  if(!file)return;
+  document.getElementById('pdfFileName').textContent='📄 '+file.name;
+  document.getElementById('pdfParseError').style.display='none';
+  const reader=new FileReader();
+  reader.onload=function(e){
+    _pdfBase64=e.target.result.split(',')[1];
+    document.getElementById('pdfParseBtn').style.display='block';
+  };
+  reader.readAsDataURL(file);
+};
+
+// 拖曳上傳
+(function(){
+  document.addEventListener('DOMContentLoaded',function(){
+    const zone=document.getElementById('pdfDropZone');
+    if(!zone)return;
+    zone.addEventListener('dragover',function(e){e.preventDefault();zone.style.borderColor='var(--orange)';});
+    zone.addEventListener('dragleave',function(){zone.style.borderColor='var(--border2)';});
+    zone.addEventListener('drop',function(e){
+      e.preventDefault();zone.style.borderColor='var(--border2)';
+      const file=e.dataTransfer.files[0];
+      if(file&&file.type==='application/pdf'){
+        document.getElementById('pdfFileInput').files; // reference
+        const dt=new DataTransfer();dt.items.add(file);
+        document.getElementById('pdfFileInput').files=dt.files;
+        onPdfSelected(document.getElementById('pdfFileInput'));
+      }
+    });
+  });
+})();
+
+window.parsePdfWithAI=async function(){
+  if(!_pdfBase64)return;
+  document.getElementById('pdfParseBtn').style.display='none';
+  document.getElementById('pdfParsing').style.display='block';
+  document.getElementById('pdfParseError').style.display='none';
+
+  const prompt=`你是一個信用卡帳單解析助手。請從這份 PDF 帳單中，抓出「本期消費明細」的每一筆交易。
+
+規則：
+1. 只抓真實消費/退款，跳過：自動扣款還款、年費減免、點數回饋入帳（金額為 0 或說明含「回饋」「點數」「年費」「已入帳」）
+2. 每筆格式：{"date":"YYYY-MM-DD","desc":"說明文字","amount":數字}
+   - amount 正數=支出，負數=退款/收入
+   - date 用消費日（非入帳日），若只有月日請用今年補齊
+3. 僅回傳 JSON 陣列，不加任何說明文字
+
+範例輸出：
+[{"date":"2026-05-01","desc":"IKEA宜家家居","amount":247},{"date":"2026-05-03","desc":"10平方圖書文具館","amount":78}]`;
+
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        messages:[{
+          role:'user',
+          content:[
+            {type:'document',source:{type:'base64',media_type:'application/pdf',data:_pdfBase64}},
+            {type:'text',text:prompt}
+          ]
+        }]
+      })
+    });
+    const data=await resp.json();
+    const text=(data.content||[]).map(c=>c.text||'').join('');
+    // 清除 markdown code fence
+    const clean=text.replace(/```json|```/g,'').trim();
+    const items=JSON.parse(clean);
+    if(!Array.isArray(items))throw new Error('格式錯誤');
+    _pdfParsedItems=items.map(it=>({...it,checked:true}));
+    renderPdfItemList();
+    document.getElementById('pdfStep1').style.display='none';
+    document.getElementById('pdfStep2').style.display='flex';
+    document.getElementById('pdfParsing').style.display='none';
+    document.getElementById('pdfParseInfo').textContent=`共解析出 ${_pdfParsedItems.length} 筆，請確認後選擇要比對的項目`;
+    updatePdfSelectedCount();
+  }catch(err){
+    document.getElementById('pdfParsing').style.display='none';
+    document.getElementById('pdfParseBtn').style.display='block';
+    document.getElementById('pdfParseError').style.display='block';
+    document.getElementById('pdfParseError').textContent='解析失敗，請確認 PDF 是否正確：'+err.message;
+  }
+};
+
+function renderPdfItemList(){
+  const el=document.getElementById('pdfItemList');
+  if(!_pdfParsedItems.length){el.innerHTML='<div style="color:var(--text3);font-size:13px;text-align:center;padding:20px">無消費明細</div>';return;}
+  el.innerHTML=_pdfParsedItems.map((it,i)=>{
+    const isIncome=it.amount<0;
+    const amtColor=isIncome?'var(--green)':'var(--text)';
+    const amtStr=(isIncome?'+':'-')+'NT$ '+Math.abs(it.amount).toLocaleString();
+    return`<label style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer">
+      <input type="checkbox" ${it.checked?'checked':''} onchange="_pdfParsedItems[${i}].checked=this.checked;updatePdfSelectedCount()" style="width:16px;height:16px;accent-color:var(--orange);flex-shrink:0">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${it.desc}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px">${it.date}</div>
+      </div>
+      <div style="font-size:14px;font-weight:700;color:${amtColor};flex-shrink:0">${amtStr}</div>
+    </label>`;
+  }).join('');
+}
+
+window.pdfToggleAll=function(val){
+  _pdfParsedItems.forEach(it=>it.checked=val);
+  renderPdfItemList();updatePdfSelectedCount();
+};
+function updatePdfSelectedCount(){
+  const n=_pdfParsedItems.filter(it=>it.checked).length;
+  document.getElementById('pdfSelectedCount').textContent=`已選 ${n} / ${_pdfParsedItems.length} 筆`;
+}
+
+// ── Step 2: 比對 ──
+window.goToReconcile=function(){
+  _reconcileItems=_pdfParsedItems.filter(it=>it.checked);
+  if(!_reconcileItems.length)return showToast('請至少選一筆');
+
+  // 找帳單對應的帳戶
+  const bill=getBillsState().bills.find(b=>b.id===_pdfBillId||b.name===_pdfBillName);
+  const accId=bill?state.accounts.find(a=>a.name===_pdfBillName||a.id===_pdfBillId)?.id:null;
+
+  // 取近三個月的交易做比對池
+  const recentTxs=state.transactions.filter(t=>{
+    const d=new Date(t.date);
+    const cutoff=new Date();cutoff.setMonth(cutoff.getMonth()-3);
+    return d>=cutoff;
+  });
+
+  // 每筆帳單明細分類：完全相符 / 疑似 / 未記帳
+  const matched=[];const fuzzy=[];const unmatched=[];
+
+  _reconcileItems.forEach(it=>{
+    const itAmt=Math.abs(it.amount);
+    const itDate=new Date(it.date);
+    // 找金額完全相同的交易
+    const sameAmt=recentTxs.filter(t=>t.amount===itAmt);
+    // 完全相符：金額 + 日期差 ≤1 天
+    const exact=sameAmt.find(t=>{
+      const diff=Math.abs(new Date(t.date)-itDate)/86400000;
+      return diff<=1;
+    });
+    if(exact){
+      matched.push({bill:it,tx:exact});
+    } else {
+      // 疑似：金額相同但日期差 2-7 天，或描述相似
+      const near=sameAmt.find(t=>{
+        const diff=Math.abs(new Date(t.date)-itDate)/86400000;
+        return diff<=7;
+      });
+      if(near){fuzzy.push({bill:it,tx:near,importChecked:false});}
+      else{unmatched.push({bill:it,importChecked:true});}
+    }
+  });
+
+  renderReconcileBody(matched,fuzzy,unmatched);
+  document.getElementById('reconcileSubtitle').textContent=
+    `✅ 相符 ${matched.length} 筆　⚠️ 疑似 ${fuzzy.length} 筆　➕ 未記帳 ${unmatched.length} 筆`;
+  document.getElementById('pdfImportModal').classList.remove('open');
+  document.getElementById('reconcileModal').classList.add('open');
+
+  // 儲存到 closure 給 import 使用
+  window._reconcileData={matched,fuzzy,unmatched,accId};
+};
+
+function reconcileAmtStr(item){
+  const isIncome=item.bill.amount<0;
+  return(isIncome?'+':'-')+'NT$ '+Math.abs(item.bill.amount).toLocaleString();
+}
+
+function renderReconcileBody(matched,fuzzy,unmatched){
+  const el=document.getElementById('reconcileBody');
+  let html='';
+
+  if(matched.length){
+    html+=`<div style="font-size:11px;font-weight:700;color:var(--green);letter-spacing:.5px;padding:14px 0 6px">✅ 明確相符（已有記錄）</div>`;
+    html+=matched.map(m=>`
+      <div style="padding:10px 0;border-bottom:1px solid var(--border);opacity:.75">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="font-size:13px;font-weight:500">${m.bill.desc}</div>
+          <div style="font-size:13px;font-weight:700;color:var(--green)">${reconcileAmtStr(m)}</div>
+        </div>
+        <div style="font-size:11px;color:var(--text3);margin-top:3px">帳單 ${m.bill.date}・已記：${m.tx.date} ${m.tx.title||m.tx.category}</div>
+      </div>`).join('');
+  }
+
+  if(fuzzy.length){
+    html+=`<div style="font-size:11px;font-weight:700;color:var(--accent);letter-spacing:.5px;padding:14px 0 6px">⚠️ 疑似相同（請確認是否同一筆）</div>`;
+    html+=fuzzy.map((f,i)=>`
+      <div style="padding:10px 0;border-bottom:1px solid var(--border)">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+          <div style="flex:1">
+            <div style="font-size:12px;color:var(--text3);margin-bottom:3px">📄 帳單：</div>
+            <div style="font-size:13px;font-weight:500">${f.bill.desc}</div>
+            <div style="font-size:11px;color:var(--text3)">${f.bill.date}</div>
+          </div>
+          <div style="font-size:13px;font-weight:700;color:var(--accent);flex-shrink:0">${reconcileAmtStr(f)}</div>
+        </div>
+        <div style="margin-top:6px;padding:8px 10px;background:var(--bg3);border-radius:6px;font-size:12px;color:var(--text2)">
+          現有記錄：${f.tx.date} ・ ${f.tx.title||f.tx.category} ・ NT$ ${f.tx.amount.toLocaleString()}
+        </div>
+        <div style="margin-top:8px;display:flex;gap:8px">
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer">
+            <input type="radio" name="fuzzy_${i}" value="same" checked onchange="window._reconcileData.fuzzy[${i}].importChecked=false" style="accent-color:var(--orange)">
+            同一筆，不匯入
+          </label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer">
+            <input type="radio" name="fuzzy_${i}" value="diff" onchange="window._reconcileData.fuzzy[${i}].importChecked=true" style="accent-color:var(--orange)">
+            不同筆，匯入
+          </label>
+        </div>
+      </div>`).join('');
+  }
+
+  if(unmatched.length){
+    html+=`<div style="font-size:11px;font-weight:700;color:var(--blue);letter-spacing:.5px;padding:14px 0 6px">➕ 未記帳（將匯入）</div>`;
+    html+=unmatched.map((u,i)=>`
+      <label style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer">
+        <input type="checkbox" checked onchange="window._reconcileData.unmatched[${i}].importChecked=this.checked" style="width:16px;height:16px;accent-color:var(--orange);flex-shrink:0">
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:500">${u.bill.desc}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px">${u.bill.date}</div>
+        </div>
+        <div style="font-size:14px;font-weight:700;color:${u.bill.amount<0?'var(--green)':'var(--text)'};flex-shrink:0">${reconcileAmtStr(u)}</div>
+      </label>`).join('');
+  }
+
+  if(!matched.length&&!fuzzy.length&&!unmatched.length)
+    html='<div style="text-align:center;padding:40px;color:var(--text3);font-size:13px">無比對結果</div>';
+
+  el.innerHTML=html;
+}
+
+window.closeReconcileModal=function(e){
+  if(!e||e.target===document.getElementById('reconcileModal'))
+    document.getElementById('reconcileModal').classList.remove('open');
+};
+
+window.importReconciled=function(){
+  const {fuzzy,unmatched,accId}=window._reconcileData||{};
+  const toImport=[
+    ...(fuzzy||[]).filter(f=>f.importChecked).map(f=>f.bill),
+    ...(unmatched||[]).filter(u=>u.importChecked).map(u=>u.bill),
+  ];
+  if(!toImport.length){showToast('沒有要匯入的項目');return;}
+
+  // 找帳戶：優先用對應帳戶，否則找第一個信用卡帳戶
+  const targetAcc=accId
+    ?state.accounts.find(a=>a.id===accId)
+    :state.accounts.find(a=>a.kind==='asset_bank');
+
+  let imported=0;
+  toImport.forEach((it,idx)=>{
+    const isIncome=it.amount<0;
+    const amt=Math.abs(it.amount);
+    const type=isIncome?'income':'expense';
+    const cat=isIncome?(state.incCats[0]?.name||'其他'):(state.expCats[0]?.name||'其他');
+    const id=(Date.now()+idx)+'';
+    if(targetAcc){
+      targetAcc.balance+=isIncome?amt:-amt;
+      targetAcc.updatedAt=Date.now();
+    }
+    state.transactions.push({
+      id,type,amount:amt,
+      category:cat,
+      accountId:targetAcc?.id||'',
+      date:it.date,
+      title:it.desc,
+      note:'由帳單匯入：'+_pdfBillName,
+      tag:''
+    });
+    imported++;
+  });
+
+  state._localUpdateAt=Date.now();scheduleSave();renderAll();
+  document.getElementById('reconcileModal').classList.remove('open');
+  showToast(`已匯入 ${imported} 筆 ✓`);
+};
 
 window.deleteBill=function(idx,cat){
   const d=getBillsState();
@@ -3357,6 +3745,16 @@ window.openEditTxModal=function(id){
   buildEditCatGrid(t.category);
   // Cat group visibility
   document.getElementById('editTxCatGroup').style.display=_editTxType==='transfer'?'none':'block';
+  // Exclude toggle
+  const excl=!!t.excludeFromStats;
+  document.getElementById('editTxExclude').checked=excl;
+  document.getElementById('editTxExcludeTrack').style.background=excl?'var(--orange)':'var(--border2)';
+  document.getElementById('editTxExcludeThumb').style.transform=excl?'translateX(20px)':'translateX(0)';
+  document.getElementById('editTxExclude').onchange=function(){
+    const v=this.checked;
+    document.getElementById('editTxExcludeTrack').style.background=v?'var(--orange)':'var(--border2)';
+    document.getElementById('editTxExcludeThumb').style.transform=v?'translateX(20px)':'translateX(0)';
+  };
   document.getElementById('editTxModal').classList.add('open');
 };
 
@@ -3401,6 +3799,7 @@ window.saveEditTx=function(){
   t.tag=document.getElementById('editTxTag').value;
   t.note=document.getElementById('editTxNote').value.trim();
   t.category=_editTxType==='transfer'?'轉帳':(_editSelCat||t.category);
+  t.excludeFromStats=document.getElementById('editTxExclude').checked||false;
   state._localUpdateAt=Date.now();scheduleSave();
   document.getElementById('editTxModal').classList.remove('open');
   renderAll();showToast('明細已更新 ✓');

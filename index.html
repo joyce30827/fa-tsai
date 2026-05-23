@@ -4365,13 +4365,23 @@ window.importAiRates=function(){
     let bank=banks.find(b=>b.name===ib.name);
     if(!bank){bank={id:'b'+now+i,name:ib.name,accounts:[]};banks.push(bank);}
     (ib.accounts||[]).forEach(ia=>{
-      bank.accounts.push({id:'a'+now+Math.random(),name:ia.name||'帳戶',rate:parseFloat(ia.rate)||0,rangeMin:ia.rangeMin||'',rangeMax:ia.rangeMax||'',expiry:ia.expiry||'',linkedAccId:'',rateUpdatedAt:now});
+      // 同名帳戶 → 更新；找不到 → 新增
+      const existing=bank.accounts.find(a=>a.name===(ia.name||'帳戶'));
+      if(existing){
+        existing.rate=parseFloat(ia.rate)||0;
+        if(ia.rangeMin!==undefined)existing.rangeMin=ia.rangeMin||'';
+        if(ia.rangeMax!==undefined)existing.rangeMax=ia.rangeMax||'';
+        if(ia.expiry!==undefined)existing.expiry=ia.expiry||'';
+        existing.rateUpdatedAt=now;
+      } else {
+        bank.accounts.push({id:'a'+now+Math.random(),name:ia.name||'帳戶',rate:parseFloat(ia.rate)||0,rangeMin:ia.rangeMin||'',rangeMax:ia.rangeMax||'',expiry:ia.expiry||'',linkedAccId:'',rateUpdatedAt:now});
+      }
       count++;
     });
   });
   state._localUpdateAt=Date.now();scheduleSave();
   document.getElementById('aiConfirmModal').classList.remove('open');
-  renderRatePage();showToast(`已匯入 ${count} 個帳戶 ✓`);
+  renderRatePage();showToast(`已更新 ${count} 個帳戶 ✓`);
 };
 
 // ── Allocation ──

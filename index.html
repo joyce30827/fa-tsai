@@ -4299,10 +4299,38 @@ function getUniqueBankNames(){
 window.openJsonImportModal=function(){
   const bankNames=getUniqueBankNames();
   if(!bankNames.length){showToast('請先在帳戶頁新增銀行帳戶');return;}
-  const prompt=`請給我以下台灣銀行的最新台幣活期存款（活存）年利率：${bankNames.join('、')}。
+
+  // 整理現有子帳戶：{ 銀行名: [子帳戶名, ...] }
+  const bankAccMap={};
+  state.accounts.filter(a=>a.kind==='asset_bank').forEach(a=>{
+    const b=a.name.trim();
+    if(!bankAccMap[b])bankAccMap[b]=[];
+    if(a.subName)bankAccMap[b].push(a.subName.trim());
+  });
+  // 加上已有的 bankRates 子帳戶
+  (state.bankRates||[]).forEach(b=>{
+    if(!bankAccMap[b.name])bankAccMap[b.name]=[];
+    (b.accounts||[]).forEach(a=>{
+      if(a.name&&!bankAccMap[b.name].includes(a.name))
+        bankAccMap[b.name].push(a.name);
+    });
+  });
+
+  const bankList=bankNames.map(name=>{
+    const accs=bankAccMap[name]||[];
+    const accStr=accs.length?`（現有子帳戶：${accs.join('、')}）`:'（尚無子帳戶）';
+    return`  - ${name} ${accStr}`;
+  }).join('\n');
+
+  const prompt=`請給我以下台灣銀行的最新台幣活存年利率。
+
+銀行清單（括號內為現有子帳戶，請沿用名稱，並可補充其他常見帳戶）：
+${bankList}
+
 只回傳 JSON，不要任何說明文字：
 {"banks":[{"name":"銀行名稱","accounts":[{"name":"帳戶名稱","rate":0.000,"rangeMin":1,"rangeMax":300000,"expiry":"2025-12-31"}]}]}
 rate 為年利率 %（例如 1.500）；rangeMin/rangeMax 為優惠額度（元）；expiry 為優惠到期日或 null。`;
+
   document.getElementById('jsonPromptText').textContent=prompt;
   document.getElementById('jsonImportInput').value='';
   document.getElementById('jsonImportError').textContent='';

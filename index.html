@@ -2727,15 +2727,18 @@ window.closeCatModal=function(e){if(!e||e.target===document.getElementById('catM
 
 // 分類格式遷移：舊版是純字串陣列，新版是 [{name,icon}]
 function migrateCats(){
-  function fix(list,defs){
-    if(!list||!list.length)return JSON.parse(JSON.stringify(defs));
-    return list.map(c=>{
-      if(typeof c==='string'){const def=defs.find(d=>d.name===c)||{icon:'📦'};return{name:c,icon:def.icon||'📦'};}
-      return{name:c.name||'?',icon:c.icon||'📦'};
-    });
+  const LEGACY_EXP=new Set(['餐飲','娛樂','教育','居家','訂閱']);
+  const LEGACY_INC=new Set(['投資','兼職']);
+  function fix(list,defs,legacy){
+    // 保留使用者自訂的（不在 legacy、也不在 defs 裡的）
+    const userCustom=(list||[])
+      .map(c=>typeof c==='string'?{name:c,icon:'📦'}:{name:c.name||'?',icon:c.icon||'📦'})
+      .filter(c=>!legacy.has(c.name)&&!defs.find(d=>d.name===c.name));
+    // 新預設 + 使用者自訂
+    return [...JSON.parse(JSON.stringify(defs)),...userCustom];
   }
-  state.expCats=fix(state.expCats,DEF_EXP);
-  state.incCats=fix(state.incCats,DEF_INC);
+  state.expCats=fix(state.expCats,DEF_EXP,LEGACY_EXP);
+  state.incCats=fix(state.incCats,DEF_INC,LEGACY_INC);
 }
 
 function renderCatList(){

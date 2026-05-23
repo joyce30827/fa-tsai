@@ -4364,8 +4364,11 @@ window.doJsonImport=function(){
       let bank=banks.find(b=>normalizeBankName(b.name)===normalizeBankName(ib.name)||b.name===ib.name);
       if(!bank){bank={id:'b'+now+Math.random(),name:ib.name,accounts:[]};banks.push(bank);}
       (ib.accounts||[]).forEach(ia=>{
-        const existing=bank.accounts.find(a=>a.name===ia.name);
-        const accData={name:ia.name||'帳戶',rate:parseFloat(ia.rate)||0,rangeMin:ia.rangeMin||'',rangeMax:ia.rangeMax||'',expiry:ia.expiry||'',linkedAccId:'',rateUpdatedAt:now};
+        const iaName=(ia.name||'帳戶').trim();
+        // 完全相符 → 優先；否則用子字串模糊比對
+        const existing=bank.accounts.find(a=>a.name===iaName)
+          ||bank.accounts.find(a=>iaName.includes(a.name)||a.name.includes(iaName));
+        const accData={name:iaName,rate:parseFloat(ia.rate)||0,rangeMin:ia.rangeMin||'',rangeMax:ia.rangeMax||'',expiry:ia.expiry||'',linkedAccId:existing?.linkedAccId||'',rateUpdatedAt:now};
         if(existing){Object.assign(existing,accData);}
         else{bank.accounts.push({id:'a'+now+Math.random(),...accData});}
         count++;
@@ -4413,16 +4416,18 @@ window.importAiRates=function(){
     let bank=banks.find(b=>b.name===ib.name);
     if(!bank){bank={id:'b'+now+i,name:ib.name,accounts:[]};banks.push(bank);}
     (ib.accounts||[]).forEach(ia=>{
-      // 同名帳戶 → 更新；找不到 → 新增
-      const existing=bank.accounts.find(a=>a.name===(ia.name||'帳戶'));
+      const iaName=(ia.name||'帳戶').trim();
+      const existing=bank.accounts.find(a=>a.name===iaName)
+        ||bank.accounts.find(a=>iaName.includes(a.name)||a.name.includes(iaName));
       if(existing){
+        existing.name=iaName;
         existing.rate=parseFloat(ia.rate)||0;
         if(ia.rangeMin!==undefined)existing.rangeMin=ia.rangeMin||'';
         if(ia.rangeMax!==undefined)existing.rangeMax=ia.rangeMax||'';
         if(ia.expiry!==undefined)existing.expiry=ia.expiry||'';
         existing.rateUpdatedAt=now;
       } else {
-        bank.accounts.push({id:'a'+now+Math.random(),name:ia.name||'帳戶',rate:parseFloat(ia.rate)||0,rangeMin:ia.rangeMin||'',rangeMax:ia.rangeMax||'',expiry:ia.expiry||'',linkedAccId:'',rateUpdatedAt:now});
+        bank.accounts.push({id:'a'+now+Math.random(),name:iaName,rate:parseFloat(ia.rate)||0,rangeMin:ia.rangeMin||'',rangeMax:ia.rangeMax||'',expiry:ia.expiry||'',linkedAccId:'',rateUpdatedAt:now});
       }
       count++;
     });

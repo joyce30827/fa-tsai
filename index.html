@@ -1933,8 +1933,8 @@ function getAccIcon(kind,size=16){
   return`<span style="display:flex;align-items:center;justify-content:center;color:${color}">${ICONS[name]?.replace(/viewBox/,`width="${size}" height="${size}" viewBox`)}</span>`;
 }
 const COLORS=['#2ecc8e','#f5c842','#f0614a','#5ba4f5','#c875f0','#ff8c42','#4ecdc4','#a8e063','#ff6b9d'];
-const DEF_EXP=[{name:'餐飲',icon:'🍜'},{name:'交通',icon:'🚌'},{name:'購物',icon:'🛍'},{name:'娛樂',icon:'🎮'},{name:'醫療',icon:'💊'},{name:'教育',icon:'📚'},{name:'居家',icon:'🏠'},{name:'訂閱',icon:'📱'},{name:'其他',icon:'📦'}];
-const DEF_INC=[{name:'薪資',icon:'💼'},{name:'獎金',icon:'🎉'},{name:'投資',icon:'📈'},{name:'兼職',icon:'💻'},{name:'其他',icon:'💰'}];
+const DEF_EXP=[{name:'飲食',icon:'🍜'},{name:'服飾',icon:'👗'},{name:'住家',icon:'🏠'},{name:'交通',icon:'🚌'},{name:'學習',icon:'📚'},{name:'休閒娛樂',icon:'🎮'},{name:'購物',icon:'🛍'},{name:'醫療',icon:'💊'},{name:'現金消費',icon:'💵'},{name:'保險',icon:'🛡'},{name:'費用/手續費',icon:'🧾'},{name:'稅金',icon:'🏛'},{name:'投資理財',icon:'📈'},{name:'電信費用',icon:'📱'},{name:'3C',icon:'💻'},{name:'美妝保養',icon:'💄'},{name:'禮品',icon:'🎁'},{name:'生活',icon:'🧺'},{name:'代墊',icon:'🤝'},{name:'紅包',icon:'🧧'},{name:'代購',icon:'🛒'},{name:'其他',icon:'📦'}];
+const DEF_INC=[{name:'薪資',icon:'💼'},{name:'利息所得',icon:'🏦'},{name:'獎金',icon:'🎉'},{name:'發票/彩券中獎',icon:'🎫'},{name:'優惠回饋',icon:'🎀'},{name:'股利',icon:'📊'},{name:'投資獲利',icon:'📈'},{name:'保險',icon:'🛡'},{name:'還錢',icon:'💸'},{name:'補助',icon:'🏛'},{name:'代墊',icon:'🤝'},{name:'紅包',icon:'🧧'},{name:'刷退',icon:'↩️'},{name:'其他',icon:'💰'}];
 
 let state={transactions:[],accounts:[],tags:['日常','工作','旅遊','家庭'],expCats:JSON.parse(JSON.stringify(DEF_EXP)),incCats:JSON.parse(JSON.stringify(DEF_INC)),currentMonth:new Date().toISOString().slice(0,7)};
 let userId=null,saveTimeout=null,unsubscribe=null;

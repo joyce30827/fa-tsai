@@ -3994,7 +3994,7 @@ window.syncBillsFromGmail=async function(){
 
       // 解析電信帳單（含 threadId），套用 telco 白名單
       const telcoFilters=(subjectFilters.telco||{})[bankName];
-      const telcoBaseMatch=TELCO_NAMES&&TELCO_NAMES.has?TELCO_NAMES.has(bankName):['中華電信','台灣大哥大','遠傳電信','亞太電信','台灣之星'].includes(bankName);
+      const telcoBaseMatch=['中華電信','台灣大哥大','遠傳電信','亞太電信','台灣之星'].includes(bankName);
       const telcoKwMatch=telcoFilters&&telcoFilters.length>0
         ?telcoFilters.some(kw=>kw.split('+').map(s=>s.trim()).filter(Boolean).every(s=>subject.includes(s)))
         :subject.includes('費用')||subject.includes('帳單')||subject.includes('通知單');

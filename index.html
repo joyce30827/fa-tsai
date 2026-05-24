@@ -3163,31 +3163,37 @@ function renderBillsByCategory(cat,elId){
   const d=getBillsState();
   const el=document.getElementById(elId);
   if(!el)return;
-  const bills=d.bills.filter(b=>b.category===cat).sort((a,b)=>(a.dueDate||'9999')>(b.dueDate||'9999')?1:-1);
+  const bills=d.bills.filter(b=>b.category===cat)
+    .sort((a,b)=>((b.dueDate||new Date(b._ts||0).toISOString().slice(0,10))>(a.dueDate||new Date(a._ts||0).toISOString().slice(0,10)))?1:-1);
   if(!bills.length){
     el.innerHTML='<div class="alloc-empty" style="padding:16px">尚無帳單，點同步或手動新增</div>';
     return;
   }
   const now=Date.now();
-  el.innerHTML=bills.map((b,i)=>{
+
+  // 依「年月」分組
+  const groups={};
+  bills.forEach(b=>{
+    const src=b.dueDate||(b._ts?new Date(b._ts).toISOString():'');
+    const ym=src?src.slice(0,7):'未知';
+    if(!groups[ym])groups[ym]=[];
+    groups[ym].push(b);
+  });
+  const sortedYMs=Object.keys(groups).sort((a,b)=>b.localeCompare(a));
+  const latestYM=sortedYMs[0];
+
+  function billCardHTML(b){
     const dueTs=b.dueDate?new Date(b.dueDate).getTime():null;
     const days=dueTs?Math.ceil((dueTs-now)/86400000):null;
-    let urgencyColor='var(--text3)';
-    let urgencyText='';
-    if(b.isPaid){
-      urgencyText='已繳清';urgencyColor='var(--green)';
-    } else if(days!==null){
+    let urgencyColor='var(--text3)',urgencyText='';
+    if(b.isPaid){urgencyText='已繳清';urgencyColor='var(--green)';}
+    else if(days!==null){
       urgencyText=days<0?'已逾期':days===0?'今天到期':`還有 ${days} 天`;
-      if(days<0)urgencyColor='var(--red)';
-      else if(days<=3)urgencyColor='var(--red)';
-      else if(days<=7)urgencyColor='var(--accent)';
+      urgencyColor=days<=0?'var(--red)':days<=3?'var(--red)':days<=7?'var(--accent)':'var(--text3)';
     }
-    const autoDebit=b.autoDebitAcc?
-      `<span style="font-size:10px;color:var(--green);background:rgba(46,204,142,0.1);padding:1px 6px;border-radius:4px">自動扣 ${b.autoDebitAcc}</span>`:'';
-    const paidBadge=b.isPaid?
-      `<span style="font-size:10px;color:var(--green);background:rgba(46,204,142,0.1);border:1px solid rgba(46,204,142,0.2);padding:1px 7px;border-radius:10px">✓ 已繳清</span>`:'';
-    const gmailLink=b.gmailThreadId?
-      `<a href="https://mail.google.com/mail/#inbox/${b.gmailThreadId}" target="_blank" style="font-size:11px;color:var(--orange);text-decoration:none;font-weight:600">查看帳單 ›</a>`:'';
+    const autoDebit=b.autoDebitAcc?`<span style="font-size:10px;color:var(--green);background:rgba(16,185,129,0.1);padding:1px 6px;border-radius:4px">自動扣 ${b.autoDebitAcc}</span>`:'';
+    const paidBadge=b.isPaid?`<span style="font-size:10px;color:var(--green);background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);padding:1px 7px;border-radius:10px">✓ 已繳清</span>`:'';
+    const gmailLink=b.gmailThreadId?`<a href="https://mail.google.com/mail/#inbox/${b.gmailThreadId}" target="_blank" style="font-size:11px;color:var(--orange);text-decoration:none;font-weight:600">查看帳單 ›</a>`:'';
     const pwd=BILL_PDF_PWD[b.name]?`<div style="font-size:10px;color:var(--text3);margin-top:3px">🔑 PDF密碼：${BILL_PDF_PWD[b.name]}</div>`:'';
     return`<div class="rate-bank-card" style="margin:0 16px 8px;cursor:${b.gmailThreadId?'pointer':'default'}" onclick="${b.gmailThreadId?`window.open('https://mail.google.com/mail/#inbox/${b.gmailThreadId}','_blank')`:''}">
       <div style="padding:12px 16px">
@@ -3198,7 +3204,7 @@ function renderBillsByCategory(cat,elId){
           </div>
           <div style="display:flex;align-items:center;gap:8px">
             <div style="font-size:15px;font-weight:700;color:${b.isPaid?'var(--green)':'var(--blue)'}">${b.amount!=null?'NT$ '+Number(b.amount).toLocaleString():'—'}</div>
-            <button onclick="event.stopPropagation();deleteBill(${i},'${cat}')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;padding:2px">✕</button>
+            <button onclick="event.stopPropagation();deleteBill('${b.id||''}','${cat}')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;padding:2px">✕</button>
           </div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;margin-top:5px;flex-wrap:wrap">
@@ -3207,6 +3213,40 @@ function renderBillsByCategory(cat,elId){
           ${gmailLink}
         </div>
         ${pwd}
+      </div>
+    </div>`;
+  }
+
+  el.innerHTML=sortedYMs.map(ym=>{
+    const grpBills=groups[ym];
+    const isLatest=ym===latestYM;
+    const [yr,mo]=ym.split('-');
+    const label=ym==='未知'?'未知月份':`${yr} 年 ${parseInt(mo)} 月`;
+    const grpId=`billgrp_${cat}_${ym.replace('-','_')}`;
+    const total=grpBills.reduce((s,b)=>s+(b.amount||0),0);
+    const allPaid=grpBills.every(b=>b.isPaid);
+    const statusBadge=allPaid
+      ?`<span style="font-size:10px;color:var(--green);font-weight:600">全部已繳</span>`
+      :`<span style="font-size:10px;color:var(--text3)">${total?'NT$ '+total.toLocaleString():grpBills.length+' 筆'}</span>`;
+
+    if(isLatest){
+      return`<div>
+        <div style="display:flex;align-items:center;gap:8px;padding:4px 16px 4px">
+          <span style="font-size:11px;font-weight:700;color:var(--orange)">${label}</span>
+          ${statusBadge}
+        </div>
+        ${grpBills.map(b=>billCardHTML(b)).join('')}
+      </div>`;
+    }
+    return`<div style="margin:4px 16px 6px;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden">
+      <button onclick="(function(el,btn){const open=el.style.display!=='none';el.style.display=open?'none':'block';btn.querySelector('.hchev').style.transform=open?'rotate(0deg)':'rotate(90deg)'})(document.getElementById('${grpId}'),this)" style="width:100%;display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--bg3);border:none;cursor:pointer;font-family:var(--font);text-align:left">
+        <svg class="hchev" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;transition:transform .2s"><polyline points="9 18 15 12 9 6"/></svg>
+        <span style="font-size:12px;font-weight:600;color:var(--text2);flex:1">${label}</span>
+        ${statusBadge}
+      </button>
+      <div id="${grpId}" style="display:none">
+        ${grpBills.map(b=>billCardHTML(b)).join('')}
+        <div style="height:8px"></div>
       </div>
     </div>`;
   }).join('');
@@ -3221,37 +3261,25 @@ function renderBillsStatus(){
   const rows=[];
   appBanks.forEach(name=>{
     const found=d.gmailBanks.find(b=>normalizeBankName(b.bankName)===name||b.bankName===name);
-    rows.push({name,status:found?'ok':'missing',lastDate:found?.lastDate||null,lastMsgId:found?.lastMsgId||null});
+    rows.push({name,status:found?'ok':'missing',lastDate:found?.lastDate||null});
   });
   d.gmailBanks.forEach(b=>{
     const normalized=normalizeBankName(b.bankName);
     const inApp=appBanks.find(n=>n===normalized||n===b.bankName);
-    if(!inApp)rows.push({name:b.bankName,status:'not_in_app',lastDate:b.lastDate,lastMsgId:b.lastMsgId||null});
+    if(!inApp)rows.push({name:b.bankName,status:'not_in_app',lastDate:b.lastDate});
   });
   el.innerHTML=rows.map(r=>{
     const icon=r.status==='ok'?'✅':r.status==='missing'?'⚠️':'📬';
     const desc=r.status==='ok'?`最近帳單：${r.lastDate?new Date(r.lastDate).toLocaleDateString('zh-TW'):'-'}`
       :r.status==='missing'?'未收到帳單，請確認是否申請電子帳單'
       :'Gmail 有收到，但 app 尚未設定帳戶';
-    const pwd=BILL_PDF_PWD[r.name]?`<div style="font-size:10px;color:var(--text3);margin-top:2px">🔑 PDF密碼：${BILL_PDF_PWD[r.name]}</div>`:'';
-    // Gmail 連結：若有 lastMsgId 直接開那封信，否則搜尋該銀行帳單
-    const gmailHref=r.lastMsgId
-      ?`https://mail.google.com/mail/#inbox/${r.lastMsgId}`
-      :`https://mail.google.com/mail/#search/${encodeURIComponent(r.name+' 對帳單 OR 帳單')}`;
-    const gmailBtn=r.status!=='missing'
-      ?`<a href="${gmailHref}" target="_blank" onclick="event.stopPropagation()" style="font-size:11px;color:var(--orange);text-decoration:none;font-weight:600;flex-shrink:0">查看帳單 ›</a>`
-      :'';
-    // PDF 上傳按鈕（在能找到帳單的情況下才顯示）
-    const pdfBtn=r.status!=='missing'
-      ?`<button onclick="event.stopPropagation();openPdfImport('${r.name.replace(/'/g,"\\'")}','')" style="font-size:11px;color:var(--text2);background:var(--bg3);border:1px solid var(--border2);border-radius:5px;padding:2px 8px;cursor:pointer;font-family:var(--font);flex-shrink:0">📄 上傳 PDF</button>`
-      :'';
-    return`<div class="alloc-item" style="flex-wrap:wrap;gap:8px 10px">
+    const pwd=BILL_PDF_PWD[r.name]?`<div style="font-size:10px;color:var(--text3)">PDF密碼：${BILL_PDF_PWD[r.name]}</div>`:'';
+    return`<div class="alloc-item">
       <div style="font-size:18px;flex-shrink:0">${icon}</div>
-      <div class="alloc-info" style="min-width:0">
+      <div class="alloc-info">
         <div class="alloc-bank">${r.name}</div>
         <div class="alloc-acc">${desc}</div>${pwd}
       </div>
-      ${gmailBtn||pdfBtn?`<div style="display:flex;align-items:center;gap:6px;flex-shrink:0;margin-left:auto">${gmailBtn}${pdfBtn}</div>`:''}
     </div>`;
   }).join('');
 }
@@ -3272,7 +3300,7 @@ window.openPdfImport=function(billName,billId){
   _pdfBase64='';
   _pdfParsedItems=[];
   // Reset UI
-  document.getElementById('pdfImportTitle').textContent=(_pdfBillName||'帳單')+' · 上傳對帳單 PDF';
+  document.getElementById('pdfImportTitle').textContent=(_pdfBillName||'信用卡')+' · 上傳帳單';
   document.getElementById('pdfStep1').style.display='block';
   document.getElementById('pdfStep2').style.display='none';
   document.getElementById('pdfFileName').textContent='';
@@ -3670,7 +3698,7 @@ window.syncBillsFromGmail=async function(){
 
       // 更新 gmailBanks
       if(!bankMap[bankName]||ts>new Date(bankMap[bankName].lastDate||0).getTime()){
-        bankMap[bankName]={bankName,lastDate:new Date(ts).toISOString().slice(0,10),lastSubject:subject,lastMsgId:msg.id};
+        bankMap[bankName]={bankName,lastDate:new Date(ts).toISOString().slice(0,10),lastSubject:subject};
       }
 
       // ✅ 偵測已繳款：「繳款入帳彙整通知」才是真正已繳清
@@ -3711,11 +3739,16 @@ window.syncBillsFromGmail=async function(){
     d.bills=d.bills.filter(b=>b.source!=='gmail');
     const seen={};
     newBills.sort((a,b)=>b._ts-a._ts).forEach(b=>{
-      const key=b.name+'_'+b.category;
+      // key 加入「年月」，讓不同月份的帳單都能保留
+      const ym=new Date(b._ts).toISOString().slice(0,7); // "2026-04"
+      const key=b.name+'_'+b.category+'_'+ym;
       if(!seen[key]){
         seen[key]=true;
-        // 套用已繳款標記
-        if(paidMap[b.name]!==undefined)b.isPaid=true;
+        // 僅對最新那期套用已繳款標記
+        if(paidMap[b.name]!==undefined){
+          const latestKey=b.name+'_'+b.category+'_latest';
+          if(!seen[latestKey]){seen[latestKey]=true;b.isPaid=true;}
+        }
         d.bills.push(b);
       }
     });

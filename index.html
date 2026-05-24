@@ -3229,6 +3229,7 @@ function renderBillsByCategory(cat,elId){
     const autoDebit=b.autoDebitAcc?`<span style="font-size:10px;color:var(--green);background:rgba(16,185,129,0.1);padding:1px 6px;border-radius:4px">自動扣 ${b.autoDebitAcc}</span>`:'';
     const paidBadge=b.isPaid?`<span style="font-size:10px;color:var(--green);background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);padding:1px 7px;border-radius:10px">✓ 已繳清</span>`:'';
     const gmailLink=b.gmailThreadId?`<a href="https://mail.google.com/mail/#inbox/${b.gmailThreadId}" target="_blank" style="font-size:11px;color:var(--orange);text-decoration:none;font-weight:600">查看帳單 ›</a>`:'';
+    const reconcileBtn=b.gmailThreadId&&b.category==='credit_card'?`<button onclick="event.stopPropagation();fetchGmailPdfAndReconcile('${b.gmailThreadId}','${b.name.replace(/'/g,"\'")}','${b.id||''}')" style="font-size:11px;color:#fff;background:var(--orange);border:none;border-radius:5px;padding:2px 10px;cursor:pointer;font-family:var(--font);font-weight:600;flex-shrink:0">📊 比對明細</button>`:'';
     const pwd=BILL_PDF_PWD[b.name]?`<div style="font-size:10px;color:var(--text3);margin-top:3px">🔑 PDF密碼：${BILL_PDF_PWD[b.name]}</div>`:'';
     return`<div class="rate-bank-card" style="margin:0 16px 8px;cursor:${b.gmailThreadId?'pointer':'default'}" onclick="${b.gmailThreadId?`window.open('https://mail.google.com/mail/#inbox/${b.gmailThreadId}','_blank')`:''}">
       <div style="padding:12px 16px">
@@ -3246,6 +3247,7 @@ function renderBillsByCategory(cat,elId){
           ${b.dueDate?`<span style="font-size:12px;color:var(--text2)">截止：${new Date(b.dueDate).toLocaleDateString('zh-TW')}</span>`:''}
           ${urgencyText?`<span style="font-size:11px;color:${urgencyColor};font-weight:600">${urgencyText}</span>`:''}
           ${gmailLink}
+          ${reconcileBtn}
         </div>
         ${pwd}
       </div>
@@ -3582,6 +3584,72 @@ window.onPdfSelected=function(input){
     });
   });
 })();
+
+window.fetchGmailPdfAndReconcile=async function(threadId,billName,billId){
+  // 開啟 modal 並進入 loading 狀態
+  _pdfBillName=billName||'';
+  _pdfBillId=billId||'';
+  _pdfBase64='';
+  _pdfParsedItems=[];
+  document.getElementById('pdfImportTitle').textContent=billName+' · 從 Gmail 讀取中...';
+  document.getElementById('pdfStep1').style.display='block';
+  document.getElementById('pdfStep2').style.display='none';
+  document.getElementById('pdfFileName').textContent='正在從 Gmail 讀取 PDF 附件...';
+  document.getElementById('pdfParseBtn').style.display='none';
+  document.getElementById('pdfParsing').style.display='none';
+  document.getElementById('pdfParseError').style.display='none';
+  const pwd=BILL_PDF_PWD[_pdfBillName];
+  document.getElementById('pdfHintPwd').textContent=pwd?'🔑 此銀行帳單密碼：'+pwd:'';
+  document.getElementById('pdfImportModal').classList.add('open');
+
+  try{
+    if(!gmailAccessToken){const ok=await requestGmailToken();if(!ok)throw new Error('Gmail 授權失敗');}
+    // 取得 thread 裡的 messages
+    const threadResp=await fetch(
+      `https://www.googleapis.com/gmail/v1/users/me/threads/${threadId}?format=full`,
+      {headers:{Authorization:`Bearer ${gmailAccessToken}`}}
+    );
+    const thread=await threadResp.json();
+    const messages=thread.messages||[];
+
+    // 在所有 message parts 裡找 PDF 附件
+    let attachmentId=null,msgId=null;
+    function findPdf(parts,mId){
+      for(const p of(parts||[])){
+        if(p.mimeType==='application/pdf'&&p.body?.attachmentId){
+          attachmentId=p.body.attachmentId;msgId=mId;return true;
+        }
+        if(p.parts&&findPdf(p.parts,mId))return true;
+      }
+      return false;
+    }
+    for(const msg of messages){
+      if(findPdf(msg.payload?.parts||[],msg.id))break;
+    }
+
+    if(!attachmentId){
+      throw new Error('這封信沒有 PDF 附件，請改用手動上傳');
+    }
+
+    // 下載附件 base64
+    const attResp=await fetch(
+      `https://www.googleapis.com/gmail/v1/users/me/messages/${msgId}/attachments/${attachmentId}`,
+      {headers:{Authorization:`Bearer ${gmailAccessToken}`}}
+    );
+    const attData=await attResp.json();
+    // Gmail 回傳的 base64 是 URL-safe，需轉成標準 base64
+    _pdfBase64=(attData.data||'').replace(/-/g,'+').replace(/_/g,'/');
+
+    document.getElementById('pdfImportTitle').textContent=billName+' · 上傳帳單 PDF';
+    document.getElementById('pdfFileName').textContent='✅ PDF 已從 Gmail 讀取，點擊解析';
+    document.getElementById('pdfParseBtn').style.display='block';
+
+  }catch(err){
+    document.getElementById('pdfFileName').textContent='';
+    document.getElementById('pdfParseError').style.display='block';
+    document.getElementById('pdfParseError').textContent='讀取失敗：'+err.message;
+  }
+};
 
 window.parsePdfWithAI=async function(){
   if(!_pdfBase64)return;

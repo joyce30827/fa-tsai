@@ -3885,7 +3885,8 @@ window.syncBillsFromGmail=async function(){
   if(btn){btn.textContent='⏳';btn.disabled=true;}
   try{
     // 搜尋帳單信件
-    const q=encodeURIComponent('subject:(對帳單 OR 帳單 OR 信用卡 OR 電信費 OR 繳款入帳 OR 繳款成功 OR statement) newer_than:90d');
+    const knownSenders=Object.keys(BILL_SENDER_MAP).map(addr=>`from:${addr}`).join(' OR ');
+    const q=encodeURIComponent(`(${knownSenders}) OR subject:(對帳單 OR 帳單 OR 信用卡 OR 電信費 OR 通知單 OR 繳款入帳 OR 繳款成功 OR statement) newer_than:90d`);
     const listRes=await fetch(
       `https://www.googleapis.com/gmail/v1/users/me/messages?q=${q}&maxResults=50`,
       {headers:{Authorization:`Bearer ${gmailAccessToken}`}}

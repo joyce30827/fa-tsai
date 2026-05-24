@@ -3381,6 +3381,7 @@ window.closeBillFilterModal=function(e){
     document.getElementById('billFilterModal').classList.remove('open');
 };
 
+let _billFilterTab='credit_card';
 function renderBillFilterList(){
   const d=getBillsState();
   const el=document.getElementById('billFilterList');
@@ -3392,70 +3393,85 @@ function renderBillFilterList(){
   d.gmailBanks.forEach(b=>bankSet.add(b.bankName));
   const banks=[...bankSet].sort();
 
+  const typeFilters=d.subjectFilters[_billFilterTab]||{};
+
+  // tab bar
+  const tabBar=`<div style="display:flex;gap:0;margin-bottom:14px;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden">
+    <button onclick="_billFilterTab='credit_card';renderBillFilterList()" style="flex:1;padding:8px;border:none;cursor:pointer;font-family:var(--font);font-size:12px;font-weight:600;background:${_billFilterTab==='credit_card'?'var(--orange)':'var(--bg3)'};color:${_billFilterTab==='credit_card'?'#fff':'var(--text2)'}">💳 信用卡帳單</button>
+    <button onclick="_billFilterTab='bank_statement';renderBillFilterList()" style="flex:1;padding:8px;border:none;cursor:pointer;font-family:var(--font);font-size:12px;font-weight:600;background:${_billFilterTab==='bank_statement'?'var(--orange)':'var(--bg3)'};color:${_billFilterTab==='bank_statement'?'#fff':'var(--text2)'}">🏦 銀行對帳單</button>
+  </div>`;
+
   if(!banks.length){
-    el.innerHTML='<div style="color:var(--text3);font-size:13px;padding:8px 0">先同步 Gmail 後，這裡會列出偵測到的銀行</div>';
+    el.innerHTML=tabBar+'<div style="color:var(--text3);font-size:13px;padding:8px 0">先同步 Gmail 後，這裡會列出偵測到的銀行</div>';
     return;
   }
 
-  el.innerHTML=banks.map(bankName=>{
-    const filters=d.subjectFilters[bankName]||[];
+  const typeLabel=_billFilterTab==='credit_card'?'信用卡帳單':'銀行對帳單';
+  const cards=banks.map(bankName=>{
+    const filters=typeFilters[bankName]||[];
     const gmailBank=d.gmailBanks.find(b=>b.bankName===bankName);
     const history=gmailBank?.history||[];
     const historySubjects=[...new Set(history.map(h=>h.subject))].filter(s=>!filters.includes(s));
-    const bankId=bankName.replace(/[^a-zA-Z0-9]/g,'_');
+    const bankId=(_billFilterTab+'_'+bankName).replace(/[^a-zA-Z0-9]/g,'_');
+    const encodedBank=encodeURIComponent(bankName);
+    const encodedType=_billFilterTab;
 
     const filterRows=filters.length
       ?filters.map((kw,i)=>`
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
           <span style="flex:1;font-size:12px;background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.2);border-radius:5px;padding:3px 8px;color:var(--text)">${kw}</span>
-          <button onclick="removeBillFilter(decodeURIComponent('${encodeURIComponent(bankName)}'),${i})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;padding:0 2px">✕</button>
+          <button onclick="removeBillFilter('${encodedType}',decodeURIComponent('${encodedBank}'),${i})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;padding:0 2px">✕</button>
         </div>`).join('')
-      :'<div style="font-size:11px;color:var(--text3);font-style:italic;margin-bottom:4px">尚未設定（全部保留）</div>';
+      :`<div style="font-size:11px;color:var(--text3);font-style:italic;margin-bottom:4px">尚未設定（全部保留）</div>`;
 
     const historyBtns=historySubjects.length
       ?`<div style="font-size:11px;color:var(--text3);margin:6px 0 4px">從歷史信件點選加入：</div>
         ${historySubjects.map(s=>`
-          <button onclick="addBillFilterDirect(decodeURIComponent('${encodeURIComponent(bankName)}'),decodeURIComponent('${encodeURIComponent(s)}'))" style="display:block;width:100%;text-align:left;font-size:11px;color:var(--text2);background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:4px 8px;cursor:pointer;font-family:var(--font);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px">+ ${s}</button>`).join('')}`
+          <button onclick="addBillFilterDirect('${encodedType}',decodeURIComponent('${encodedBank}'),decodeURIComponent('${encodeURIComponent(s)}'))" style="display:block;width:100%;text-align:left;font-size:11px;color:var(--text2);background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:4px 8px;cursor:pointer;font-family:var(--font);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px">+ ${s}</button>`).join('')}`
       :'';
 
     return`<div style="margin-bottom:14px;padding:14px;background:var(--bg3);border-radius:var(--radius-sm);border:1px solid var(--border)">
       <div style="font-size:13px;font-weight:700;margin-bottom:10px">${bankName}</div>
-      <div style="font-size:11px;color:var(--text3);margin-bottom:5px">主旨白名單（符合任一即保留）</div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:5px">${typeLabel}主旨白名單（符合任一即保留）</div>
       ${filterRows}
       <div style="display:flex;gap:6px;margin-top:8px">
         <input id="filterInput_${bankId}" placeholder="輸入關鍵字..." style="flex:1;background:var(--bg);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:6px 10px;color:var(--text);font-family:var(--font);font-size:12px">
-        <button onclick="addBillFilter(decodeURIComponent('${encodeURIComponent(bankName)}'),'filterInput_${bankId}')" style="padding:6px 12px;background:var(--orange);color:#fff;border:none;border-radius:var(--radius-sm);cursor:pointer;font-size:12px;font-family:var(--font)">加入</button>
+        <button onclick="addBillFilter('${encodedType}',decodeURIComponent('${encodedBank}'),'filterInput_${bankId}')" style="padding:6px 12px;background:var(--orange);color:#fff;border:none;border-radius:var(--radius-sm);cursor:pointer;font-size:12px;font-family:var(--font)">加入</button>
       </div>
       ${historyBtns}
     </div>`;
   }).join('');
+
+  el.innerHTML=tabBar+cards;
 }
 
-window.addBillFilter=function(bankName,inputId){
+window.addBillFilter=function(type,bankName,inputId){
   const input=document.getElementById(inputId);
   const kw=(input?.value||'').trim();
   if(!kw)return;
   const d=getBillsState();
-  if(!d.subjectFilters[bankName])d.subjectFilters[bankName]=[];
-  if(!d.subjectFilters[bankName].includes(kw))d.subjectFilters[bankName].push(kw);
+  if(!d.subjectFilters[type])d.subjectFilters[type]={};
+  if(!d.subjectFilters[type][bankName])d.subjectFilters[type][bankName]=[];
+  if(!d.subjectFilters[type][bankName].includes(kw))d.subjectFilters[type][bankName].push(kw);
   if(input)input.value='';
   state._localUpdateAt=Date.now();scheduleSave();
   renderBillFilterList();updateBillFilterSubtitle();
 };
 
-window.addBillFilterDirect=function(bankName,kw){
+window.addBillFilterDirect=function(type,bankName,kw){
   const d=getBillsState();
-  if(!d.subjectFilters[bankName])d.subjectFilters[bankName]=[];
-  if(!d.subjectFilters[bankName].includes(kw))d.subjectFilters[bankName].push(kw);
+  if(!d.subjectFilters[type])d.subjectFilters[type]={};
+  if(!d.subjectFilters[type][bankName])d.subjectFilters[type][bankName]=[];
+  if(!d.subjectFilters[type][bankName].includes(kw))d.subjectFilters[type][bankName].push(kw);
   state._localUpdateAt=Date.now();scheduleSave();
   renderBillFilterList();updateBillFilterSubtitle();
 };
 
-window.removeBillFilter=function(bankName,idx){
+window.removeBillFilter=function(type,bankName,idx){
   const d=getBillsState();
-  if(!d.subjectFilters[bankName])return;
-  d.subjectFilters[bankName].splice(idx,1);
-  if(!d.subjectFilters[bankName].length)delete d.subjectFilters[bankName];
+  if(!d.subjectFilters[type]||!d.subjectFilters[type][bankName])return;
+  d.subjectFilters[type][bankName].splice(idx,1);
+  if(!d.subjectFilters[type][bankName].length)delete d.subjectFilters[type][bankName];
   state._localUpdateAt=Date.now();scheduleSave();
   renderBillFilterList();updateBillFilterSubtitle();
 };
@@ -3470,9 +3486,14 @@ window.clearBlockedMsgIds=function(){
 
 function updateBillFilterSubtitle(){
   const d=getBillsState();
-  const count=Object.keys(d.subjectFilters).length;
+  const sf=d.subjectFilters||{};
+  const ccCount=Object.keys(sf.credit_card||{}).length;
+  const bsCount=Object.keys(sf.bank_statement||{}).length;
+  const total=ccCount+bsCount;
   const el=document.getElementById('billFilterSubtitle');
-  if(el)el.textContent=count?`已設定 ${count} 家銀行的過濾規則`:'設定各銀行有效帳單的主旨關鍵字';
+  if(el)el.textContent=total
+    ?`信用卡 ${ccCount} 家 · 對帳單 ${bsCount} 家已設定規則`
+    :'設定各銀行有效帳單的主旨關鍵字';
 }
 
 let _pdfBillName='';
@@ -3889,10 +3910,13 @@ window.syncBillsFromGmail=async function(){
       }
       if(!bankName)return;
 
-      // B：白名單 — 有設定 subjectFilters 時，主旨必須符合至少一個關鍵字
-      const filters=subjectFilters[bankName];
-      if(filters&&filters.length>0){
-        const match=filters.some(kw=>subject.includes(kw));
+      // B：白名單（bank_statement）— gmailBanks 收件狀況的過濾
+      // 信用卡帳單用 credit_card filter，在下方信用卡解析時個別套用
+      const bsFilters=(subjectFilters.bank_statement||{})[bankName];
+      const isCcMail=subject.includes('信用卡')&&(subject.includes('帳單')||subject.includes('對帳單'));
+      // 對帳單白名單：只對非信用卡信件套用（信用卡信件由下方自行判斷）
+      if(!isCcMail&&bsFilters&&bsFilters.length>0){
+        const match=bsFilters.some(kw=>subject.includes(kw));
         if(!match)return;
       }
 
@@ -3912,7 +3936,10 @@ window.syncBillsFromGmail=async function(){
       }
 
       // 解析信用卡帳單（含 threadId 供點擊查看）
-      if(subject.includes('信用卡')&&(subject.includes('帳單')||subject.includes('對帳單'))){
+      // 套用 credit_card 白名單：有設定時主旨必須符合
+      const ccFilters=(subjectFilters.credit_card||{})[bankName];
+      const ccMatch=!ccFilters||ccFilters.length===0||ccFilters.some(kw=>subject.includes(kw));
+      if(subject.includes('信用卡')&&(subject.includes('帳單')||subject.includes('對帳單'))&&ccMatch){
         const amtMatch=snippet.match(/應繳總金額[　 ]*([0-9,]+)/)||snippet.match(/本期應繳總金額[　 ]*([0-9,]+)/);
         const amount=amtMatch?parseInt(amtMatch[1].replace(/,/g,'')):null;
         const dueMatch=snippet.match(/繳款截止日[　 ]*(\d{2,4}[\/\-]\d{1,2}[\/\-]\d{1,2})/);

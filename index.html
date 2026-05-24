@@ -317,11 +317,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .rate-bank-group-del{background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;padding:2px 4px;transition:color .12s}
 .rate-bank-group-del:hover{color:var(--red)}
 /* table header */
-.rate-table-head{display:grid;grid-template-columns:minmax(80px,1.4fr) 70px 90px 64px 90px 80px 70px 44px;gap:0;border-bottom:1px solid var(--border);padding:6px 14px;align-items:center}
+.rate-table-head{display:grid;grid-template-columns:minmax(80px,1.4fr) 70px 90px 80px 90px 80px 70px 44px;gap:0;border-bottom:1px solid var(--border);padding:6px 14px;align-items:center}
 .rate-table-head-cell{font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.7px;text-align:right}
 .rate-table-head-cell:first-child{text-align:left}
 /* table row */
-.rate-acc-row{display:grid;grid-template-columns:minmax(80px,1.4fr) 70px 90px 64px 90px 80px 70px 44px;gap:0;padding:10px 14px;border-bottom:1px solid var(--border);align-items:center;transition:background .1s}
+.rate-acc-row{display:grid;grid-template-columns:minmax(80px,1.4fr) 70px 90px 80px 90px 80px 70px 44px;gap:0;padding:10px 14px;border-bottom:1px solid var(--border);align-items:center;transition:background .1s}
 .rate-acc-row:last-child{border-bottom:none}
 .rate-acc-row:hover{background:var(--bg3)}
 .rate-acc-row.expiring{background:rgba(249,115,22,0.04)}
@@ -4104,6 +4104,27 @@ function renderRateBankList(){
       const canAddStr=canAdd!==null?
         `<span class="${canAdd<0?'negative':'positive'}">${Number(canAdd).toLocaleString()}</span>`:
         '<span style="color:var(--text4)">—</span>';
+      const isMobile=window.innerWidth<768;
+      if(isMobile){
+        const hasRange=!!(acc.rangeMin||acc.rangeMax);
+        const hasExpiry=!!acc.expiry;
+        const hasDays=days!==null;
+        const hasBal=balance!==null;
+        const hasCanAdd=canAdd!==null;
+        return`<div class="rate-acc-card ${rowClass}" onclick="openEditRateAcc(${bi},${ai})" style="padding:12px 14px;border-bottom:1px solid var(--border);cursor:pointer">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+            <div style="font-size:13px;font-weight:600;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${acc.name||'帳戶'}</div>
+            <div style="font-size:15px;font-weight:700;color:var(--orange);flex-shrink:0">${parseFloat(acc.rate||0).toFixed(3)}%</div>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:6px">
+            ${hasRange?`<span style="font-size:11px;color:var(--text3)">額度 <span style="color:var(--text2)">${rangeStr}</span></span>`:''}
+            ${hasExpiry?`<span style="font-size:11px;color:var(--text3)">到期 <span style="color:var(--text2)">${acc.expiry.slice(0,10)}</span></span>`:''}
+            ${hasDays?`<span style="font-size:11px;color:var(--text3)">剩 ${daysCell} 天</span>`:''}
+            ${hasBal?`<span style="font-size:11px;color:var(--text3)">餘額 ${balStr}</span>`:''}
+            ${hasCanAdd?`<span style="font-size:11px;color:var(--text3)">可放 ${canAddStr}</span>`:''}
+          </div>
+        </div>`;
+      }
       return`<div class="rate-acc-row ${rowClass}" onclick="openEditRateAcc(${bi},${ai})">
         <div class="rate-acc-cell rate-acc-name">${acc.name||'帳戶'}</div>
         <div class="rate-acc-cell highlight">${parseFloat(acc.rate||0).toFixed(3)}%</div>
@@ -4122,7 +4143,7 @@ function renderRateBankList(){
       <div class="rate-bank-group-header">
         <div class="rate-bank-group-name"><span style="color:var(--text3)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg></span> ${bank.name}${websiteLink}</div>
       </div>
-      <div class="rate-table-head">
+      <div class="rate-table-head" style="${window.innerWidth<768?`display:none`:`display:grid`}">
         <div class="rate-table-head-cell" style="text-align:left">帳戶</div>
         <div class="rate-table-head-cell">利率</div>
         <div class="rate-table-head-cell">額度</div>
@@ -4220,7 +4241,7 @@ window.openAddRateAcc=function(bi){
   sel.innerHTML='<option value="">不連結</option>';
   state.accounts.filter(a=>a.kind==='asset_bank').forEach(a=>{
     const selected=a.name===bankName?'selected':'';
-    sel.innerHTML+=`<option value="${a.id}" ${selected}>${a.name}</option>`;
+    sel.innerHTML+=`<option value="${a.id}" ${selected}>${a.name}${a.subName?' - '+a.subName:''}</option>`;
   });
   document.getElementById('rateAccDelBtn').style.display='none';
   document.getElementById('addRateAccModal').classList.add('open');
@@ -4240,7 +4261,7 @@ window.openEditRateAcc=function(bi,ai){
   sel.innerHTML='<option value="">不連結</option>';
   state.accounts.filter(a=>a.kind==='asset_bank').forEach(a=>{
     const selected=a.id===acc.linkedAccId?'selected':'';
-    sel.innerHTML+=`<option value="${a.id}" ${selected}>${a.name}</option>`;
+    sel.innerHTML+=`<option value="${a.id}" ${selected}>${a.name}${a.subName?' - '+a.subName:''}</option>`;
   });
   document.getElementById('rateAccDelBtn').style.display='block';
   document.getElementById('addRateAccModal').classList.add('open');

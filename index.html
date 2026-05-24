@@ -3435,20 +3435,16 @@ function renderBillFilterList(){
       :`<div style="font-size:11px;color:var(--text3);font-style:italic;margin-bottom:4px">尚未設定（全部保留）</div>`;
 
     const historyBtns=historySubjects.length
-      ?`<div style="font-size:11px;color:var(--text3);margin:6px 0 4px">從歷史信件點選加入（數字已自動去除，可直接確認）：</div>
-        ${historySubjects.map(s=>{
-          const stripped=stripNumbers(s);
-          const hasNum=/\d/.test(s);
-          const display=hasNum?`${stripped} <span style="color:var(--text3);font-size:10px">（原：${s}）</span>`:s;
-          const kw=stripped||s; // 若去掉後是空的就用原始
-          return`<div style="margin-bottom:4px">
-            <div style="font-size:11px;color:var(--text3);margin-bottom:2px">${display}</div>
-            <div style="display:flex;gap:4px">
-              <input id="histInput_${bankId}_${encodeURIComponent(s).slice(0,8)}" value="${kw.replace(/"/g,'&quot;')}" style="flex:1;background:var(--bg);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:4px 8px;color:var(--text);font-family:var(--font);font-size:11px">
-              <button onclick="addBillFilter('${encodedType}',decodeURIComponent('${encodedBank}'),'histInput_${bankId}_${encodeURIComponent(s).slice(0,8)}')" style="padding:4px 10px;background:var(--orange);color:#fff;border:none;border-radius:var(--radius-sm);cursor:pointer;font-size:11px;font-family:var(--font);flex-shrink:0">加入</button>
-            </div>
-          </div>`;
-        }).join('')}`
+      ?`<div style="font-size:11px;color:var(--text3);margin:6px 0 4px">從歷史信件點選填入：</div>
+        <div style="display:flex;flex-direction:column;gap:3px">
+          ${historySubjects.map(s=>{
+            const stripped=stripNumbers(s);
+            const kw=stripped||s;
+            const hasNum=/\d/.test(s);
+            const hint=hasNum?` <span style="color:var(--text3);font-size:10px">（已去除數字）</span>`:'';
+            return`<button onclick="document.getElementById('filterInput_${bankId}').value=decodeURIComponent('${encodeURIComponent(kw)}');document.getElementById('filterInput_${bankId}').focus()" style="text-align:left;font-size:11px;color:var(--text2);background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:4px 8px;cursor:pointer;font-family:var(--font);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${kw}${hint}</button>`;
+          }).join('')}
+        </div>`
       :'';
 
     return`<div style="margin-bottom:14px;padding:14px;background:var(--bg3);border-radius:var(--radius-sm);border:1px solid var(--border)">

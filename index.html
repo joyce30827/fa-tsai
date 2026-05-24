@@ -3612,19 +3612,25 @@ window.fetchGmailPdfAndReconcile=async function(threadId,billName,billId){
     const thread=await threadResp.json();
     const messages=thread.messages||[];
 
-    // 在所有 message parts 裡找 PDF 附件
+    // 在所有 message parts 裡找 PDF 附件（遞迴找所有層）
     let attachmentId=null,msgId=null;
-    function findPdf(parts,mId){
-      for(const p of(parts||[])){
-        if(p.mimeType==='application/pdf'&&p.body?.attachmentId){
-          attachmentId=p.body.attachmentId;msgId=mId;return true;
-        }
-        if(p.parts&&findPdf(p.parts,mId))return true;
+    function findPdf(part,mId){
+      if(!part)return false;
+      console.log('[PDF FIND]',part.mimeType,part.filename,part.body?.attachmentId||'no-att');
+      // 直接是 PDF
+      if((part.mimeType==='application/pdf'||part.mimeType==='application/octet-stream'||(part.filename||'').toLowerCase().endsWith('.pdf'))
+          &&part.body?.attachmentId){
+        attachmentId=part.body.attachmentId;msgId=mId;return true;
+      }
+      // 遞迴找子 parts
+      for(const p of(part.parts||[])){
+        if(findPdf(p,mId))return true;
       }
       return false;
     }
     for(const msg of messages){
-      if(findPdf(msg.payload?.parts||[],msg.id))break;
+      console.log('[MSG]',msg.id,'payload mimeType:',msg.payload?.mimeType,'parts count:',msg.payload?.parts?.length);
+      if(findPdf(msg.payload,msg.id))break;
     }
 
     if(!attachmentId){

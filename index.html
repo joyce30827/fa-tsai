@@ -3942,6 +3942,7 @@ window.syncBillsFromGmail=async function(){
         &&(subject.includes('帳單')||subject.includes('對帳單')||subject.includes('電子帳單'));
 
       const isTelco=['中華電信','台灣大哥大','遠傳電信','亞太電信','台灣之星'].includes(bankName);
+      if(isTelco||bankName==='中華電信')console.log('[TELCO DEBUG]',{bankName,subject,isCcMail,isTelco,snippet:snippet.slice(0,80)});
 
       if(isCcMail){
         // ── 信用卡帳單管道 ──────────────────────────────

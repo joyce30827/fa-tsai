@@ -1109,6 +1109,21 @@ select.form-input{appearance:none;cursor:pointer}
           </div>
         </div>
       </div>
+      <div class="section-heading">帳單過濾設定</div>
+      <div class="settings-section">
+        <div class="settings-card">
+          <div class="settings-row" onclick="openBillFilterModal()">
+            <div class="settings-row-left">
+              <div class="settings-icon" style="background:rgba(249,115,22,0.1);display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg></div>
+              <div>
+                <div class="settings-row-title">對帳單主旨過濾</div>
+                <div class="settings-row-sub" id="billFilterSubtitle">設定各銀行有效帳單的主旨關鍵字</div>
+              </div>
+            </div>
+            <div class="settings-chevron">›</div>
+          </div>
+        </div>
+      </div>
       <div class="section-heading">分類管理</div>      <div class="settings-section">
         <div class="settings-card">
           <div class="settings-row" onclick="openCatModal('expense')">
@@ -1165,6 +1180,22 @@ select.form-input{appearance:none;cursor:pointer}
         </div>
       </div>
     </div>
+    <!-- 帳單過濾設定 Modal -->
+    <div class="modal-overlay" id="billFilterModal" onclick="closeBillFilterModal(event)">
+      <div class="modal" onclick="event.stopPropagation()" style="max-height:88vh;display:flex;flex-direction:column">
+        <div class="modal-handle"></div>
+        <div class="modal-header-row" style="flex-shrink:0">
+          <div class="modal-title">帳單過濾設定</div>
+          <button class="modal-close" onclick="closeBillFilterModal()">✕</button>
+        </div>
+        <div style="font-size:12px;color:var(--text3);padding:0 20px 12px;flex-shrink:0">設定後，同步 Gmail 時只保留主旨包含指定關鍵字的信件；移除的廣告信也會永久記憶。</div>
+        <div id="billFilterList" style="flex:1;overflow-y:auto;padding:0 16px 16px"></div>
+        <div style="padding:12px 16px;border-top:1px solid var(--border);flex-shrink:0;display:flex;gap:8px">
+          <button onclick="clearBlockedMsgIds()" style="flex:1;padding:10px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text2);font-family:var(--font);font-size:13px;cursor:pointer">清除黑名單 (<span id="blockedCount">0</span> 筆)</button>
+        </div>
+      </div>
+    </div>
+
     <!-- TAB 5: 帳單 -->
     <div id="sec-bills" class="section">
       <div class="page-header">
@@ -2693,6 +2724,7 @@ function renderSettings(){
   migrateCats();
   document.getElementById('expCatCount').textContent=state.expCats.length+' 個分類';
   document.getElementById('incCatCount').textContent=state.incCats.length+' 個分類';
+  updateBillFilterSubtitle();
   document.getElementById('tagList').innerHTML=state.tags.map((tag,i)=>`<div class="tag-item">${tag}<button class="tag-edit" onclick="openEditTagModal(${i})" title="編輯"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="tag-del" onclick="deleteTag('${tag}')">✕</button></div>`).join('');
 }
 window.addTag=function(){const inp=document.getElementById('newTagInput');const v=inp.value.trim();if(!v||state.tags.includes(v))return showToast('請輸入標籤名稱或標籤已存在');state.tags.push(v);inp.value='';state._localUpdateAt=Date.now();scheduleSave();renderSettings();showToast('標籤已新增');};
@@ -3121,8 +3153,10 @@ const BILL_CAT_LABEL={
 };
 
 function getBillsState(){
-  if(!state.billsData)state.billsData={lastSync:null,gmailBanks:[],bills:[]};
+  if(!state.billsData)state.billsData={lastSync:null,gmailBanks:[],bills:[],subjectFilters:{},blockedMsgIds:[]};
   if(!state.billsData.bills)state.billsData.bills=[];
+  if(!state.billsData.subjectFilters)state.billsData.subjectFilters={};
+  if(!state.billsData.blockedMsgIds)state.billsData.blockedMsgIds=[];
   return state.billsData;
 }
 
@@ -3295,8 +3329,9 @@ function renderBillsStatus(){
         ${history.map(h=>`
           <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)">
             <span style="font-size:11px;color:var(--text2);flex-shrink:0">${new Date(h.date).toLocaleDateString('zh-TW')}</span>
-            <span style="font-size:11px;color:var(--text3);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${h.subject}</span>
+            <span style="font-size:11px;color:var(--text3);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${h.subject}">${h.subject}</span>
             <a href="https://mail.google.com/mail/#inbox/${h.msgId}" target="_blank" onclick="event.stopPropagation()" style="font-size:11px;color:var(--orange);text-decoration:none;flex-shrink:0">查看 ›</a>
+            <button onclick="event.stopPropagation();removeGmailHistoryEntry('${r.name.replace(/'/g,"\\'")}','${h.msgId}')" title="從清單移除（不影響 Gmail 信件）" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:0 2px;line-height:1;flex-shrink:0">✕</button>
           </div>`).join('')}
       </div>
       <button onclick="(function(el,btn){const o=el.style.display!=='none';el.style.display=o?'none':'block';btn.textContent=o?'歷史 ${history.length} 筆 ▾':'收起 ▴'})(document.getElementById('${rowId}'),this)" style="font-size:11px;color:var(--text3);background:none;border:none;cursor:pointer;padding:4px 0 0;font-family:var(--font)">歷史 ${history.length} 筆 ▾</button>`:'';
@@ -3316,10 +3351,130 @@ function renderBillsStatus(){
   }).join('');
 }
 
+window.removeGmailHistoryEntry=function(bankName,msgId){
+  const d=getBillsState();
+  // A：加入黑名單，下次 sync 自動跳過
+  if(!d.blockedMsgIds.includes(msgId))d.blockedMsgIds.push(msgId);
+  // 從目前顯示的 history 移除
+  const bank=d.gmailBanks.find(b=>b.bankName===bankName);
+  if(bank&&bank.history){
+    bank.history=bank.history.filter(h=>h.msgId!==msgId);
+    if(bank.history.length){
+      bank.lastDate=bank.history[0].date;
+      bank.lastSubject=bank.history[0].subject;
+      bank.lastMsgId=bank.history[0].msgId;
+    }
+  }
+  state._localUpdateAt=Date.now();
+  scheduleSave();
+  renderBillsStatus();
+};
+// ══════════════════════════════════════════
+// 帳單過濾設定
+// ══════════════════════════════════════════
+window.openBillFilterModal=function(){
+  renderBillFilterList();
+  document.getElementById('billFilterModal').classList.add('open');
+};
+window.closeBillFilterModal=function(e){
+  if(!e||e.target===document.getElementById('billFilterModal'))
+    document.getElementById('billFilterModal').classList.remove('open');
+};
 
-// ══════════════════════════════════════════
-// PDF 帳單解析 & 對帳功能
-// ══════════════════════════════════════════
+function renderBillFilterList(){
+  const d=getBillsState();
+  const el=document.getElementById('billFilterList');
+  const countEl=document.getElementById('blockedCount');
+  if(countEl)countEl.textContent=d.blockedMsgIds.length;
+
+  const bankSet=new Set();
+  Object.values(BILL_SENDER_MAP).forEach(n=>bankSet.add(normalizeBankName(n)));
+  d.gmailBanks.forEach(b=>bankSet.add(b.bankName));
+  const banks=[...bankSet].sort();
+
+  if(!banks.length){
+    el.innerHTML='<div style="color:var(--text3);font-size:13px;padding:8px 0">先同步 Gmail 後，這裡會列出偵測到的銀行</div>';
+    return;
+  }
+
+  el.innerHTML=banks.map(bankName=>{
+    const filters=d.subjectFilters[bankName]||[];
+    const gmailBank=d.gmailBanks.find(b=>b.bankName===bankName);
+    const history=gmailBank?.history||[];
+    const historySubjects=[...new Set(history.map(h=>h.subject))].filter(s=>!filters.includes(s));
+    const bankId=bankName.replace(/[^a-zA-Z0-9]/g,'_');
+
+    const filterRows=filters.length
+      ?filters.map((kw,i)=>`
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+          <span style="flex:1;font-size:12px;background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.2);border-radius:5px;padding:3px 8px;color:var(--text)">${kw}</span>
+          <button onclick="removeBillFilter(decodeURIComponent('${encodeURIComponent(bankName)}'),${i})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;padding:0 2px">✕</button>
+        </div>`).join('')
+      :'<div style="font-size:11px;color:var(--text3);font-style:italic;margin-bottom:4px">尚未設定（全部保留）</div>';
+
+    const historyBtns=historySubjects.length
+      ?`<div style="font-size:11px;color:var(--text3);margin:6px 0 4px">從歷史信件點選加入：</div>
+        ${historySubjects.map(s=>`
+          <button onclick="addBillFilterDirect(decodeURIComponent('${encodeURIComponent(bankName)}'),decodeURIComponent('${encodeURIComponent(s)}'))" style="display:block;width:100%;text-align:left;font-size:11px;color:var(--text2);background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:4px 8px;cursor:pointer;font-family:var(--font);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px">+ ${s}</button>`).join('')}`
+      :'';
+
+    return`<div style="margin-bottom:14px;padding:14px;background:var(--bg3);border-radius:var(--radius-sm);border:1px solid var(--border)">
+      <div style="font-size:13px;font-weight:700;margin-bottom:10px">${bankName}</div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:5px">主旨白名單（符合任一即保留）</div>
+      ${filterRows}
+      <div style="display:flex;gap:6px;margin-top:8px">
+        <input id="filterInput_${bankId}" placeholder="輸入關鍵字..." style="flex:1;background:var(--bg);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:6px 10px;color:var(--text);font-family:var(--font);font-size:12px">
+        <button onclick="addBillFilter(decodeURIComponent('${encodeURIComponent(bankName)}'),'filterInput_${bankId}')" style="padding:6px 12px;background:var(--orange);color:#fff;border:none;border-radius:var(--radius-sm);cursor:pointer;font-size:12px;font-family:var(--font)">加入</button>
+      </div>
+      ${historyBtns}
+    </div>`;
+  }).join('');
+}
+
+window.addBillFilter=function(bankName,inputId){
+  const input=document.getElementById(inputId);
+  const kw=(input?.value||'').trim();
+  if(!kw)return;
+  const d=getBillsState();
+  if(!d.subjectFilters[bankName])d.subjectFilters[bankName]=[];
+  if(!d.subjectFilters[bankName].includes(kw))d.subjectFilters[bankName].push(kw);
+  if(input)input.value='';
+  state._localUpdateAt=Date.now();scheduleSave();
+  renderBillFilterList();updateBillFilterSubtitle();
+};
+
+window.addBillFilterDirect=function(bankName,kw){
+  const d=getBillsState();
+  if(!d.subjectFilters[bankName])d.subjectFilters[bankName]=[];
+  if(!d.subjectFilters[bankName].includes(kw))d.subjectFilters[bankName].push(kw);
+  state._localUpdateAt=Date.now();scheduleSave();
+  renderBillFilterList();updateBillFilterSubtitle();
+};
+
+window.removeBillFilter=function(bankName,idx){
+  const d=getBillsState();
+  if(!d.subjectFilters[bankName])return;
+  d.subjectFilters[bankName].splice(idx,1);
+  if(!d.subjectFilters[bankName].length)delete d.subjectFilters[bankName];
+  state._localUpdateAt=Date.now();scheduleSave();
+  renderBillFilterList();updateBillFilterSubtitle();
+};
+
+window.clearBlockedMsgIds=function(){
+  if(!confirm('確定清除黑名單？下次同步時那些信件可能再度出現。'))return;
+  const d=getBillsState();
+  d.blockedMsgIds=[];
+  state._localUpdateAt=Date.now();scheduleSave();
+  renderBillFilterList();
+};
+
+function updateBillFilterSubtitle(){
+  const d=getBillsState();
+  const count=Object.keys(d.subjectFilters).length;
+  const el=document.getElementById('billFilterSubtitle');
+  if(el)el.textContent=count?`已設定 ${count} 家銀行的過濾規則`:'設定各銀行有效帳單的主旨關鍵字';
+}
+
 let _pdfBillName='';
 let _pdfBillId='';
 let _pdfBase64='';
@@ -3706,9 +3861,15 @@ window.syncBillsFromGmail=async function(){
     const bankMap={};
     const newBills=[];
     const paidMap={}; // bankName -> true/amount，代表已繳清
+    const d0=getBillsState();
+    const blockedSet=new Set(d0.blockedMsgIds||[]);
+    const subjectFilters=d0.subjectFilters||{};
 
     details.forEach(msg=>{
       if(!msg.payload)return;
+      // A：黑名單 — 曾被手動移除的 msgId 直接跳過
+      if(blockedSet.has(msg.id))return;
+
       const headers=msg.payload.headers||[];
       const subject=(headers.find(h=>h.name==='Subject')?.value||'').trim();
       const from=(headers.find(h=>h.name==='From')?.value||'').toLowerCase();
@@ -3727,6 +3888,13 @@ window.syncBillsFromGmail=async function(){
         }
       }
       if(!bankName)return;
+
+      // B：白名單 — 有設定 subjectFilters 時，主旨必須符合至少一個關鍵字
+      const filters=subjectFilters[bankName];
+      if(filters&&filters.length>0){
+        const match=filters.some(kw=>subject.includes(kw));
+        if(!match)return;
+      }
 
       // 更新 gmailBanks：每家銀行保留所有歷史信件
       if(!bankMap[bankName])bankMap[bankName]=[];

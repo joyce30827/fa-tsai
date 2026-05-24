@@ -3927,22 +3927,32 @@ window.syncBillsFromGmail=async function(){
       }
       if(!bankName)return;
 
-      // B：白名單（bank_statement）— gmailBanks 收件狀況的過濾
-      // 信用卡帳單用 credit_card filter，在下方信用卡解析時個別套用
-      const bsFilters=(subjectFilters.bank_statement||{})[bankName];
+      // 判斷信件類型：信用卡帳單 vs 銀行對帳單，兩者進不同管道
       const isCcMail=subject.includes('信用卡')&&(subject.includes('帳單')||subject.includes('對帳單'));
-      // 對帳單白名單：只對非信用卡信件套用（信用卡信件由下方自行判斷）
-      if(!isCcMail&&bsFilters&&bsFilters.length>0){
-        const match=bsFilters.some(kw=>subject.includes(kw));
-        if(!match)return;
+
+      if(isCcMail){
+        // ── 信用卡帳單管道 ──────────────────────────────
+        // 套用 credit_card 白名單
+        const ccFilters=(subjectFilters.credit_card||{})[bankName];
+        const ccMatch=!ccFilters||ccFilters.length===0||ccFilters.some(kw=>subject.includes(kw));
+        if(!ccMatch)return; // 不符合白名單，跳過
+      } else {
+        // ── 銀行對帳單管道 ──────────────────────────────
+        // 套用 bank_statement 白名單
+        const bsFilters=(subjectFilters.bank_statement||{})[bankName];
+        if(bsFilters&&bsFilters.length>0){
+          const match=bsFilters.some(kw=>subject.includes(kw));
+          if(!match)return; // 不符合白名單，跳過
+        }
       }
 
-      // 更新 gmailBanks：每家銀行保留所有歷史信件
-      if(!bankMap[bankName])bankMap[bankName]=[];
-      const msgDate=new Date(ts).toISOString().slice(0,10);
-      // 同一天同主旨去重
-      if(!bankMap[bankName].find(e=>e.date===msgDate&&e.subject===subject)){
-        bankMap[bankName].push({date:msgDate,subject,msgId:msg.id});
+      // 更新 gmailBanks：只收銀行對帳單信件（信用卡帳單不進收件狀況列表）
+      if(!isCcMail){
+        if(!bankMap[bankName])bankMap[bankName]=[];
+        const msgDate=new Date(ts).toISOString().slice(0,10);
+        if(!bankMap[bankName].find(e=>e.date===msgDate&&e.subject===subject)){
+          bankMap[bankName].push({date:msgDate,subject,msgId:msg.id});
+        }
       }
 
       // ✅ 偵測已繳款：「繳款入帳彙整通知」才是真正已繳清
@@ -3953,10 +3963,7 @@ window.syncBillsFromGmail=async function(){
       }
 
       // 解析信用卡帳單（含 threadId 供點擊查看）
-      // 套用 credit_card 白名單：有設定時主旨必須符合
-      const ccFilters=(subjectFilters.credit_card||{})[bankName];
-      const ccMatch=!ccFilters||ccFilters.length===0||ccFilters.some(kw=>subject.includes(kw));
-      if(subject.includes('信用卡')&&(subject.includes('帳單')||subject.includes('對帳單'))&&ccMatch){
+      if(isCcMail){
         const amtMatch=snippet.match(/應繳總金額[　 ]*([0-9,]+)/)||snippet.match(/本期應繳總金額[　 ]*([0-9,]+)/);
         const amount=amtMatch?parseInt(amtMatch[1].replace(/,/g,'')):null;
         const dueMatch=snippet.match(/繳款截止日[　 ]*(\d{2,4}[\/\-]\d{1,2}[\/\-]\d{1,2})/);

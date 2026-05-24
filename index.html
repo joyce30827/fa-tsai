@@ -1569,11 +1569,11 @@ select.form-input{appearance:none;cursor:pointer}
         <div style="font-size:13px;font-weight:600;color:var(--text)">排除收支統計</div>
         <div style="font-size:11px;color:var(--text3);margin-top:2px">僅記錄用，不計入當月統計</div>
       </div>
-      <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0">
-        <input type="checkbox" id="editTxExclude" style="opacity:0;width:0;height:0" onchange="toggleExcludeSwitch(this.checked)">
-        <span onclick="document.getElementById('editTxExclude').click()" style="position:absolute;inset:0;background:var(--border2);border-radius:12px;cursor:pointer;transition:background .2s" id="editTxExcludeTrack"></span>
-        <span onclick="document.getElementById('editTxExclude').click()" style="position:absolute;top:3px;left:3px;width:18px;height:18px;background:#fff;border-radius:50%;cursor:pointer;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.3)" id="editTxExcludeThumb"></span>
-      </label>
+      <div style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0;cursor:pointer" onclick="document.getElementById('editTxExclude').checked=!document.getElementById('editTxExclude').checked;toggleExcludeSwitch(document.getElementById('editTxExclude').checked)">
+        <input type="checkbox" id="editTxExclude" style="opacity:0;width:0;height:0;position:absolute">
+        <span style="position:absolute;inset:0;background:var(--border2);border-radius:12px;transition:background .2s" id="editTxExcludeTrack"></span>
+        <span style="position:absolute;top:3px;left:3px;width:18px;height:18px;background:#fff;border-radius:50%;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.3)" id="editTxExcludeThumb"></span>
+      </div>
     </div>
     <div style="display:flex;gap:8px;padding:16px 20px 4px">
       <button onclick="deleteEditTx()" style="flex:0 0 auto;padding:11px 16px;background:none;border:1px solid rgba(239,68,68,0.3);border-radius:var(--radius-sm);color:var(--red);font-size:13px;font-weight:600;font-family:var(--font);cursor:pointer">刪除</button>

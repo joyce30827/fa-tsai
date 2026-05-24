@@ -3412,9 +3412,19 @@ function renderBillFilterList(){
     const gmailBank=d.gmailBanks.find(b=>b.bankName===bankName);
     const history=gmailBank?.history||[];
     const historySubjects=[...new Set(history.map(h=>h.subject))].filter(s=>!filters.includes(s));
-    const bankId=(_billFilterTab+'_'+bankName).replace(/[^a-zA-Z0-9]/g,'_');
+    // Bug fix: 用 index 產生唯一 id，避免中文銀行名稱全被轉成 _ 而衝突
+    const bankIdx=banks.indexOf(bankName);
+    const bankId=`${_billFilterTab}_${bankIdx}`;
     const encodedBank=encodeURIComponent(bankName);
     const encodedType=_billFilterTab;
+
+    // 自動去掉主旨中的數字段，產生預填關鍵字供確認後加入
+    function stripNumbers(s){
+      return s
+        .replace(/\d{4}[\/\-年]\d{1,2}[\/\-月]?\d{0,2}日?/g,'')  // 日期
+        .replace(/\d+/g,'')                                             // 其他數字
+        .replace(/[\s　]+/g,' ').trim();
+    }
 
     const filterRows=filters.length
       ?filters.map((kw,i)=>`
@@ -3425,9 +3435,20 @@ function renderBillFilterList(){
       :`<div style="font-size:11px;color:var(--text3);font-style:italic;margin-bottom:4px">尚未設定（全部保留）</div>`;
 
     const historyBtns=historySubjects.length
-      ?`<div style="font-size:11px;color:var(--text3);margin:6px 0 4px">從歷史信件點選加入：</div>
-        ${historySubjects.map(s=>`
-          <button onclick="addBillFilterDirect('${encodedType}',decodeURIComponent('${encodedBank}'),decodeURIComponent('${encodeURIComponent(s)}'))" style="display:block;width:100%;text-align:left;font-size:11px;color:var(--text2);background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:4px 8px;cursor:pointer;font-family:var(--font);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px">+ ${s}</button>`).join('')}`
+      ?`<div style="font-size:11px;color:var(--text3);margin:6px 0 4px">從歷史信件點選加入（數字已自動去除，可直接確認）：</div>
+        ${historySubjects.map(s=>{
+          const stripped=stripNumbers(s);
+          const hasNum=/\d/.test(s);
+          const display=hasNum?`${stripped} <span style="color:var(--text3);font-size:10px">（原：${s}）</span>`:s;
+          const kw=stripped||s; // 若去掉後是空的就用原始
+          return`<div style="margin-bottom:4px">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:2px">${display}</div>
+            <div style="display:flex;gap:4px">
+              <input id="histInput_${bankId}_${encodeURIComponent(s).slice(0,8)}" value="${kw.replace(/"/g,'&quot;')}" style="flex:1;background:var(--bg);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:4px 8px;color:var(--text);font-family:var(--font);font-size:11px">
+              <button onclick="addBillFilter('${encodedType}',decodeURIComponent('${encodedBank}'),'histInput_${bankId}_${encodeURIComponent(s).slice(0,8)}')" style="padding:4px 10px;background:var(--orange);color:#fff;border:none;border-radius:var(--radius-sm);cursor:pointer;font-size:11px;font-family:var(--font);flex-shrink:0">加入</button>
+            </div>
+          </div>`;
+        }).join('')}`
       :'';
 
     return`<div style="margin-bottom:14px;padding:14px;background:var(--bg3);border-radius:var(--radius-sm);border:1px solid var(--border)">

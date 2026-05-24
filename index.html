@@ -3445,13 +3445,8 @@ function renderBillFilterList(){
     const historyBtns=historySubjects.length
       ?`<div style="font-size:11px;color:var(--text3);margin:6px 0 4px">從歷史信件點選填入：</div>
         <div style="display:flex;flex-direction:column;gap:3px">
-          ${historySubjects.map(s=>{
-            const stripped=stripNumbers(s);
-            const kw=stripped||s;
-            const hasNum=/\d/.test(s);
-            const hint=hasNum?` <span style="color:var(--text3);font-size:10px">（已去除數字）</span>`:'';
-            return`<button onclick="document.getElementById('filterInput_${bankId}').value=decodeURIComponent('${encodeURIComponent(kw)}');document.getElementById('filterInput_${bankId}').focus()" style="text-align:left;font-size:11px;color:var(--text2);background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:4px 8px;cursor:pointer;font-family:var(--font);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${kw}${hint}</button>`;
-          }).join('')}
+          ${historySubjects.map(s=>`
+            <button onclick="document.getElementById('filterInput_${bankId}').value=decodeURIComponent('${encodeURIComponent(s)}');document.getElementById('filterInput_${bankId}').focus()" style="text-align:left;font-size:11px;color:var(--text2);background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:4px 8px;cursor:pointer;font-family:var(--font);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s}</button>`).join('')}
         </div>`
       :'';
 
@@ -3472,7 +3467,10 @@ function renderBillFilterList(){
 
 window.addBillFilter=function(type,bankName,inputId){
   const input=document.getElementById(inputId);
-  const kw=(input?.value||'').trim();
+  let kw=(input?.value||'').trim();
+  if(!kw)return;
+  // 按加入時去除數字段
+  kw=kw.replace(/\d{4}[\/\-年]\d{1,2}[\/\-月]?\d{0,2}日?/g,'').replace(/\d+/g,'').replace(/[\s　]+/g,' ').trim();
   if(!kw)return;
   const d=getBillsState();
   if(!d.subjectFilters[type])d.subjectFilters[type]={};

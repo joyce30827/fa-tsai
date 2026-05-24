@@ -3261,24 +3261,56 @@ function renderBillsStatus(){
   const rows=[];
   appBanks.forEach(name=>{
     const found=d.gmailBanks.find(b=>normalizeBankName(b.bankName)===name||b.bankName===name);
-    rows.push({name,status:found?'ok':'missing',lastDate:found?.lastDate||null});
+    rows.push({name,status:found?'ok':'missing',gmailBank:found||null});
   });
   d.gmailBanks.forEach(b=>{
     const normalized=normalizeBankName(b.bankName);
     const inApp=appBanks.find(n=>n===normalized||n===b.bankName);
-    if(!inApp)rows.push({name:b.bankName,status:'not_in_app',lastDate:b.lastDate});
+    if(!inApp)rows.push({name:b.bankName,status:'not_in_app',gmailBank:b});
   });
   el.innerHTML=rows.map(r=>{
     const icon=r.status==='ok'?'✅':r.status==='missing'?'⚠️':'📬';
-    const desc=r.status==='ok'?`最近帳單：${r.lastDate?new Date(r.lastDate).toLocaleDateString('zh-TW'):'-'}`
-      :r.status==='missing'?'未收到帳單，請確認是否申請電子帳單'
-      :'Gmail 有收到，但 app 尚未設定帳戶';
-    const pwd=BILL_PDF_PWD[r.name]?`<div style="font-size:10px;color:var(--text3)">PDF密碼：${BILL_PDF_PWD[r.name]}</div>`:'';
-    return`<div class="alloc-item">
-      <div style="font-size:18px;flex-shrink:0">${icon}</div>
-      <div class="alloc-info">
-        <div class="alloc-bank">${r.name}</div>
-        <div class="alloc-acc">${desc}</div>${pwd}
+    const gb=r.gmailBank;
+    const history=gb?.history||[];
+    const lastDate=gb?.lastDate;
+    const desc=r.status==='missing'?'未收到帳單，請確認是否申請電子帳單'
+      :r.status==='not_in_app'?'Gmail 有收到，但 app 尚未設定帳戶'
+      :`最近帳單：${lastDate?new Date(lastDate).toLocaleDateString('zh-TW'):'-'}`;
+    const pwd=BILL_PDF_PWD[r.name]?`<div style="font-size:10px;color:var(--text3);margin-top:2px">🔑 PDF密碼：${BILL_PDF_PWD[r.name]}</div>`:'';
+    const rowId=`bankstat_${r.name.replace(/\s/g,'')}`;
+
+    // 最新那封的快捷按鈕（只在有收到時顯示）
+    const latestGmailHref=gb?.lastMsgId
+      ?`https://mail.google.com/mail/#inbox/${gb.lastMsgId}`
+      :`https://mail.google.com/mail/#search/${encodeURIComponent(r.name+' 對帳單 OR 帳單')}`;
+    const quickBtns=r.status!=='missing'?`
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        <a href="${latestGmailHref}" target="_blank" onclick="event.stopPropagation()" style="font-size:11px;color:var(--orange);text-decoration:none;font-weight:600;line-height:1.8">查看最新 ›</a>
+        <button onclick="event.stopPropagation();openPdfImport('${r.name.replace(/'/g,"\\'")}','')" style="font-size:11px;color:var(--text2);background:var(--bg3);border:1px solid var(--border2);border-radius:5px;padding:2px 8px;cursor:pointer;font-family:var(--font)">📄 上傳 PDF</button>
+      </div>`:'';
+
+    // 歷史清單（有多筆才顯示展開）
+    const historyHTML=history.length>1?`
+      <div id="${rowId}" style="display:none;border-top:1px solid var(--border);margin-top:8px;padding-top:8px">
+        ${history.map(h=>`
+          <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)">
+            <span style="font-size:11px;color:var(--text2);flex-shrink:0">${new Date(h.date).toLocaleDateString('zh-TW')}</span>
+            <span style="font-size:11px;color:var(--text3);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${h.subject}</span>
+            <a href="https://mail.google.com/mail/#inbox/${h.msgId}" target="_blank" onclick="event.stopPropagation()" style="font-size:11px;color:var(--orange);text-decoration:none;flex-shrink:0">查看 ›</a>
+          </div>`).join('')}
+      </div>
+      <button onclick="(function(el,btn){const o=el.style.display!=='none';el.style.display=o?'none':'block';btn.textContent=o?'歷史 ${history.length} 筆 ▾':'收起 ▴'})(document.getElementById('${rowId}'),this)" style="font-size:11px;color:var(--text3);background:none;border:none;cursor:pointer;padding:4px 0 0;font-family:var(--font)">歷史 ${history.length} 筆 ▾</button>`:'';
+
+    return`<div class="alloc-item" style="flex-wrap:wrap;align-items:flex-start;gap:8px">
+      <div style="font-size:18px;flex-shrink:0;margin-top:1px">${icon}</div>
+      <div class="alloc-info" style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+          <div class="alloc-bank">${r.name}</div>
+          ${quickBtns}
+        </div>
+        <div class="alloc-acc">${desc}</div>
+        ${pwd}
+        ${historyHTML}
       </div>
     </div>`;
   }).join('');
@@ -3696,9 +3728,12 @@ window.syncBillsFromGmail=async function(){
       }
       if(!bankName)return;
 
-      // 更新 gmailBanks
-      if(!bankMap[bankName]||ts>new Date(bankMap[bankName].lastDate||0).getTime()){
-        bankMap[bankName]={bankName,lastDate:new Date(ts).toISOString().slice(0,10),lastSubject:subject};
+      // 更新 gmailBanks：每家銀行保留所有歷史信件
+      if(!bankMap[bankName])bankMap[bankName]=[];
+      const msgDate=new Date(ts).toISOString().slice(0,10);
+      // 同一天同主旨去重
+      if(!bankMap[bankName].find(e=>e.date===msgDate&&e.subject===subject)){
+        bankMap[bankName].push({date:msgDate,subject,msgId:msg.id});
       }
 
       // ✅ 偵測已繳款：「繳款入帳彙整通知」才是真正已繳清
@@ -3735,7 +3770,10 @@ window.syncBillsFromGmail=async function(){
 
     // 合併：只更新 gmail 來源的帳單，保留手動新增的
     const d=getBillsState();
-    d.gmailBanks=Object.values(bankMap);
+    d.gmailBanks=Object.entries(bankMap).map(([bankName,entries])=>{
+      const sorted=entries.sort((a,b)=>b.date.localeCompare(a.date));
+      return{bankName,lastDate:sorted[0].date,lastSubject:sorted[0].subject,lastMsgId:sorted[0].msgId,history:sorted};
+    });
     d.bills=d.bills.filter(b=>b.source!=='gmail');
     const seen={};
     newBills.sort((a,b)=>b._ts-a._ts).forEach(b=>{

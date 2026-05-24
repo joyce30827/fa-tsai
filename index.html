@@ -3941,46 +3941,16 @@ window.syncBillsFromGmail=async function(){
       const isCcMail=(subject.includes('信用卡')||subject.includes('卡費'))
         &&(subject.includes('帳單')||subject.includes('對帳單')||subject.includes('電子帳單'));
 
+      const isTelco=['中華電信','台灣大哥大','遠傳電信','亞太電信','台灣之星'].includes(bankName);
+
       if(isCcMail){
         // ── 信用卡帳單管道 ──────────────────────────────
-        // 套用 credit_card 白名單
         const ccFilters=(subjectFilters.credit_card||{})[bankName];
-        // 每個關鍵字可用 + 連接多個片段（AND），多個關鍵字之間是 OR
         const ccMatch=!ccFilters||ccFilters.length===0||ccFilters.some(kw=>
           kw.split('+').map(s=>s.trim()).filter(Boolean).every(s=>subject.includes(s))
         );
-        if(!ccMatch)return; // 不符合白名單，跳過
-      } else {
-        // ── 銀行對帳單管道 ──────────────────────────────
-        // 套用 bank_statement 白名單
-        const bsFilters=(subjectFilters.bank_statement||{})[bankName];
-        if(bsFilters&&bsFilters.length>0){
-          // 每個關鍵字可用 + 連接多個片段（AND），多個關鍵字之間是 OR
-          const match=bsFilters.some(kw=>
-            kw.split('+').map(s=>s.trim()).filter(Boolean).every(s=>subject.includes(s))
-          );
-          if(!match)return; // 不符合白名單，跳過
-        }
-      }
-
-      // 更新 gmailBanks：只收銀行對帳單信件（信用卡帳單不進收件狀況列表）
-      if(!isCcMail){
-        if(!bankMap[bankName])bankMap[bankName]=[];
-        const msgDate=new Date(ts).toISOString().slice(0,10);
-        if(!bankMap[bankName].find(e=>e.date===msgDate&&e.subject===subject)){
-          bankMap[bankName].push({date:msgDate,subject,msgId:msg.id});
-        }
-      }
-
-      // ✅ 偵測已繳款：「繳款入帳彙整通知」才是真正已繳清
-      if(subject.includes('繳款入帳')||subject.includes('繳款成功')||subject.includes('繳款紀錄')){
-        const amtMatch=snippet.match(/金額[　 ]*([0-9,]+)/);
-        const paidAmt=amtMatch?parseInt(amtMatch[1].replace(/,/g,'')):null;
-        if(paidMap[bankName]===undefined||paidAmt)paidMap[bankName]=paidAmt||true;
-      }
-
-      // 解析信用卡帳單（含 threadId 供點擊查看）
-      if(isCcMail){
+        if(!ccMatch)return;
+        // 解析信用卡帳單
         const amtMatch=snippet.match(/應繳總金額[　 ]*([0-9,]+)/)||snippet.match(/本期應繳總金額[　 ]*([0-9,]+)/);
         const amount=amtMatch?parseInt(amtMatch[1].replace(/,/g,'')):null;
         const dueMatch=snippet.match(/繳款截止日[　 ]*(\d{2,4}[\/\-]\d{1,2}[\/\-]\d{1,2})/);
@@ -3990,15 +3960,15 @@ window.syncBillsFromGmail=async function(){
           dueDate=parts[0].length<=3?`${parseInt(parts[0])+1911}-${parts[1].padStart(2,'0')}-${parts[2].padStart(2,'0')}`:dueMatch[1];
         }
         newBills.push({id:'bill'+ts,name:bankName,category:'credit_card',amount,dueDate,autoDebitAcc:null,source:'gmail',gmailSubject:subject,gmailThreadId:msg.id,isPaid:false,_ts:ts});
-      }
 
-      // 解析電信帳單（含 threadId），套用 telco 白名單
-      const telcoFilters=(subjectFilters.telco||{})[bankName];
-      const telcoBaseMatch=['中華電信','台灣大哥大','遠傳電信','亞太電信','台灣之星'].includes(bankName);
-      const telcoKwMatch=telcoFilters&&telcoFilters.length>0
-        ?telcoFilters.some(kw=>kw.split('+').map(s=>s.trim()).filter(Boolean).every(s=>subject.includes(s)))
-        :subject.includes('費用')||subject.includes('帳單')||subject.includes('通知單');
-      if(telcoBaseMatch&&telcoKwMatch&&!subject.includes('繳費結果')){
+      } else if(isTelco){
+        // ── 電信帳單管道 ──────────────────────────────
+        const telcoFilters=(subjectFilters.telco||{})[bankName];
+        const telcoMatch=telcoFilters&&telcoFilters.length>0
+          ?telcoFilters.some(kw=>kw.split('+').map(s=>s.trim()).filter(Boolean).every(s=>subject.includes(s)))
+          :subject.includes('費用')||subject.includes('帳單')||subject.includes('通知單');
+        if(!telcoMatch||subject.includes('繳費結果'))return;
+        // 解析電信帳單
         const dueMatch=snippet.match(/繳費截止[：:日 　]*(\d{2,4}[\/\-]\d{1,2}[\/\-]\d{1,2})/);
         let dueDate=null;
         if(dueMatch){
@@ -4006,6 +3976,29 @@ window.syncBillsFromGmail=async function(){
           dueDate=parts[0].length<=3?`${parseInt(parts[0])+1911}-${parts[1].padStart(2,'0')}-${parts[2].padStart(2,'0')}`:dueMatch[1];
         }
         newBills.push({id:'bill_telco_'+ts,name:bankName,category:'telco',amount:null,dueDate,autoDebitAcc:null,source:'gmail',gmailSubject:subject,gmailThreadId:msg.id,isPaid:false,_ts:ts});
+
+      } else {
+        // ── 銀行對帳單管道 ──────────────────────────────
+        const bsFilters=(subjectFilters.bank_statement||{})[bankName];
+        if(bsFilters&&bsFilters.length>0){
+          const match=bsFilters.some(kw=>
+            kw.split('+').map(s=>s.trim()).filter(Boolean).every(s=>subject.includes(s))
+          );
+          if(!match)return;
+        }
+        // 進 gmailBanks（銀行收件狀況）
+        if(!bankMap[bankName])bankMap[bankName]=[];
+        const msgDate=new Date(ts).toISOString().slice(0,10);
+        if(!bankMap[bankName].find(e=>e.date===msgDate&&e.subject===subject)){
+          bankMap[bankName].push({date:msgDate,subject,msgId:msg.id});
+        }
+      }
+
+      // ✅ 偵測已繳款（三種管道都需要）
+      if(subject.includes('繳款入帳')||subject.includes('繳款成功')||subject.includes('繳款紀錄')){
+        const amtMatch=snippet.match(/金額[　 ]*([0-9,]+)/);
+        const paidAmt=amtMatch?parseInt(amtMatch[1].replace(/,/g,'')):null;
+        if(paidMap[bankName]===undefined||paidAmt)paidMap[bankName]=paidAmt||true;
       }
     });
 

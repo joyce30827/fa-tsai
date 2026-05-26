@@ -1090,6 +1090,8 @@ select.form-input{appearance:none;cursor:pointer}
               <button onclick="saveAnthropicKey()" style="padding:8px 14px;background:var(--orange);color:#fff;border:none;border-radius:var(--radius-sm);cursor:pointer;font-family:var(--font);font-size:13px;font-weight:600">儲存</button>
             </div>
             <div id="anthropicKeyStatus" style="font-size:11px;color:var(--text3);margin-top:6px"></div>
+            <button onclick="listGeminiModels()" style="margin-top:8px;font-size:11px;color:var(--text2);background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:4px 10px;cursor:pointer;font-family:var(--font)">查詢可用模型</button>
+            <div id="geminiModelList" style="font-size:11px;color:var(--text3);margin-top:6px;max-height:120px;overflow-y:auto"></div>
           </div>
         </div>
       </div>
@@ -2736,6 +2738,29 @@ window.drillIntoMonth=function(ym){
 };
 function getAnthropicKey(){return localStorage.getItem('anthropic_api_key')||'';}
 
+window.listGeminiModels=async function(){
+  const key=getAnthropicKey();
+  const el=document.getElementById('geminiModelList');
+  if(!key){el.textContent='請先儲存 API Key';return;}
+  el.textContent='查詢中...';
+  try{
+    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
+    const d=await r.json();
+    if(d.error){el.textContent='錯誤：'+d.error.message;return;}
+    const models=(d.models||[])
+      .filter(m=>(m.supportedGenerationMethods||[]).includes('generateContent'))
+      .map(m=>m.name.replace('models/',''));
+    el.innerHTML=models.length
+      ?models.map(m=>`<div style="padding:2px 0;cursor:pointer;color:var(--orange)" onclick="setGeminiModel('${m}')">${m} ← 點選使用</div>`).join('')
+      :'沒有可用模型';
+  }catch(e){el.textContent='查詢失敗：'+e.message;}
+};
+
+window.setGeminiModel=function(model){
+  localStorage.setItem('gemini_model',model);
+  document.getElementById('geminiModelList').innerHTML+=`<div style="color:var(--green);margin-top:4px">✅ 已設定使用 ${model}</div>`;
+};
+
 window.saveAnthropicKey=function(){
   const val=document.getElementById('anthropicKeyInput').value.trim();
   if(!val){localStorage.removeItem('anthropic_api_key');document.getElementById('anthropicKeyStatus').textContent='已清除';return;}
@@ -3708,7 +3733,8 @@ window.parsePdfWithAI=async function(){
   try{
     const apiKey=getAnthropicKey();
     if(!apiKey)throw new Error('請先在設定頁填入 Gemini API Key');
-    const resp=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`,{
+    const geminiModel=localStorage.getItem('gemini_model')||'gemini-1.5-flash-latest';
+    const resp=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({

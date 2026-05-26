@@ -1084,10 +1084,10 @@ select.form-input{appearance:none;cursor:pointer}
       <div class="settings-section">
         <div class="settings-card">
           <div style="padding:14px 16px">
-            <div style="font-size:13px;font-weight:600;margin-bottom:4px">OpenAI API Key</div>
-            <div style="font-size:11px;color:var(--text3);margin-bottom:10px">用於 AI 解析信用卡帳單 PDF 明細。新帳號有 $5 免費額度，解析一份帳單約 $0.001。請至 <a href="https://platform.openai.com/api-keys" target="_blank" style="color:var(--orange)">platform.openai.com/api-keys</a> 取得</div>
+            <div style="font-size:13px;font-weight:600;margin-bottom:4px">Anthropic API Key</div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:10px">用於 AI 解析信用卡帳單 PDF 明細。新帳號有免費額度，請至 <a href="https://console.anthropic.com" target="_blank" style="color:var(--orange)">console.anthropic.com</a> → API Keys 取得</div>
             <div style="display:flex;gap:8px">
-              <input id="anthropicKeyInput" type="password" placeholder="sk-..." style="flex:1;background:var(--bg);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:8px 12px;color:var(--text);font-family:var(--font-mono,monospace);font-size:12px">
+              <input id="anthropicKeyInput" type="password" placeholder="sk-ant-..." style="flex:1;background:var(--bg);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:8px 12px;color:var(--text);font-family:var(--font-mono,monospace);font-size:12px">
               <button onclick="saveAnthropicKey()" style="padding:8px 14px;background:var(--orange);color:#fff;border:none;border-radius:var(--radius-sm);cursor:pointer;font-family:var(--font);font-size:13px;font-weight:600">儲存</button>
             </div>
             <div id="anthropicKeyStatus" style="font-size:11px;color:var(--text3);margin-top:6px"></div>
@@ -2769,7 +2769,7 @@ function getAnthropicKey(){return state.openaiApiKey||'';}
 window.saveAnthropicKey=function(){
   const val=document.getElementById('anthropicKeyInput').value.trim();
   if(!val){delete state.openaiApiKey;state._localUpdateAt=Date.now();scheduleSave();document.getElementById('anthropicKeyStatus').textContent='已清除';return;}
-  if(!val.startsWith('sk-')){document.getElementById('anthropicKeyStatus').textContent='⚠️ 格式不正確，應以 sk- 開頭';return;}
+  if(!val.startsWith('sk-ant-')){document.getElementById('anthropicKeyStatus').textContent='⚠️ 格式不正確，應以 sk-ant- 開頭';return;}
   state.openaiApiKey=val;
   state._localUpdateAt=Date.now();scheduleSave();
   document.getElementById('anthropicKeyStatus').textContent='✅ 已儲存';
@@ -2833,8 +2833,8 @@ function renderSettings(){
   const k=getAnthropicKey();
   const si=document.getElementById('anthropicKeyStatus');
   const ki=document.getElementById('anthropicKeyInput');
-  if(si)si.textContent=k?'✅ 已設定 OpenAI API Key（已同步）':'尚未設定';
-  if(ki)ki.placeholder=k?'（已設定，輸入新的可覆蓋）':'sk-...';
+  if(si)si.textContent=k?'✅ 已設定 Anthropic API Key（已同步）':'尚未設定';
+  if(ki)ki.placeholder=k?'（已設定，輸入新的可覆蓋）':'sk-ant-...';
   document.getElementById('tagList').innerHTML=state.tags.map((tag,i)=>`<div class="tag-item">${tag}<button class="tag-edit" onclick="openEditTagModal(${i})" title="編輯"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="tag-del" onclick="deleteTag('${tag}')">✕</button></div>`).join('');
 }
 window.addTag=function(){const inp=document.getElementById('newTagInput');const v=inp.value.trim();if(!v||state.tags.includes(v))return showToast('請輸入標籤名稱或標籤已存在');state.tags.push(v);inp.value='';state._localUpdateAt=Date.now();scheduleSave();renderSettings();showToast('標籤已新增');};
@@ -3787,47 +3787,71 @@ window.parsePdfWithAI=async function(){
 
   try{
     const apiKey=getAnthropicKey();
-    if(!apiKey)throw new Error('請先在設定頁填入 OpenAI API Key');
+    if(!apiKey)throw new Error('請先在設定頁填入 Anthropic API Key');
 
-    // PDF base64 → Uint8Array → PDF.js → 每頁轉 canvas → base64 圖片
-    const pdfBytes=Uint8Array.from(atob(_pdfBase64),c=>c.charCodeAt(0));
-    const pdfjsLib=window['pdfjs-dist/build/pdf'];
-    pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    // Claude 原生支援 PDF base64，若有密碼需先用 PDF.js 解密再重新輸出
+    let pdfData=_pdfBase64;
     const pdfPassword=getPdfPwd(_pdfBillName)||null;
-    const pdfLoadTask=pdfjsLib.getDocument({data:pdfBytes,...(pdfPassword?{password:pdfPassword}:{})});
-    const pdf=await pdfLoadTask.promise;
-    const pageImages=[];
-    for(let i=1;i<=Math.min(pdf.numPages,6);i++){
-      const page=await pdf.getPage(i);
-      const scale=2;
-      const vp=page.getViewport({scale});
-      const canvas=document.createElement('canvas');
-      canvas.width=vp.width;canvas.height=vp.height;
-      await page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise;
-      pageImages.push(canvas.toDataURL('image/jpeg',0.85).split(',')[1]);
+    if(pdfPassword){
+      // 用 PDF.js 解密後重新 render 成無密碼 PDF（每頁轉圖片）
+      const pdfBytes=Uint8Array.from(atob(_pdfBase64),c=>c.charCodeAt(0));
+      const pdfjsLib=window['pdfjs-dist/build/pdf'];
+      pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      const pdf=await pdfjsLib.getDocument({data:pdfBytes,password:pdfPassword}).promise;
+      const pageImgs=[];
+      for(let i=1;i<=Math.min(pdf.numPages,8);i++){
+        const page=await pdf.getPage(i);
+        const vp=page.getViewport({scale:2});
+        const canvas=document.createElement('canvas');
+        canvas.width=vp.width;canvas.height=vp.height;
+        await page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise;
+        pageImgs.push(canvas.toDataURL('image/jpeg',0.9).split(',')[1]);
+      }
+      // 以圖片形式送給 Claude（支援 vision）
+      const resp2=await fetch('https://api.anthropic.com/v1/messages',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+        body:JSON.stringify({
+          model:'claude-haiku-4-5-20251001',
+          max_tokens:2000,
+          messages:[{role:'user',content:[
+            ...pageImgs.map(b64=>({type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}})),
+            {type:'text',text:prompt}
+          ]}]
+        })
+      });
+      const d2=await resp2.json();
+      if(d2.error)throw new Error(d2.error.message||'Anthropic API 錯誤');
+      const text2=(d2.content||[]).map(c=>c.text||'').join('');
+      const clean2=text2.replace(/```json|```/g,'').trim();
+      const items2=JSON.parse(clean2);
+      if(!Array.isArray(items2))throw new Error('格式錯誤');
+      _pdfParsedItems=items2.map(it=>({...it,checked:true}));
+      renderPdfItemList();
+      document.getElementById('pdfStep1').style.display='none';
+      document.getElementById('pdfStep2').style.display='flex';
+      document.getElementById('pdfParsing').style.display='none';
+      document.getElementById('pdfParseInfo').textContent=`共解析出 ${_pdfParsedItems.length} 筆，請確認後選擇要比對的項目`;
+      updatePdfSelectedCount();
+      return;
     }
 
-    // 把所有頁面圖片送給 GPT-4o-mini vision
-    const imageContents=pageImages.map(b64=>({
-      type:'image_url',
-      image_url:{url:`data:image/jpeg;base64,${b64}`,detail:'high'}
-    }));
-
-    const resp=await fetch('https://api.openai.com/v1/chat/completions',{
+    // 無密碼：直接傳 PDF base64 給 Claude
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
       body:JSON.stringify({
-        model:'gpt-4o-mini',
+        model:'claude-haiku-4-5-20251001',
         max_tokens:2000,
-        messages:[{
-          role:'user',
-          content:[...imageContents,{type:'text',text:prompt}]
-        }]
+        messages:[{role:'user',content:[
+          {type:'document',source:{type:'base64',media_type:'application/pdf',data:pdfData}},
+          {type:'text',text:prompt}
+        ]}]
       })
     });
     const data=await resp.json();
-    if(data.error)throw new Error(data.error.message||'OpenAI API 錯誤');
-    const text=data.choices?.[0]?.message?.content||'';
+    if(data.error)throw new Error(data.error.message||'Anthropic API 錯誤');
+    const text=(data.content||[]).map(c=>c.text||'').join('');
     // 清除 markdown code fence
     const clean=text.replace(/```json|```/g,'').trim();
     const items=JSON.parse(clean);

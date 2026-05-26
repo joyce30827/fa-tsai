@@ -876,6 +876,7 @@ select.form-input{appearance:none;cursor:pointer}
   .detail-screen{left:256px}
 }
 </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
 <body>
 
@@ -1083,15 +1084,14 @@ select.form-input{appearance:none;cursor:pointer}
       <div class="settings-section">
         <div class="settings-card">
           <div style="padding:14px 16px">
-            <div style="font-size:13px;font-weight:600;margin-bottom:4px">Google Gemini API Key</div>
-            <div style="font-size:11px;color:var(--text3);margin-bottom:10px">用於 AI 解析信用卡帳單 PDF 明細，免費額度每天 1,500 次。請至 <a href="https://aistudio.google.com" target="_blank" style="color:var(--orange)">aistudio.google.com</a> → Get API Key 取得</div>
+            <div style="font-size:13px;font-weight:600;margin-bottom:4px">OpenAI API Key</div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:10px">用於 AI 解析信用卡帳單 PDF 明細。新帳號有 $5 免費額度，解析一份帳單約 $0.001。請至 <a href="https://platform.openai.com/api-keys" target="_blank" style="color:var(--orange)">platform.openai.com/api-keys</a> 取得</div>
             <div style="display:flex;gap:8px">
-              <input id="anthropicKeyInput" type="password" placeholder="AIza..." style="flex:1;background:var(--bg);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:8px 12px;color:var(--text);font-family:var(--font-mono,monospace);font-size:12px">
+              <input id="anthropicKeyInput" type="password" placeholder="sk-..." style="flex:1;background:var(--bg);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:8px 12px;color:var(--text);font-family:var(--font-mono,monospace);font-size:12px">
               <button onclick="saveAnthropicKey()" style="padding:8px 14px;background:var(--orange);color:#fff;border:none;border-radius:var(--radius-sm);cursor:pointer;font-family:var(--font);font-size:13px;font-weight:600">儲存</button>
             </div>
             <div id="anthropicKeyStatus" style="font-size:11px;color:var(--text3);margin-top:6px"></div>
-            <button onclick="listGeminiModels()" style="margin-top:8px;font-size:11px;color:var(--text2);background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:4px 10px;cursor:pointer;font-family:var(--font)">查詢可用模型</button>
-            <div id="geminiModelList" style="font-size:11px;color:var(--text3);margin-top:6px;max-height:120px;overflow-y:auto"></div>
+
           </div>
         </div>
       </div>
@@ -2765,7 +2765,7 @@ window.setGeminiModel=function(model){
 window.saveAnthropicKey=function(){
   const val=document.getElementById('anthropicKeyInput').value.trim();
   if(!val){localStorage.removeItem('anthropic_api_key');document.getElementById('anthropicKeyStatus').textContent='已清除';return;}
-  if(!val.startsWith('AIza')){document.getElementById('anthropicKeyStatus').textContent='⚠️ 格式不正確，應以 AIza 開頭';return;}
+  if(!val.startsWith('sk-')){document.getElementById('anthropicKeyStatus').textContent='⚠️ 格式不正確，應以 sk- 開頭';return;}
   localStorage.setItem('anthropic_api_key',val);
   document.getElementById('anthropicKeyStatus').textContent='✅ 已儲存';
   document.getElementById('anthropicKeyInput').value='';
@@ -2780,7 +2780,7 @@ function renderSettings(){
   const si=document.getElementById('anthropicKeyStatus');
   const ki=document.getElementById('anthropicKeyInput');
   if(si)si.textContent=k?'✅ 已設定 API Key':'尚未設定';
-  if(ki)ki.placeholder=k?'（已設定，輸入新的可覆蓋）':'AIza...';
+  if(ki)ki.placeholder=k?'（已設定，輸入新的可覆蓋）':'sk-...';
   document.getElementById('tagList').innerHTML=state.tags.map((tag,i)=>`<div class="tag-item">${tag}<button class="tag-edit" onclick="openEditTagModal(${i})" title="編輯"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="tag-del" onclick="deleteTag('${tag}')">✕</button></div>`).join('');
 }
 window.addTag=function(){const inp=document.getElementById('newTagInput');const v=inp.value.trim();if(!v||state.tags.includes(v))return showToast('請輸入標籤名稱或標籤已存在');state.tags.push(v);inp.value='';state._localUpdateAt=Date.now();scheduleSave();renderSettings();showToast('標籤已新增');};
@@ -3733,23 +3733,45 @@ window.parsePdfWithAI=async function(){
 
   try{
     const apiKey=getAnthropicKey();
-    if(!apiKey)throw new Error('請先在設定頁填入 Gemini API Key');
-    const geminiModel=localStorage.getItem('gemini_model')||'gemini-1.5-flash-latest';
-    const resp=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`,{
+    if(!apiKey)throw new Error('請先在設定頁填入 OpenAI API Key');
+
+    // PDF base64 → Uint8Array → PDF.js → 每頁轉 canvas → base64 圖片
+    const pdfBytes=Uint8Array.from(atob(_pdfBase64),c=>c.charCodeAt(0));
+    const pdfjsLib=window['pdfjs-dist/build/pdf'];
+    pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    const pdf=await pdfjsLib.getDocument({data:pdfBytes}).promise;
+    const pageImages=[];
+    for(let i=1;i<=Math.min(pdf.numPages,6);i++){
+      const page=await pdf.getPage(i);
+      const scale=2;
+      const vp=page.getViewport({scale});
+      const canvas=document.createElement('canvas');
+      canvas.width=vp.width;canvas.height=vp.height;
+      await page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise;
+      pageImages.push(canvas.toDataURL('image/jpeg',0.85).split(',')[1]);
+    }
+
+    // 把所有頁面圖片送給 GPT-4o-mini vision
+    const imageContents=pageImages.map(b64=>({
+      type:'image_url',
+      image_url:{url:`data:image/jpeg;base64,${b64}`,detail:'high'}
+    }));
+
+    const resp=await fetch('https://api.openai.com/v1/chat/completions',{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
       body:JSON.stringify({
-        contents:[{
-          parts:[
-            {inline_data:{mime_type:'application/pdf',data:_pdfBase64}},
-            {text:prompt}
-          ]
+        model:'gpt-4o-mini',
+        max_tokens:2000,
+        messages:[{
+          role:'user',
+          content:[...imageContents,{type:'text',text:prompt}]
         }]
       })
     });
     const data=await resp.json();
-    if(data.error)throw new Error(data.error.message||'Gemini API 錯誤');
-    const text=(data.candidates?.[0]?.content?.parts||[]).map(p=>p.text||'').join('');
+    if(data.error)throw new Error(data.error.message||'OpenAI API 錯誤');
+    const text=data.choices?.[0]?.message?.content||'';
     // 清除 markdown code fence
     const clean=text.replace(/```json|```/g,'').trim();
     const items=JSON.parse(clean);

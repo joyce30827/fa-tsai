@@ -1098,9 +1098,15 @@ select.form-input{appearance:none;cursor:pointer}
       <div class="section-heading">PDF 密碼設定</div>
       <div class="settings-section">
         <div class="settings-card">
-          <div style="padding:14px 16px">
-            <div style="font-size:11px;color:var(--text3);margin-bottom:12px">密碼儲存在本機，不會同步到雲端。用於自動解密 Gmail 附件的 PDF 帳單。</div>
-            <div id="pdfPwdList"></div>
+          <div class="settings-row" onclick="openPdfPwdModal()">
+            <div class="settings-row-left">
+              <div class="settings-icon" style="background:rgba(249,115,22,0.1);display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+              <div>
+                <div class="settings-row-title">各銀行 PDF 密碼</div>
+                <div class="settings-row-sub" id="pdfPwdSubtitle">設定後可自動解密帳單 PDF</div>
+              </div>
+            </div>
+            <div class="settings-chevron">›</div>
           </div>
         </div>
       </div>
@@ -1205,6 +1211,19 @@ select.form-input{appearance:none;cursor:pointer}
         </div>
       </div>
     </div>
+    <!-- PDF 密碼設定 Modal -->
+    <div class="modal-overlay" id="pdfPwdModal" onclick="closePdfPwdModal(event)">
+      <div class="modal" onclick="event.stopPropagation()" style="max-height:85vh;display:flex;flex-direction:column">
+        <div class="modal-handle"></div>
+        <div class="modal-header-row" style="flex-shrink:0">
+          <div class="modal-title">各銀行 PDF 密碼</div>
+          <button class="modal-close" onclick="closePdfPwdModal()">✕</button>
+        </div>
+        <div style="font-size:12px;color:var(--text3);padding:0 20px 12px;flex-shrink:0">用於自動解密 Gmail 附件的帳單 PDF，密碼會同步到所有裝置。</div>
+        <div id="pdfPwdModalList" style="flex:1;overflow-y:auto;padding:0 16px 16px"></div>
+      </div>
+    </div>
+
     <!-- 帳單過濾設定 Modal -->
     <div class="modal-overlay" id="billFilterModal" onclick="closeBillFilterModal(event)">
       <div class="modal" onclick="event.stopPropagation()" style="max-height:88vh;display:flex;flex-direction:column">
@@ -2769,25 +2788,40 @@ function savePdfPwd(bankName,pwd){
 }
 
 function renderPdfPwdList(){
-  const el=document.getElementById('pdfPwdList');
+  const el=document.getElementById('pdfPwdModalList');
   if(!el)return;
-  // 列出 BILL_PDF_PWD 裡有的銀行
   const banks=Object.keys(BILL_PDF_PWD).filter(n=>BILL_PDF_PWD[n]!=='無密碼（互動式）');
   el.innerHTML=banks.map(name=>{
     const hint=BILL_PDF_PWD[name]||'';
     const saved=getPdfPwd(name);
-    const bankId=name.replace(/[^a-zA-Z0-9]/g,'_')+Math.abs(name.split('').reduce((a,c)=>a+c.charCodeAt(0),0));
-    return`<div style="margin-bottom:12px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-        <span style="font-size:12px;font-weight:600">${name}</span>
+    const bankIdx=Object.keys(BILL_PDF_PWD).indexOf(name);
+    const bankId='ppwd_'+bankIdx;
+    return`<div style="margin-bottom:14px;padding:14px;background:var(--bg3);border-radius:var(--radius-sm);border:1px solid var(--border)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <span style="font-size:13px;font-weight:600">${name}</span>
         <span style="font-size:10px;color:var(--text3)">${hint}</span>
       </div>
       <div style="display:flex;gap:6px">
-        <input id="pdfPwdInput_${bankId}" type="password" value="${saved}" placeholder="輸入實際密碼..." style="flex:1;background:var(--bg);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:6px 10px;color:var(--text);font-family:var(--font-mono,monospace);font-size:12px">
-        <button onclick="(function(){const v=document.getElementById('pdfPwdInput_${bankId}').value.trim();savePdfPwd(decodeURIComponent('${encodeURIComponent(name)}'),v);showToast(v?'✅ 已儲存 ${name} 密碼':'已清除 ${name} 密碼')})()" style="padding:6px 12px;background:var(--orange);color:#fff;border:none;border-radius:var(--radius-sm);cursor:pointer;font-size:12px;font-family:var(--font)">儲存</button>
+        <input id="${bankId}" type="password" value="${saved}" placeholder="輸入實際密碼..." style="flex:1;background:var(--bg);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:7px 10px;color:var(--text);font-family:var(--font-mono,monospace);font-size:12px">
+        <button onclick="(function(){const v=document.getElementById('${bankId}').value.trim();savePdfPwd(decodeURIComponent('${encodeURIComponent(name)}'),v);showToast(v?'✅ 已儲存':'已清除');updatePdfPwdSubtitle()})()" style="padding:7px 14px;background:var(--orange);color:#fff;border:none;border-radius:var(--radius-sm);cursor:pointer;font-size:12px;font-family:var(--font);font-weight:600">儲存</button>
       </div>
     </div>`;
   }).join('');
+}
+
+window.openPdfPwdModal=function(){
+  renderPdfPwdList();
+  document.getElementById('pdfPwdModal').classList.add('open');
+};
+window.closePdfPwdModal=function(e){
+  if(!e||e.target===document.getElementById('pdfPwdModal'))
+    document.getElementById('pdfPwdModal').classList.remove('open');
+};
+function updatePdfPwdSubtitle(){
+  const banks=Object.keys(BILL_PDF_PWD).filter(n=>BILL_PDF_PWD[n]!=='無密碼（互動式）');
+  const set=banks.filter(n=>getPdfPwd(n)).length;
+  const el=document.getElementById('pdfPwdSubtitle');
+  if(el)el.textContent=set?`已設定 ${set} / ${banks.length} 家銀行密碼`:'設定後可自動解密帳單 PDF';
 }
 
 function renderSettings(){
@@ -2795,7 +2829,7 @@ function renderSettings(){
   document.getElementById('expCatCount').textContent=state.expCats.length+' 個分類';
   document.getElementById('incCatCount').textContent=state.incCats.length+' 個分類';
   updateBillFilterSubtitle();
-  renderPdfPwdList();
+  updatePdfPwdSubtitle();
   const k=getAnthropicKey();
   const si=document.getElementById('anthropicKeyStatus');
   const ki=document.getElementById('anthropicKeyInput');

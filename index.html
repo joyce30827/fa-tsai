@@ -677,6 +677,21 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .yr-chevron{color:var(--text3);font-size:16px;margin-left:4px}
 .tx-month-header{padding-top:0}
 .tx-year-header{display:grid;grid-template-columns:1fr 1.5fr 1fr;background:var(--bg);border-bottom:1px solid var(--border)}
+.tx-range-header{display:flex;align-items:center;justify-content:space-between;background:var(--bg);border-bottom:1px solid var(--border);padding:calc(env(safe-area-inset-top,0px) + 10px) 16px 10px;gap:8px}
+.tx-range-label{font-size:13px;font-weight:700;color:var(--text);flex:1;text-align:center}
+.tx-range-edit-btn{background:var(--orange-dim);border:1px solid var(--orange-line);border-radius:6px;color:var(--orange);font-size:11px;font-weight:600;padding:5px 10px;cursor:pointer;font-family:var(--font);white-space:nowrap}
+.tx-range-clear-btn{background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer;padding:4px;line-height:1}
+.range-picker-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:300;display:flex;align-items:flex-end;justify-content:center}
+.range-picker-sheet{background:var(--bg2);border-radius:20px 20px 0 0;border:1px solid var(--border2);border-bottom:none;width:100%;max-width:480px;padding:20px 20px calc(env(safe-area-inset-bottom,0px) + 24px)}
+.range-picker-handle{width:36px;height:4px;border-radius:2px;background:var(--border2);margin:0 auto 18px}
+.range-picker-title{font-size:16px;font-weight:700;margin-bottom:16px;text-align:center}
+.range-picker-row{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.range-picker-label{font-size:12px;color:var(--text3);width:32px;flex-shrink:0;font-weight:600}
+.range-picker-input{flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-size:14px;padding:10px 12px;font-family:var(--font)}
+.range-picker-input:focus{outline:none;border-color:var(--orange)}
+.range-picker-shortcuts{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.range-shortcut-btn{padding:6px 12px;background:var(--bg3);border:1px solid var(--border2);border-radius:20px;color:var(--text2);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);transition:all .15s}
+.range-shortcut-btn:active{background:var(--orange-dim);border-color:var(--orange);color:var(--orange)}
 .tx-view-mode-badge{font-size:10px;font-weight:700;letter-spacing:.4px;padding:2px 8px;border-radius:20px;margin-left:6px;background:var(--orange-dim);color:var(--orange);vertical-align:middle}
 .tx-month-header{display:grid;grid-template-columns:1fr 1.5fr 1fr;background:var(--bg);border-bottom:1px solid var(--border);padding:env(safe-area-inset-top,0) 0 0;padding-top:calc(env(safe-area-inset-top,0) + 48px)}
 .tx-month-prev,.tx-month-next{padding:14px 12px;cursor:pointer;opacity:.5;transition:opacity .15s}
@@ -724,6 +739,29 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .cat-row-amt{font-size:14px;font-weight:700}
 .cat-bar-wrap{height:2px;background:var(--bg3);border-radius:1px;margin:6px 20px 4px}
 .cat-bar{height:2px;border-radius:1px;background:var(--orange);transition:width .4s}
+/* ── Budget ── */
+.budget-section{margin:0 16px 6px}
+.budget-section-header{display:flex;align-items:center;justify-content:space-between;padding:10px 0 6px}
+.budget-section-title{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:1px}
+.budget-section-btn{font-size:11px;color:var(--orange);background:none;border:none;cursor:pointer;font-family:var(--font);font-weight:600;padding:2px 0}
+.budget-card{background:var(--bg2);border-radius:var(--radius);border:1px solid var(--border);padding:14px 16px;margin-bottom:8px;box-shadow:var(--shadow-card)}
+.budget-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.budget-card-left{display:flex;align-items:center;gap:8px}
+.budget-card-icon{font-size:18px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:var(--bg3);border-radius:8px;border:1px solid var(--border);flex-shrink:0}
+.budget-card-name{font-size:13px;font-weight:600}
+.budget-card-sub{font-size:10px;color:var(--text3);margin-top:2px}
+.budget-card-right{text-align:right;flex-shrink:0}
+.budget-card-spent{font-size:13px;font-weight:700}
+.budget-card-limit{font-size:10px;color:var(--text3);margin-top:2px}
+.budget-bar-wrap{height:5px;background:var(--bg4);border-radius:3px;overflow:hidden}
+.budget-bar{height:5px;border-radius:3px;transition:width .5s cubic-bezier(.4,0,.2,1)}
+.budget-add-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:12px;background:none;border:1px dashed var(--border2);border-radius:var(--radius-sm);color:var(--text3);font-size:12px;font-family:var(--font);cursor:pointer;transition:all .15s;margin-bottom:4px}
+.budget-add-btn:active{border-color:var(--orange);color:var(--orange)}
+.budget-modal-cat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;max-height:220px;overflow-y:auto;margin-bottom:4px}
+.budget-modal-cat-item{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 4px;background:var(--bg3);border-radius:var(--radius-sm);border:1px solid var(--border);cursor:pointer;transition:all .15s}
+.budget-modal-cat-item.selected{background:var(--orange-dim);border-color:var(--orange)}
+.budget-modal-cat-item-icon{font-size:20px}
+.budget-modal-cat-item-name{font-size:9px;color:var(--text2);text-align:center;line-height:1.3}
 .chart-wrap{height:190px;position:relative;margin:4px 0}
 .group-label{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;padding:12px 20px 6px}
 .acc-card{background:var(--bg2);border-radius:var(--radius);border:1px solid var(--border);padding:16px 18px;margin:0 16px 8px;cursor:pointer;transition:border-color .15s,box-shadow .15s;box-shadow:var(--shadow-card)}
@@ -1038,6 +1076,37 @@ select.form-input{appearance:none;cursor:pointer}
             <div class="tx-month-side-year" id="txNextYearLabel"></div>
           </div>
         </div>
+        <!-- Range mode -->
+        <div class="tx-range-header" id="txRangeHeader" style="display:none">
+          <button class="tx-range-clear-btn" onclick="exitRangeMode()" title="離開自訂區間">✕</button>
+          <div class="tx-range-label" id="txRangeLabel">選擇區間</div>
+          <button class="tx-range-edit-btn" onclick="openRangePicker()">修改區間</button>
+        </div>
+      </div>
+
+      <!-- Range picker sheet -->
+      <div class="range-picker-overlay" id="rangePickerOverlay" style="display:none" onclick="closeRangePicker(event)">
+        <div class="range-picker-sheet" onclick="event.stopPropagation()">
+          <div class="range-picker-handle"></div>
+          <div class="range-picker-title">自訂統計區間</div>
+          <div class="range-picker-shortcuts">
+            <button class="range-shortcut-btn" onclick="applyRangeShortcut('this_month')">本月</button>
+            <button class="range-shortcut-btn" onclick="applyRangeShortcut('last_month')">上月</button>
+            <button class="range-shortcut-btn" onclick="applyRangeShortcut('last_3m')">近 3 個月</button>
+            <button class="range-shortcut-btn" onclick="applyRangeShortcut('last_6m')">近 6 個月</button>
+            <button class="range-shortcut-btn" onclick="applyRangeShortcut('this_year')">今年</button>
+            <button class="range-shortcut-btn" onclick="applyRangeShortcut('last_year')">去年</button>
+          </div>
+          <div class="range-picker-row">
+            <div class="range-picker-label">開始</div>
+            <input type="date" class="range-picker-input" id="rangeStartInput">
+          </div>
+          <div class="range-picker-row">
+            <div class="range-picker-label">結束</div>
+            <input type="date" class="range-picker-input" id="rangeEndInput">
+          </div>
+          <button onclick="applyRangePicker()" style="width:100%;padding:13px;background:var(--orange);border:none;border-radius:var(--radius-sm);color:#fff;font-size:14px;font-weight:700;font-family:var(--font);cursor:pointer;margin-top:4px">套用</button>
+        </div>
       </div>
       <!-- Income / Expense summary -->
       <div class="tx-summary-bar">
@@ -1060,6 +1129,8 @@ select.form-input{appearance:none;cursor:pointer}
       <div id="txCatView" style="display:none;padding:8px 0"></div>
       <!-- 明細 view -->
       <div id="txListContainer"></div>
+      <!-- 預算區塊（month 模式顯示於底部） -->
+      <div id="budgetSection" style="display:none"></div>
     </div>
 
     <!-- Search overlay -->
@@ -1149,6 +1220,21 @@ select.form-input{appearance:none;cursor:pointer}
               <div>
                 <div class="settings-row-title">對帳單主旨過濾</div>
                 <div class="settings-row-sub" id="billFilterSubtitle">設定各銀行有效帳單的主旨關鍵字</div>
+              </div>
+            </div>
+            <div class="settings-chevron">›</div>
+          </div>
+        </div>
+      </div>
+      <div class="section-heading">預算管理</div>
+      <div class="settings-section">
+        <div class="settings-card">
+          <div class="settings-row" onclick="openBudgetSettingsModal()">
+            <div class="settings-row-left">
+              <div class="settings-icon" style="background:rgba(16,185,129,0.1);display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+              <div>
+                <div class="settings-row-title">月度預算設定</div>
+                <div class="settings-row-sub" id="budgetSettingsSubtitle">設定各支出分類的每月預算上限</div>
               </div>
             </div>
             <div class="settings-chevron">›</div>
@@ -1728,6 +1814,48 @@ select.form-input{appearance:none;cursor:pointer}
   </div>
 </div>
 
+<!-- Budget Settings Modal -->
+<div class="modal-overlay" id="budgetSettingsModal" onclick="closeBudgetSettingsModal(event)">
+  <div class="modal" onclick="event.stopPropagation()" style="max-height:90vh;display:flex;flex-direction:column">
+    <div class="modal-handle"></div>
+    <div class="modal-header-row" style="flex-shrink:0">
+      <div class="modal-title">月度預算設定</div>
+      <button class="modal-close-btn" onclick="closeBudgetSettingsModal()">✕</button>
+    </div>
+    <div style="font-size:12px;color:var(--text3);padding:0 20px 12px;flex-shrink:0">設定後將在收支頁下方顯示本月各項預算進度。</div>
+    <div id="budgetSettingsList" style="flex:1;overflow-y:auto;padding:0 16px 8px"></div>
+    <div style="padding:12px 20px 4px;border-top:1px solid var(--border);flex-shrink:0">
+      <button onclick="openAddBudgetModal()" class="budget-add-btn">＋ 新增預算項目</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit Budget Modal -->
+<div class="modal-overlay" id="addBudgetModal" onclick="closeAddBudgetModal(event)">
+  <div class="modal" onclick="event.stopPropagation()" style="max-height:90vh">
+    <div class="modal-handle"></div>
+    <div class="modal-header-row">
+      <div class="modal-title" id="addBudgetModalTitle">新增預算</div>
+      <button class="modal-close-btn" onclick="closeAddBudgetModal()">✕</button>
+    </div>
+    <div style="padding:0 20px 4px">
+      <div class="form-group">
+        <label class="form-label">支出分類</label>
+        <div class="budget-modal-cat-grid" id="budgetCatGrid"></div>
+        <input type="hidden" id="budgetCatValue">
+      </div>
+      <div class="form-group">
+        <label class="form-label">每月預算上限 (NT$)</label>
+        <input class="form-input" type="number" id="budgetAmountInput" placeholder="例：5000" min="1" step="1">
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;padding:8px 20px 16px">
+      <button id="budgetDeleteBtn" onclick="deleteBudget()" style="display:none;padding:12px 16px;background:var(--red-dim);border:1px solid rgba(239,68,68,0.3);border-radius:var(--radius-sm);color:var(--red);font-size:13px;font-weight:600;font-family:var(--font);cursor:pointer">刪除</button>
+      <button onclick="saveBudget()" style="flex:1;padding:12px;background:var(--orange);border:none;border-radius:var(--radius-sm);color:#fff;font-size:13px;font-weight:700;font-family:var(--font);cursor:pointer">儲存</button>
+    </div>
+  </div>
+</div>
+
 <!-- Bank Manager Modal -->
 <div class="modal-overlay" id="bankMgrModal" onclick="closeBankMgrModal(event)">
   <div class="modal" onclick="event.stopPropagation()" style="max-height:88vh">
@@ -2177,7 +2305,7 @@ auth.onAuthStateChanged(async user=>{
     setSyncDot('syncing');
     try{
       const snap=await db.collection('users').doc(userId).collection('data').doc('main').get();
-      if(snap.exists){const d=snap.data();state.transactions=d.transactions||[];state.accounts=d.accounts||[];state.tags=d.tags||state.tags;state.expCats=d.expCats||state.expCats;state.incCats=d.incCats||state.incCats;state.bankRates=d.bankRates||[];state.billsData=d.billsData||{};state.bankList=d.bankList||[];migrateCats();}
+      if(snap.exists){const d=snap.data();state.transactions=d.transactions||[];state.accounts=d.accounts||[];state.tags=d.tags||state.tags;state.expCats=d.expCats||state.expCats;state.incCats=d.incCats||state.incCats;state.bankRates=d.bankRates||[];state.billsData=d.billsData||{};state.bankList=d.bankList||[];state.budgets=d.budgets||[];migrateCats();}
       setSyncDot('synced');
     }catch(e){
       console.error('Firestore load error:',e.code, e.message);
@@ -2203,7 +2331,7 @@ function monthTx(m,inclExcluded=false){return state.transactions.filter(t=>t.dat
 function accById(id){return state.accounts.find(a=>a.id===id);}
 function catIcon(name,type){const l=type==='income'?state.incCats:state.expCats;return(l.find(c=>c.name===name)||{icon:'📦'}).icon;}
 
-function renderAll(){updateMonthLabel();renderOverview();renderAccounts();renderTransactions();renderSettings();}
+function renderAll(){updateMonthLabel();renderOverview();renderAccounts();renderTransactions();renderSettings();renderBudgetSection();}
 
 // Overview
 function renderOverview(){
@@ -2600,21 +2728,114 @@ window.deleteRateAcc=function(bi,ai){
 
 // Transactions
 let txSubtab='detail';
-let txViewMode='month'; // 'month' | 'year'
+let txViewMode='month'; // 'month' | 'year' | 'range'
 let currentYear=new Date().getFullYear();
 let _slideDir=null; // 'left' | 'right' | null
+let txRangeStart=''; // YYYY-MM-DD
+let txRangeEnd='';   // YYYY-MM-DD
 
 window.toggleTxViewMode=function(){
-  txViewMode=txViewMode==='month'?'year':'month';
-  document.getElementById('txCalBtn').classList.toggle('active',txViewMode==='year');
-  document.getElementById('txMonthHeader').style.display=txViewMode==='month'?'grid':'none';
-  document.getElementById('txYearHeader').style.display=txViewMode==='year'?'grid':'none';
-  // year mode hides sub-tabs (always show 明細 list grouped by month)
-  document.getElementById('subtabCat').style.display=txViewMode==='year'?'none':'';
-  document.getElementById('subtabDetail').style.display=txViewMode==='year'?'none':'';
-  if(txViewMode==='year'){
+  if(txViewMode==='month'){
+    txViewMode='year';
     currentYear=parseInt(state.currentMonth.split('-')[0]);
+    updateTxViewModeUI();
+    renderTransactions();
+  } else if(txViewMode==='year'){
+    txViewMode='range';
+    if(!txRangeStart){
+      const[y,m]=state.currentMonth.split('-');
+      txRangeStart=`${y}-${m}-01`;
+      const lastDay=new Date(parseInt(y),parseInt(m),0).getDate();
+      txRangeEnd=`${y}-${m}-${String(lastDay).padStart(2,'0')}`;
+    }
+    updateTxViewModeUI();
+    updateRangeModeLabel();
+    openRangePicker();
+  } else {
+    txViewMode='month';
+    updateTxViewModeUI();
+    renderTransactions();
   }
+};
+
+function updateTxViewModeUI(){
+  const isMonth=txViewMode==='month';
+  const isYear=txViewMode==='year';
+  const isRange=txViewMode==='range';
+  document.getElementById('txCalBtn').classList.toggle('active',isYear||isRange);
+  document.getElementById('txMonthHeader').style.display=isMonth?'grid':'none';
+  document.getElementById('txYearHeader').style.display=isYear?'grid':'none';
+  document.getElementById('txRangeHeader').style.display=isRange?'flex':'none';
+  document.getElementById('subtabCat').style.display=(isYear||isRange)?'none':'';
+  document.getElementById('subtabDetail').style.display=(isYear||isRange)?'none':'';
+}
+
+function updateRangeModeLabel(){
+  if(!txRangeStart||!txRangeEnd)return;
+  const fmt=d=>{const[y,m,dd]=d.split('-');return`${y}/${parseInt(m)}/${parseInt(dd)}`;};
+  document.getElementById('txRangeLabel').textContent=`${fmt(txRangeStart)} － ${fmt(txRangeEnd)}`;
+}
+
+window.exitRangeMode=function(){
+  txViewMode='month';
+  updateTxViewModeUI();
+  renderTransactions();
+};
+
+window.openRangePicker=function(){
+  const today=new Date().toISOString().slice(0,10);
+  document.getElementById('rangeStartInput').value=txRangeStart||today;
+  document.getElementById('rangeEndInput').value=txRangeEnd||today;
+  document.getElementById('rangePickerOverlay').style.display='flex';
+};
+
+window.closeRangePicker=function(e){
+  if(!e||e.target===document.getElementById('rangePickerOverlay')){
+    document.getElementById('rangePickerOverlay').style.display='none';
+    if(!txRangeStart){txViewMode='month';updateTxViewModeUI();renderTransactions();}
+  }
+};
+
+window.applyRangeShortcut=function(key){
+  const now=new Date();
+  const pad=n=>String(n).padStart(2,'0');
+  const ymd=(y,m,d)=>`${y}-${pad(m)}-${pad(d)}`;
+  const lastDay=(y,m)=>new Date(y,m,0).getDate();
+  let s,e;
+  if(key==='this_month'){
+    s=ymd(now.getFullYear(),now.getMonth()+1,1);
+    e=ymd(now.getFullYear(),now.getMonth()+1,lastDay(now.getFullYear(),now.getMonth()+1));
+  }else if(key==='last_month'){
+    const d=new Date(now.getFullYear(),now.getMonth()-1,1);
+    s=ymd(d.getFullYear(),d.getMonth()+1,1);
+    e=ymd(d.getFullYear(),d.getMonth()+1,lastDay(d.getFullYear(),d.getMonth()+1));
+  }else if(key==='last_3m'){
+    const d=new Date(now.getFullYear(),now.getMonth()-2,1);
+    s=ymd(d.getFullYear(),d.getMonth()+1,1);
+    e=ymd(now.getFullYear(),now.getMonth()+1,lastDay(now.getFullYear(),now.getMonth()+1));
+  }else if(key==='last_6m'){
+    const d=new Date(now.getFullYear(),now.getMonth()-5,1);
+    s=ymd(d.getFullYear(),d.getMonth()+1,1);
+    e=ymd(now.getFullYear(),now.getMonth()+1,lastDay(now.getFullYear(),now.getMonth()+1));
+  }else if(key==='this_year'){
+    s=ymd(now.getFullYear(),1,1);e=ymd(now.getFullYear(),12,31);
+  }else if(key==='last_year'){
+    s=ymd(now.getFullYear()-1,1,1);e=ymd(now.getFullYear()-1,12,31);
+  }
+  document.getElementById('rangeStartInput').value=s;
+  document.getElementById('rangeEndInput').value=e;
+};
+
+window.applyRangePicker=function(){
+  const s=document.getElementById('rangeStartInput').value;
+  const e=document.getElementById('rangeEndInput').value;
+  if(!s||!e){showToast('請選擇開始與結束日期');return;}
+  if(s>e){showToast('結束日期不能早於開始日期');return;}
+  txRangeStart=s;txRangeEnd=e;
+  txViewMode='range';
+  document.getElementById('rangePickerOverlay').style.display='none';
+  updateTxViewModeUI();
+  updateRangeModeLabel();
   renderTransactions();
 };
 
@@ -2692,6 +2913,12 @@ function renderTransactions(){
   if(txViewMode==='year'){
     updateYearLabel();
     renderYearView();
+    const bs=document.getElementById('budgetSection');if(bs)bs.style.display='none';
+    return;
+  }
+  if(txViewMode==='range'){
+    renderRangeView();
+    const bs=document.getElementById('budgetSection');if(bs)bs.style.display='none';
     return;
   }
   updateMonthLabel();
@@ -2752,6 +2979,7 @@ function renderTransactions(){
     }).join('');
     applyAnim(el);
   }
+  renderBudgetSection();
 }
 
 function renderYearView(){
@@ -2808,13 +3036,44 @@ window.drillIntoMonth=function(ym){
   state.currentMonth=ym;
   txViewMode='month';
   currentYear=parseInt(ym.split('-')[0]);
-  document.getElementById('txCalBtn').classList.remove('active');
-  document.getElementById('txMonthHeader').style.display='grid';
-  document.getElementById('txYearHeader').style.display='none';
-  document.getElementById('subtabCat').style.display='';
-  document.getElementById('subtabDetail').style.display='';
+  updateTxViewModeUI();
   renderTransactions();
 };
+
+function renderRangeView(){
+  const filterTag=selectedFilterTags||[];
+  const tx=state.transactions.filter(t=>{
+    if(!t.date)return false;
+    if(filterTag.length>0&&!filterTag.includes(t.tag))return false;
+    return t.date>=txRangeStart&&t.date<=txRangeEnd;
+  });
+  const statTx=tx.filter(t=>!t.excludeFromStats);
+  const inc=statTx.filter(t=>t.type==='income').reduce((s,t)=>s+effectiveAmt(t),0);
+  const exp=statTx.filter(t=>t.type==='expense').reduce((s,t)=>s+effectiveAmt(t),0);
+  document.getElementById('txIncome').textContent='$ '+inc.toLocaleString();
+  document.getElementById('txExpense').textContent='$ '+exp.toLocaleString();
+
+  // range 模式固定顯示明細 list
+  document.getElementById('txCatView').style.display='none';
+  const el=document.getElementById('txListContainer');
+  el.style.display='block';
+
+  if(!tx.length){
+    el.innerHTML='<div class="empty-state"><div class="empty-icon">🔍</div><div>此區間沒有記錄</div></div>';
+    return;
+  }
+  const sorted=tx.slice().sort((a,b)=>b.date.localeCompare(a.date));
+  const g={};
+  sorted.forEach(t=>{if(!g[t.date])g[t.date]=[];g[t.date].push(t);});
+  el.innerHTML=Object.entries(g).sort((a,b)=>b[0].localeCompare(a[0])).map(([date,ts])=>{
+    const d=new Date(date+'T00:00:00');
+    return`<div class="tl-group">
+      <div class="tl-date-col"><div class="tl-date-m">${d.getMonth()+1}月</div><div class="tl-date-d">${d.getDate()}</div></div>
+      <div class="tl-rows">${ts.map(t=>tlCardHTML(t)).join('')}</div>
+    </div>`;
+  }).join('');
+}
+
 function getAnthropicKey(){return state.openaiApiKey||'';}
 
 window.saveAnthropicKey=function(){
@@ -5126,7 +5385,7 @@ function renderAllocation(){
   }).join('');
 }
 
-// Patch saveToFirebase to include bankRates
+// Patch saveToFirebase to include bankRates + budgets
 const _origSaveToFirebase=saveToFirebase;
 saveToFirebase=async function(){
   if(!userId)return;setSyncDot('syncing');
@@ -5135,6 +5394,7 @@ saveToFirebase=async function(){
       transactions:state.transactions,accounts:state.accounts,tags:state.tags,
       expCats:state.expCats,incCats:state.incCats,bankRates:state.bankRates||[],
       billsData:state.billsData||{},bankList:state.bankList||[],
+      budgets:state.budgets||[],
       updatedAt:Date.now()
     });setSyncDot('synced');
   }catch(e){setSyncDot('error');showToast('同步失敗');}
@@ -5142,6 +5402,181 @@ saveToFirebase=async function(){
 
 // Also patch the Firestore load to include bankRates
 const _origOnAuthChanged=auth.onAuthStateChanged;
+
+// ══════════════════════════════════════════════
+// 預算管理
+// ══════════════════════════════════════════════
+
+function getBudgets(){ if(!state.budgets)state.budgets=[]; return state.budgets; }
+
+let _editingBudgetId=null;
+
+// ── 收支頁預算區塊 ──
+function renderBudgetSection(){
+  const el=document.getElementById('budgetSection');
+  if(!el)return;
+  const budgets=getBudgets();
+  if(!budgets.length||txViewMode!=='month'){el.style.display='none';return;}
+
+  const tx=monthTx(null,false); // 當月、不含排除
+  const spendMap={};
+  tx.filter(t=>t.type==='expense').forEach(t=>{
+    spendMap[t.category]=(spendMap[t.category]||0)+effectiveAmt(t);
+  });
+
+  const overBudget=budgets.filter(b=>(spendMap[b.category]||0)>b.amount);
+  el.style.display='block';
+  el.innerHTML=`
+    <div class="budget-section">
+      <div class="budget-section-header">
+        <div class="budget-section-title">📊 月度預算</div>
+        <button class="budget-section-btn" onclick="openBudgetSettingsModal()">管理 ›</button>
+      </div>
+      ${overBudget.length?`<div style="font-size:11px;color:var(--red);background:var(--red-dim);border:1px solid rgba(239,68,68,0.2);border-radius:var(--radius-sm);padding:7px 12px;margin-bottom:8px">⚠ ${overBudget.map(b=>b.category).join('、')} 已超出預算</div>`:''}
+      ${budgets.map(b=>{
+        const spent=spendMap[b.category]||0;
+        const pct=Math.min(Math.round(spent/b.amount*100),100);
+        const over=spent>b.amount;
+        const remain=b.amount-spent;
+        const barColor=over?'var(--red)':pct>80?'#f59e0b':'var(--green)';
+        const catObj=(state.expCats||[]).find(c=>c.name===b.category)||{icon:'📦'};
+        return`<div class="budget-card" onclick="openEditBudgetModal('${b.id}')">
+          <div class="budget-card-top">
+            <div class="budget-card-left">
+              <div class="budget-card-icon">${catObj.icon}</div>
+              <div>
+                <div class="budget-card-name">${b.category}</div>
+                <div class="budget-card-sub">${over?`超支 NT$${Math.abs(remain).toLocaleString()}`:`剩餘 NT$${remain.toLocaleString()}`}</div>
+              </div>
+            </div>
+            <div class="budget-card-right">
+              <div class="budget-card-spent" style="color:${over?'var(--red)':'var(--text)'}">${pct}%</div>
+              <div class="budget-card-limit">NT$${spent.toLocaleString()} / ${b.amount.toLocaleString()}</div>
+            </div>
+          </div>
+          <div class="budget-bar-wrap"><div class="budget-bar" style="width:${pct}%;background:${barColor}"></div></div>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+// ── 設定 Modal ──
+window.openBudgetSettingsModal=function(){
+  renderBudgetSettingsList();
+  document.getElementById('budgetSettingsModal').classList.add('open');
+};
+window.closeBudgetSettingsModal=function(e){
+  if(!e||e.target===document.getElementById('budgetSettingsModal'))
+    document.getElementById('budgetSettingsModal').classList.remove('open');
+};
+function renderBudgetSettingsList(){
+  const budgets=getBudgets();
+  const el=document.getElementById('budgetSettingsList');
+  if(!budgets.length){
+    el.innerHTML='<div style="text-align:center;color:var(--text3);font-size:13px;padding:32px 0">尚未設定任何預算<br><span style="font-size:11px">點下方按鈕新增</span></div>';
+    return;
+  }
+  el.innerHTML=budgets.map(b=>{
+    const catObj=(state.expCats||[]).find(c=>c.name===b.category)||{icon:'📦'};
+    return`<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--bg3);border-radius:var(--radius-sm);border:1px solid var(--border);margin-bottom:8px;cursor:pointer" onclick="openEditBudgetModal('${b.id}')">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="font-size:20px">${catObj.icon}</div>
+        <div>
+          <div style="font-size:13px;font-weight:600">${b.category}</div>
+          <div style="font-size:11px;color:var(--text3)">每月上限</div>
+        </div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:14px;font-weight:700;color:var(--orange)">NT$${Number(b.amount).toLocaleString()}</div>
+        <div style="font-size:10px;color:var(--text3)">點擊編輯 ›</div>
+      </div>
+    </div>`;
+  }).join('');
+  // 更新設定頁 subtitle
+  const sub=document.getElementById('budgetSettingsSubtitle');
+  if(sub)sub.textContent=`已設定 ${budgets.length} 個分類預算`;
+}
+
+// ── Add/Edit Modal ──
+window.openAddBudgetModal=function(){
+  _editingBudgetId=null;
+  document.getElementById('addBudgetModalTitle').textContent='新增預算';
+  document.getElementById('budgetAmountInput').value='';
+  document.getElementById('budgetCatValue').value='';
+  document.getElementById('budgetDeleteBtn').style.display='none';
+  renderBudgetCatGrid(null);
+  document.getElementById('addBudgetModal').classList.add('open');
+};
+window.openEditBudgetModal=function(id){
+  const b=getBudgets().find(x=>x.id===id);
+  if(!b)return;
+  _editingBudgetId=id;
+  document.getElementById('addBudgetModalTitle').textContent='編輯預算';
+  document.getElementById('budgetAmountInput').value=b.amount;
+  document.getElementById('budgetCatValue').value=b.category;
+  document.getElementById('budgetDeleteBtn').style.display='block';
+  renderBudgetCatGrid(b.category);
+  document.getElementById('addBudgetModal').classList.add('open');
+  // 關閉設定 modal
+  document.getElementById('budgetSettingsModal').classList.remove('open');
+};
+window.closeAddBudgetModal=function(e){
+  if(!e||e.target===document.getElementById('addBudgetModal'))
+    document.getElementById('addBudgetModal').classList.remove('open');
+};
+function renderBudgetCatGrid(selectedCat){
+  const cats=state.expCats||[];
+  const existing=getBudgets().map(b=>b.category);
+  document.getElementById('budgetCatGrid').innerHTML=cats.map(c=>{
+    // 已有預算的分類（編輯時排除自身）
+    const disabled=existing.includes(c.name)&&c.name!==selectedCat;
+    const sel=c.name===selectedCat;
+    return`<div class="budget-modal-cat-item${sel?' selected':''}${disabled?' disabled':''}"
+      style="${disabled?'opacity:.35;pointer-events:none':''}"
+      onclick="selectBudgetCat('${c.name}')">
+      <div class="budget-modal-cat-item-icon">${c.icon}</div>
+      <div class="budget-modal-cat-item-name">${c.name}</div>
+    </div>`;
+  }).join('');
+}
+window.selectBudgetCat=function(name){
+  document.getElementById('budgetCatValue').value=name;
+  document.querySelectorAll('.budget-modal-cat-item').forEach(el=>{
+    el.classList.toggle('selected',el.querySelector('.budget-modal-cat-item-name')?.textContent===name);
+  });
+};
+window.saveBudget=function(){
+  const cat=document.getElementById('budgetCatValue').value;
+  const amt=parseInt(document.getElementById('budgetAmountInput').value);
+  if(!cat){showToast('請選擇分類');return;}
+  if(!amt||amt<1){showToast('請輸入有效金額');return;}
+  const budgets=getBudgets();
+  if(_editingBudgetId){
+    const b=budgets.find(x=>x.id===_editingBudgetId);
+    if(b){b.category=cat;b.amount=amt;}
+  } else {
+    budgets.push({id:'bg'+Date.now(),category:cat,amount:amt});
+  }
+  state._localUpdateAt=Date.now();scheduleSave();
+  document.getElementById('addBudgetModal').classList.remove('open');
+  renderBudgetSettingsList();
+  renderBudgetSection();
+  const sub=document.getElementById('budgetSettingsSubtitle');
+  if(sub)sub.textContent=`已設定 ${budgets.length} 個分類預算`;
+  showToast('預算已儲存 ✓');
+};
+window.deleteBudget=function(){
+  if(!_editingBudgetId)return;
+  if(!confirm('確認刪除此預算設定？'))return;
+  state.budgets=getBudgets().filter(b=>b.id!==_editingBudgetId);
+  state._localUpdateAt=Date.now();scheduleSave();
+  document.getElementById('addBudgetModal').classList.remove('open');
+  renderBudgetSettingsList();
+  renderBudgetSection();
+  const sub=document.getElementById('budgetSettingsSubtitle');
+  if(sub)sub.textContent=state.budgets.length?`已設定 ${state.budgets.length} 個分類預算`:'設定各支出分類的每月預算上限';
+  showToast('已刪除');
+};
 
 renderAll();
 </script>

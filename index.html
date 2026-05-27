@@ -1505,6 +1505,26 @@ select.form-input{appearance:none;cursor:pointer}
     <div class="form-group"><label class="form-label">標籤（選填）</label><select class="form-input" id="txTagSel"><option value="">無標籤</option></select></div>
     <!-- 7. 備註 -->
     <div class="form-group"><label class="form-label">備註（選填）</label><input class="form-input" type="text" id="txNote" placeholder="補充說明..."></div>
+    <!-- 8. 代墊分攤 -->
+    <div class="form-group" id="txSplitSection">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <label class="form-label" style="margin-bottom:0">代墊分攤（選填）</label>
+        <span style="font-size:10px;color:var(--text3)">帳戶扣全額，統計只算我的份</span>
+      </div>
+      <div style="background:var(--orange-dim);border:1px solid var(--orange-line);border-radius:var(--radius-sm);padding:12px">
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <div style="flex:1">
+            <div style="font-size:10px;color:var(--text3);margin-bottom:4px">我的份額 (NT$)</div>
+            <input class="form-input" type="number" id="txMyAmount" placeholder="0" inputmode="decimal" oninput="_updateSplitHint()" style="padding:8px 10px;font-size:13px">
+          </div>
+          <div style="flex:1.4">
+            <div style="font-size:10px;color:var(--text3);margin-bottom:4px">說明（選填）</div>
+            <input class="form-input" type="text" id="txSplitNote" placeholder="例：幫小明代墊" style="padding:8px 10px;font-size:13px">
+          </div>
+        </div>
+        <div style="font-size:10px;color:var(--text3)" id="txSplitHint"></div>
+      </div>
+    </div>
     <button class="submit-btn" onclick="addTransaction()">記帳</button>
   </div>
 </div>
@@ -1638,6 +1658,26 @@ select.form-input{appearance:none;cursor:pointer}
     <div class="form-group">
       <label class="form-label">備註</label>
       <input class="form-input" id="editTxNote" placeholder="備註（選填）">
+    </div>
+    <!-- 代墊分攤 -->
+    <div class="form-group" id="editTxSplitSection">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <label class="form-label" style="margin-bottom:0">代墊分攤（選填）</label>
+        <span style="font-size:10px;color:var(--text3)">帳戶扣全額，統計只算我的份</span>
+      </div>
+      <div style="background:var(--orange-dim);border:1px solid var(--orange-line);border-radius:var(--radius-sm);padding:12px">
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <div style="flex:1">
+            <div style="font-size:10px;color:var(--text3);margin-bottom:4px">我的份額 (NT$)</div>
+            <input class="form-input" type="number" id="editTxMyAmount" placeholder="0" inputmode="decimal" oninput="_updateEditSplitHint()" style="padding:8px 10px;font-size:13px">
+          </div>
+          <div style="flex:1.4">
+            <div style="font-size:10px;color:var(--text3);margin-bottom:4px">說明（選填）</div>
+            <input class="form-input" type="text" id="editTxSplitNote" placeholder="例：幫小明代墊" style="padding:8px 10px;font-size:13px">
+          </div>
+        </div>
+        <div style="font-size:10px;color:var(--text3)" id="editTxSplitHint"></div>
+      </div>
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-top:1px solid var(--border);margin-top:4px">
       <div>
@@ -2157,6 +2197,8 @@ function scheduleSave(){clearTimeout(saveTimeout);saveTimeout=setTimeout(saveToF
 function setupSync(){if(unsubscribe)unsubscribe();unsubscribe=db.collection('users').doc(userId).collection('data').doc('main').onSnapshot(snap=>{if(!snap.exists)return;const d=snap.data();if(d.updatedAt>(state._localUpdateAt||0)){state.transactions=d.transactions||[];state.accounts=d.accounts||[];state.tags=d.tags||state.tags;state.expCats=d.expCats||state.expCats;state.incCats=d.incCats||state.incCats;state.bankRates=d.bankRates||[];state.billsData=d.billsData||{};renderAll();setSyncDot('synced');}},()=>setSyncDot('error'));}
 
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
+// 統計用金額：有代墊分攤時用 myAmount，否則用 amount
+function effectiveAmt(t){return(t.type==='expense'&&t.myAmount!=null)?t.myAmount:t.amount;}
 function monthTx(m,inclExcluded=false){return state.transactions.filter(t=>t.date.startsWith(m||state.currentMonth)&&(selectedFilterTags.length===0||selectedFilterTags.includes(t.tag))&&(inclExcluded||!t.excludeFromStats));}
 function accById(id){return state.accounts.find(a=>a.id===id);}
 function catIcon(name,type){const l=type==='income'?state.incCats:state.expCats;return(l.find(c=>c.name===name)||{icon:'📦'}).icon;}
@@ -2227,12 +2269,12 @@ function renderOverview(){
 function renderCharts(){
   const [y,m]=state.currentMonth.split('-').map(Number);
   const months=[];for(let i=5;i>=0;i--){const dt=new Date(y,m-1-i,1);months.push(dt.toISOString().slice(0,7));}
-  const inc=months.map(mo=>state.transactions.filter(t=>t.type==='income'&&t.date.startsWith(mo)&&!t.excludeFromStats).reduce((s,t)=>s+t.amount,0));
-  const exp=months.map(mo=>state.transactions.filter(t=>t.type==='expense'&&t.date.startsWith(mo)&&!t.excludeFromStats).reduce((s,t)=>s+t.amount,0));
+  const inc=months.map(mo=>state.transactions.filter(t=>t.type==='income'&&t.date.startsWith(mo)&&!t.excludeFromStats).reduce((s,t)=>s+effectiveAmt(t),0));
+  const exp=months.map(mo=>state.transactions.filter(t=>t.type==='expense'&&t.date.startsWith(mo)&&!t.excludeFromStats).reduce((s,t)=>s+effectiveAmt(t),0));
   const labels=months.map(mo=>parseInt(mo.split('-')[1])+'月');
   if(barChart)barChart.destroy();
   barChart=new Chart(document.getElementById('monthChart'),{type:'bar',data:{labels,datasets:[{label:'收入',data:inc,backgroundColor:'rgba(46,204,142,0.8)',borderRadius:5,borderSkipped:false},{label:'支出',data:exp,backgroundColor:'rgba(240,97,74,0.8)',borderRadius:5,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#666',font:{size:11},boxWidth:10}}},scales:{x:{ticks:{color:'#555'},grid:{color:'rgba(255,255,255,0.04)'}},y:{ticks:{color:'#555',callback:v=>`${(v/1000).toFixed(0)}K`},grid:{color:'rgba(255,255,255,0.04)'}}}}});
-  const catData={};monthTx().filter(t=>t.type==='expense').forEach(t=>{catData[t.category]=(catData[t.category]||0)+t.amount;});
+  const catData={};monthTx().filter(t=>t.type==='expense').forEach(t=>{catData[t.category]=(catData[t.category]||0)+effectiveAmt(t);});
   if(doughChart)doughChart.destroy();
   const ck=Object.keys(catData);
   if(ck.length)doughChart=new Chart(document.getElementById('catChart'),{type:'doughnut',data:{labels:ck,datasets:[{data:ck.map(k=>catData[k]),backgroundColor:COLORS,borderWidth:0,hoverOffset:5}]},options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'right',labels:{color:'#666',font:{size:11},boxWidth:10,padding:6}}}}});
@@ -2625,16 +2667,25 @@ function tlCardHTML(t){
   const badgeColor=acc?(ACC_KIND_META[acc.kind]?.color||'#555'):'#555';
   const accBadge=acc?`<span class="tl-acc-badge" style="background:${badgeColor}">${acc.subName||acc.name.slice(0,4)}</span>`:'';
   const tagBadge=t.tag?`<span class="tl-tag-badge">${t.tag}</span>`:'';
-  const amtStr=t.type==='income'?`$ ${t.amount.toLocaleString()}`:`$ -${t.amount.toLocaleString()}`;
   const excludeStyle=t.excludeFromStats?'opacity:.38;filter:grayscale(1)':'';
   const excludeBadge=t.excludeFromStats?`<span style="font-size:10px;color:var(--text3);background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:0 5px;line-height:18px">不計統計</span>`:'';
+  const hasSplit=t.type==='expense'&&t.myAmount!=null;
+  const splitBadge=hasSplit?`<span style="font-size:9px;padding:1px 5px;border-radius:4px;font-weight:600;background:var(--orange-dim);color:var(--orange2);border:1px solid var(--orange-line)">代墊</span>`:'';
+  let amtHTML;
+  if(hasSplit){
+    amtHTML=`<div class="tl-amount ${t.excludeFromStats?'neutral':amtCls}">$ -${t.myAmount.toLocaleString()}</div>`+
+            `<div style="font-size:10px;color:var(--text3);text-align:right;margin-top:1px;font-family:var(--font-mono)">共 -${t.amount.toLocaleString()}</div>`;
+  } else {
+    const amtStr=t.type==='income'?`$ ${t.amount.toLocaleString()}`:`$ -${t.amount.toLocaleString()}`;
+    amtHTML=`<div class="tl-amount ${t.excludeFromStats?'neutral':amtCls}">${amtStr}</div>`;
+  }
   return`<div class="tl-row" style="${excludeStyle}" onclick="openEditTxModal('${t.id}')">
     <div class="tl-info">
       <div class="tl-cat ${t.excludeFromStats?'':''+amtCls}">${t.category}</div>
       <div class="tl-desc">${t.title||t.note||t.category}</div>
-      <div class="tl-badges">${accBadge}${tagBadge}${excludeBadge}</div>
+      <div class="tl-badges">${accBadge}${tagBadge}${splitBadge}${excludeBadge}</div>
     </div>
-    <div class="tl-amount ${t.excludeFromStats?'neutral':amtCls}">${amtStr}</div>
+    <div style="text-align:right">${amtHTML}</div>
   </div>`;
 }
 function renderTransactions(){
@@ -2646,8 +2697,8 @@ function renderTransactions(){
   updateMonthLabel();
   const tx=monthTx(null,true);          // 列表顯示：含排除的
   const statTx=tx.filter(t=>!t.excludeFromStats); // 統計：不含排除的
-  const inc=statTx.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
-  const exp=statTx.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const inc=statTx.filter(t=>t.type==='income').reduce((s,t)=>s+effectiveAmt(t),0);
+  const exp=statTx.filter(t=>t.type==='expense').reduce((s,t)=>s+effectiveAmt(t),0);
   document.getElementById('txIncome').textContent='$ '+inc.toLocaleString();
   document.getElementById('txExpense').textContent='$ '+exp.toLocaleString();
 
@@ -2666,9 +2717,9 @@ function renderTransactions(){
   if(txSubtab==='cat'){
     // Category breakdown view
     const expTx=statTx.filter(t=>t.type==='expense');
-    const totalExp=expTx.reduce((s,t)=>s+t.amount,0);
+    const totalExp=expTx.reduce((s,t)=>s+effectiveAmt(t),0);
     const catMap={};
-    expTx.forEach(t=>{if(!catMap[t.category])catMap[t.category]={amount:0,count:0,icon:'📦'};catMap[t.category].amount+=t.amount;catMap[t.category].count++;});
+    expTx.forEach(t=>{if(!catMap[t.category])catMap[t.category]={amount:0,count:0,icon:'📦'};catMap[t.category].amount+=effectiveAmt(t);catMap[t.category].count++;});
     // get icons from expCats
     state.expCats.forEach(c=>{if(catMap[c.name])catMap[c.name].icon=c.icon;});
     const sorted=Object.entries(catMap).sort((a,b)=>b[1].amount-a[1].amount);
@@ -2713,8 +2764,8 @@ function renderYearView(){
     el.classList.add(animCls);
   }
   const yearTx=state.transactions.filter(t=>t.date.startsWith(currentYear+'')&&(selectedFilterTags.length===0||selectedFilterTags.includes(t.tag)));
-  const yearInc=yearTx.filter(t=>t.type==='income'&&!t.excludeFromStats).reduce((s,t)=>s+t.amount,0);
-  const yearExp=yearTx.filter(t=>t.type==='expense'&&!t.excludeFromStats).reduce((s,t)=>s+t.amount,0);
+  const yearInc=yearTx.filter(t=>t.type==='income'&&!t.excludeFromStats).reduce((s,t)=>s+effectiveAmt(t),0);
+  const yearExp=yearTx.filter(t=>t.type==='expense'&&!t.excludeFromStats).reduce((s,t)=>s+effectiveAmt(t),0);
   document.getElementById('txIncome').textContent='$ '+yearInc.toLocaleString();
   document.getElementById('txExpense').textContent='$ '+yearExp.toLocaleString();
 
@@ -2735,8 +2786,8 @@ function renderYearView(){
 
   el.innerHTML=Object.entries(months).reverse().map(([ym,txs])=>{
     const[y,m]=ym.split('-').map(Number);
-    const inc=txs.filter(t=>t.type==='income'&&!t.excludeFromStats).reduce((s,t)=>s+t.amount,0);
-    const exp=txs.filter(t=>t.type==='expense'&&!t.excludeFromStats).reduce((s,t)=>s+t.amount,0);
+    const inc=txs.filter(t=>t.type==='income'&&!t.excludeFromStats).reduce((s,t)=>s+effectiveAmt(t),0);
+    const exp=txs.filter(t=>t.type==='expense'&&!t.excludeFromStats).reduce((s,t)=>s+effectiveAmt(t),0);
     if(!txs.length)return''; // skip empty months
     return`<div class="yr-month-block" onclick="drillIntoMonth('${ym}')">
       <div class="yr-month-header">
@@ -3023,6 +3074,10 @@ window.openTxModal=function(){
   document.getElementById('txAmt').value='';
   document.getElementById('txTitle').value='';
   document.getElementById('txNote').value='';
+  document.getElementById('txMyAmount').value='';
+  document.getElementById('txSplitNote').value='';
+  document.getElementById('txSplitHint').textContent='';
+  document.getElementById('txSplitSection').style.display='block';
   document.getElementById('txTagSel').innerHTML='<option value="">無標籤</option>'+state.tags.map(t=>`<option>${t}</option>`).join('');
   document.getElementById('txModal').classList.add('open');
   setTimeout(()=>document.getElementById('txAmt').focus(),200);
@@ -3099,7 +3154,9 @@ window.deleteQuickCat=function(name){
   state._localUpdateAt=Date.now();scheduleSave();
   renderQuickCatList();buildCatGrid();renderSettings();
 };
-window.setType=function(type){curType=type;document.getElementById('typeExpense').className='type-btn'+(type==='expense'?' active expense':'');document.getElementById('typeIncome').className='type-btn'+(type==='income'?' active income':'');document.getElementById('typeTransfer').className='type-btn'+(type==='transfer'?' active transfer':'');const isTransfer=type==='transfer';document.getElementById('catSection').style.display=isTransfer?'none':'block';document.getElementById('accNormalSection').style.display=isTransfer?'none':'block';document.getElementById('accTransferSection').style.display=isTransfer?'block':'none';if(!isTransfer){selCat='';buildCatGrid();}};
+window.setType=function(type){curType=type;document.getElementById('typeExpense').className='type-btn'+(type==='expense'?' active expense':'');document.getElementById('typeIncome').className='type-btn'+(type==='income'?' active income':'');document.getElementById('typeTransfer').className='type-btn'+(type==='transfer'?' active transfer':'');const isTransfer=type==='transfer';document.getElementById('catSection').style.display=isTransfer?'none':'block';document.getElementById('accNormalSection').style.display=isTransfer?'none':'block';document.getElementById('accTransferSection').style.display=isTransfer?'block':'none';document.getElementById('txSplitSection').style.display=type==='expense'?'block':'none';if(!isTransfer){selCat='';buildCatGrid();}};
+window._updateSplitHint=function(){const amt=parseFloat(document.getElementById('txAmt').value)||0;const my=parseFloat(document.getElementById('txMyAmount').value)||0;const hint=document.getElementById('txSplitHint');if(amt>0&&my>0&&my<amt){hint.innerHTML=`統計計 <span style="color:var(--orange2);font-weight:600">NT$${my.toLocaleString()}</span>，代墊 NT$${(amt-my).toLocaleString()}`;}else if(my>=amt&&my>0){hint.innerHTML=`<span style="color:var(--red)">我的份額不可大於或等於總金額</span>`;}else{hint.textContent='';}};
+window._updateEditSplitHint=function(){const amt=parseFloat(document.getElementById('editTxAmount').value)||0;const my=parseFloat(document.getElementById('editTxMyAmount').value)||0;const hint=document.getElementById('editTxSplitHint');if(amt>0&&my>0&&my<amt){hint.innerHTML=`統計計 <span style="color:var(--orange2);font-weight:600">NT$${my.toLocaleString()}</span>，代墊 NT$${(amt-my).toLocaleString()}`;}else if(my>=amt&&my>0){hint.innerHTML=`<span style="color:var(--red)">我的份額不可大於或等於總金額</span>`;}else{hint.textContent='';}}
 function buildCatGrid(){
   migrateCats();
   const cats=curType==='expense'?state.expCats:state.incCats;
@@ -3133,7 +3190,10 @@ window.addTransaction=function(){
     if(!accId)return showToast('請先新增帳戶');
     const acc=accById(accId);
     if(acc){acc.balance+=curType==='income'?amt:-amt;acc.updatedAt=Date.now();}
-    state.transactions.push({id:Date.now()+'',type:curType,amount:amt,category:selCat,accountId:accId,date,title:title||selCat,note,tag});
+    const myAmtRaw=parseFloat(document.getElementById('txMyAmount').value)||0;
+    const myAmt=(curType==='expense'&&myAmtRaw>0&&myAmtRaw<amt)?myAmtRaw:null;
+    const splitNote=myAmt?document.getElementById('txSplitNote').value.trim():'';
+    state.transactions.push({id:Date.now()+'',type:curType,amount:amt,category:selCat,accountId:accId,date,title:title||selCat,note,tag,...(myAmt!==null?{myAmount:myAmt,splitNote}:{})});
   }
   document.getElementById('txModal').classList.remove('open');
   state._localUpdateAt=Date.now();
@@ -4309,6 +4369,12 @@ window.openEditTxModal=function(id){
   const excl=!!t.excludeFromStats;
   document.getElementById('editTxExclude').checked=excl;
   toggleExcludeSwitch(excl);
+  // Split fields
+  const showSplit=_editTxType==='expense';
+  document.getElementById('editTxSplitSection').style.display=showSplit?'block':'none';
+  document.getElementById('editTxMyAmount').value=t.myAmount||'';
+  document.getElementById('editTxSplitNote').value=t.splitNote||'';
+  document.getElementById('editTxSplitHint').textContent='';
   document.getElementById('editTxModal').classList.add('open');
 };
 
@@ -4322,6 +4388,7 @@ window.setEditTxType=function(type,btn){
   document.querySelectorAll('#editTxTypeSeg .seg-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById('editTxCatGroup').style.display=type==='transfer'?'none':'block';
+  document.getElementById('editTxSplitSection').style.display=type==='expense'?'block':'none';
   buildEditCatGrid();
 };
 
@@ -4354,6 +4421,14 @@ window.saveEditTx=function(){
   t.note=document.getElementById('editTxNote').value.trim();
   t.category=_editTxType==='transfer'?'轉帳':(_editSelCat||t.category);
   t.excludeFromStats=document.getElementById('editTxExclude').checked||false;
+  if(_editTxType==='expense'){
+    const myAmtRaw=parseFloat(document.getElementById('editTxMyAmount').value)||0;
+    const myAmt=(myAmtRaw>0&&myAmtRaw<amount)?myAmtRaw:null;
+    if(myAmt!==null){t.myAmount=myAmt;t.splitNote=document.getElementById('editTxSplitNote').value.trim();}
+    else{delete t.myAmount;delete t.splitNote;}
+  } else {
+    delete t.myAmount;delete t.splitNote;
+  }
   state._localUpdateAt=Date.now();scheduleSave();
   document.getElementById('editTxModal').classList.remove('open');
   renderAll();showToast('明細已更新 ✓');

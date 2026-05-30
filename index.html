@@ -1204,6 +1204,21 @@ select.form-input{appearance:none;cursor:pointer}
           </div>
         </div>
       </div>
+      <div class="section-heading">資料匯出</div>
+      <div class="settings-section">
+        <div class="settings-card">
+          <div class="settings-row" onclick="openExportModal()">
+            <div class="settings-row-left">
+              <div class="settings-icon" style="background:var(--green-dim);display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
+              <div>
+                <div class="settings-row-title">匯出收支明細</div>
+                <div class="settings-row-sub">下載 CSV 或 JSON 備份檔案</div>
+              </div>
+            </div>
+            <div class="settings-chevron">›</div>
+          </div>
+        </div>
+      </div>
       <div class="section-heading">銀行管理</div>
       <div class="settings-section">
         <div class="settings-card">
@@ -1876,6 +1891,46 @@ select.form-input{appearance:none;cursor:pointer}
     <div style="display:flex;gap:8px;padding:16px 20px 4px">
       <button onclick="previewCarrierCSV()" style="flex:1;padding:11px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-size:13px;font-weight:600;font-family:var(--font);cursor:pointer">預覽</button>
       <button onclick="importCarrierCSV()" style="flex:1;padding:11px;background:var(--orange);border:none;border-radius:var(--radius-sm);color:#fff;font-size:13px;font-weight:700;font-family:var(--font);cursor:pointer">匯入</button>
+    </div>
+  </div>
+</div>
+
+<!-- Export Modal -->
+<div class="modal-overlay" id="exportModal" onclick="closeExportModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-header-row">
+      <div class="modal-title">匯出資料</div>
+      <button class="modal-close-btn" onclick="closeExportModal()">✕</button>
+    </div>
+    <div style="padding:0 20px 4px">
+      <div class="form-group">
+        <label class="form-label">匯出範圍</label>
+        <select class="form-input" id="exportRangeType" onchange="updateExportRangeUI()">
+          <option value="all">全部資料</option>
+          <option value="year">指定年份</option>
+          <option value="month">指定月份</option>
+        </select>
+      </div>
+      <div class="form-group" id="exportYearGroup" style="display:none">
+        <label class="form-label">年份</label>
+        <select class="form-input" id="exportYear" onchange="updateExportCount()"></select>
+      </div>
+      <div class="form-group" id="exportMonthGroup" style="display:none">
+        <label class="form-label">月份</label>
+        <select class="form-input" id="exportMonth" onchange="updateExportCount()"></select>
+      </div>
+      <div id="exportCountHint" style="font-size:12px;color:var(--text3);margin-bottom:4px;min-height:18px"></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;padding:8px 20px 16px">
+      <button onclick="doExportCSV()" style="width:100%;padding:12px;background:var(--green);border:none;border-radius:var(--radius-sm);color:#fff;font-size:13px;font-weight:700;font-family:var(--font);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        下載 CSV（可用 Excel 開啟）
+      </button>
+      <button onclick="doExportJSON()" style="width:100%;padding:12px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text2);font-size:13px;font-weight:600;font-family:var(--font);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        下載 JSON（完整備份）
+      </button>
     </div>
   </div>
 </div>
@@ -5818,6 +5873,112 @@ window.deleteReminder = function(){
   renderCustomReminders();
   renderBillsAlert();
   showToast('已刪除');
+};
+
+// ══════════════════════════════════════════════
+// 資料匯出
+// ══════════════════════════════════════════════
+
+window.openExportModal = function() {
+  const years = [...new Set(state.transactions.map(t => t.date.slice(0,4)))].sort((a,b)=>b-a);
+  const yearSel = document.getElementById('exportYear');
+  yearSel.innerHTML = years.length
+    ? years.map(y => `<option value="${y}">${y} 年</option>`).join('')
+    : `<option value="${new Date().getFullYear()}">${new Date().getFullYear()} 年</option>`;
+  const monthSel = document.getElementById('exportMonth');
+  monthSel.innerHTML = Array.from({length:12},(_,i)=>`<option value="${String(i+1).padStart(2,'0')}">${i+1} 月</option>`).join('');
+  const [cy, cm] = (state.currentMonth||'').split('-');
+  if(cy && years.includes(cy)) yearSel.value = cy;
+  if(cm) monthSel.value = cm;
+  document.getElementById('exportRangeType').value = 'all';
+  updateExportRangeUI();
+  document.getElementById('exportModal').classList.add('open');
+};
+
+window.closeExportModal = function(e) {
+  if(!e || e.target === document.getElementById('exportModal'))
+    document.getElementById('exportModal').classList.remove('open');
+};
+
+window.updateExportRangeUI = function() {
+  const t = document.getElementById('exportRangeType').value;
+  document.getElementById('exportYearGroup').style.display = (t==='year'||t==='month') ? 'block' : 'none';
+  document.getElementById('exportMonthGroup').style.display = t==='month' ? 'block' : 'none';
+  updateExportCount();
+};
+
+window.updateExportCount = function() {
+  document.getElementById('exportCountHint').textContent = `共 ${getExportTxList().length} 筆交易記錄`;
+};
+
+function getExportTxList() {
+  const t = document.getElementById('exportRangeType').value;
+  const y = document.getElementById('exportYear').value;
+  const m = document.getElementById('exportMonth').value;
+  let txs = state.transactions.slice();
+  if(t==='year') txs = txs.filter(tx => tx.date.startsWith(y));
+  else if(t==='month') txs = txs.filter(tx => tx.date.startsWith(`${y}-${m}`));
+  return txs.sort((a,b) => a.date.localeCompare(b.date));
+}
+
+function downloadFile(content, filename, mimeType) {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+window.doExportCSV = function() {
+  const txs = getExportTxList();
+  if(!txs.length) { showToast('沒有符合條件的資料'); return; }
+  const accMap = {};
+  state.accounts.forEach(a => { accMap[a.id] = a; });
+  const TYPE_LABEL = { expense:'支出', income:'收入', transfer:'轉帳' };
+  const rows = [['日期','類型','金額','分類','名稱/描述','帳戶','標籤','備註','排除統計','代墊金額']];
+  txs.forEach(t => {
+    const acc = accMap[t.accountId];
+    const accLabel = acc ? (acc.subName ? `${acc.name} ${acc.subName}` : acc.name) : '';
+    rows.push([
+      t.date, TYPE_LABEL[t.type]||t.type,
+      t.type==='income' ? t.amount : -t.amount,
+      t.category||'', t.title||t.note||'', accLabel,
+      t.tag||'', t.note||'', t.excludeFromStats?'是':'否',
+      t.myAmount!=null ? t.myAmount : ''
+    ]);
+  });
+  const BOM = '\uFEFF';
+  const csv = BOM + rows.map(r =>
+    r.map(v => { const s=String(v==null?'':v); return s.includes(',')||s.includes('\n')||s.includes('"') ? `"${s.replace(/"/g,'""')}"` : s; }).join(',')
+  ).join('\r\n');
+  const t = document.getElementById('exportRangeType').value;
+  const y = document.getElementById('exportYear').value;
+  const m = document.getElementById('exportMonth').value;
+  let fn = 'Joyce_Fortune_Journal';
+  if(t==='year') fn += `_${y}`;
+  else if(t==='month') fn += `_${y}-${m}`;
+  fn += '.csv';
+  downloadFile(csv, fn, 'text/csv;charset=utf-8');
+  showToast(`已匯出 ${txs.length} 筆 ✓`);
+  document.getElementById('exportModal').classList.remove('open');
+};
+
+window.doExportJSON = function() {
+  const now = new Date();
+  const ts = now.getFullYear()+String(now.getMonth()+1).padStart(2,'0')+String(now.getDate()).padStart(2,'0');
+  const backup = {
+    exportedAt: now.toISOString(), version: 1,
+    transactions: state.transactions, accounts: state.accounts,
+    tags: state.tags, expCats: state.expCats, incCats: state.incCats,
+    bankList: state.bankList||[], bankRates: state.bankRates||[],
+    billsData: state.billsData||{}, budgets: state.budgets||[],
+    reminders: state.reminders||[]
+  };
+  downloadFile(JSON.stringify(backup, null, 2), `Joyce_Fortune_Journal_backup_${ts}.json`, 'application/json');
+  showToast('完整備份已匯出 ✓');
+  document.getElementById('exportModal').classList.remove('open');
 };
 
 renderAll();

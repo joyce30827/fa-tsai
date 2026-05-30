@@ -6161,7 +6161,23 @@ function renderProjOverviewSection(){
   const el=document.getElementById('projOverviewSection');
   if(!el)return;
   const projs=getProjects().filter(p=>isProjActive(p));
-  if(!projs.length){el.innerHTML='';return;}
+  const emptyBlock=projs.length?'':
+    `<div style="padding:0 16px 16px">
+      <div style="background:var(--bg2);border:1px dashed var(--border2);border-radius:var(--radius);padding:20px;text-align:center;cursor:pointer" onclick="openAddProjModal()">
+        <div style="font-size:22px;margin-bottom:6px">🎯</div>
+        <div style="font-size:13px;color:var(--text2);font-weight:600;margin-bottom:4px">新增專案預算</div>
+        <div style="font-size:11px;color:var(--text3)">用標籤或分類追蹤特定主題的花費</div>
+      </div>
+    </div>`;
+  if(!projs.length){
+    el.innerHTML=`
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px 6px">
+        <div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:1.2px">專案預算</div>
+        <button onclick="openAddProjModal()" style="font-size:11px;color:var(--orange);background:none;border:none;cursor:pointer;font-family:var(--font);font-weight:600">＋ 新增</button>
+      </div>
+      ${emptyBlock}`;
+    return;
+  }
   el.innerHTML=`
     <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px 6px">
       <div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:1.2px">專案預算</div>

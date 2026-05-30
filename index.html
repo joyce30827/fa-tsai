@@ -691,7 +691,15 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .range-picker-input:focus{outline:none;border-color:var(--orange)}
 .range-picker-shortcuts{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
 .range-shortcut-btn{padding:6px 12px;background:var(--bg3);border:1px solid var(--border2);border-radius:20px;color:var(--text2);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);transition:all .15s}
-.range-shortcut-btn:active{background:var(--orange-dim);border-color:var(--orange);color:var(--orange)}
+.reminder-card{display:flex;align-items:center;justify-content:space-between;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 16px;margin:0 16px 8px;cursor:pointer;transition:border-color .15s}
+.reminder-card:active{border-color:var(--orange)}
+.reminder-card-left{display:flex;align-items:center;gap:10px}
+.reminder-card-icon{font-size:20px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:var(--bg3);border-radius:8px;border:1px solid var(--border);flex-shrink:0}
+.reminder-card-name{font-size:13px;font-weight:600}
+.reminder-card-meta{font-size:11px;color:var(--text3);margin-top:2px}
+.reminder-card-right{text-align:right;flex-shrink:0}
+.reminder-card-days{font-size:12px;font-weight:700}
+.reminder-card-amount{font-size:11px;color:var(--text3);margin-top:2px}
 .tx-view-mode-badge{font-size:10px;font-weight:700;letter-spacing:.4px;padding:2px 8px;border-radius:20px;margin-left:6px;background:var(--orange-dim);color:var(--orange);vertical-align:middle}
 .tx-month-header{display:grid;grid-template-columns:1fr 1.5fr 1fr;background:var(--bg);border-bottom:1px solid var(--border);padding:env(safe-area-inset-top,0) 0 0;padding-top:calc(env(safe-area-inset-top,0) + 48px)}
 .tx-month-prev,.tx-month-next{padding:14px 12px;cursor:pointer;opacity:.5;transition:opacity .15s}
@@ -1352,6 +1360,13 @@ select.form-input{appearance:none;cursor:pointer}
       <div class="section-heading">📱 電信帳單</div>
       <div id="telcoBillsList"><div class="alloc-empty" style="padding:20px">點右上角 🔄 同步</div></div>
 
+      <!-- 自訂到期提醒 -->
+      <div class="section-heading" style="display:flex;align-items:center;justify-content:space-between;padding-right:16px">
+        <span>🔔 自訂到期提醒</span>
+        <button onclick="openAddReminderModal()" style="font-size:11px;font-weight:600;color:var(--orange);background:none;border:none;cursor:pointer;font-family:var(--font);padding:4px 0">＋ 新增</button>
+      </div>
+      <div id="customRemindersList" style="padding-bottom:4px"></div>
+
       <!-- 銀行帳單收件狀況 -->
       <div class="section-heading">📬 銀行帳單收件狀況</div>
       <div class="alloc-card" style="margin:0 16px 14px">
@@ -1364,7 +1379,58 @@ select.form-input{appearance:none;cursor:pointer}
       </div>
     </div>
 
-    <!-- PDF 帳單解析 Modal (Step 1) -->
+<!-- Custom Reminder Modal -->
+<div class="modal-overlay" id="addReminderModal" onclick="closeAddReminderModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-header-row">
+      <div class="modal-title" id="addReminderModalTitle">新增提醒</div>
+      <button class="modal-close-btn" onclick="closeAddReminderModal()">✕</button>
+    </div>
+    <div style="padding:0 20px 4px">
+      <div class="form-group">
+        <label class="form-label">名稱</label>
+        <input class="form-input" id="reminderNameInput" placeholder="例：Netflix 訂閱、保費、年費">
+      </div>
+      <div class="form-group">
+        <label class="form-label">到期日</label>
+        <input class="form-input" type="date" id="reminderDueDateInput">
+      </div>
+      <div class="form-group">
+        <label class="form-label">金額（選填）</label>
+        <input class="form-input" type="number" id="reminderAmountInput" placeholder="NT$">
+      </div>
+      <div class="form-group">
+        <label class="form-label">類別</label>
+        <select class="form-input" id="reminderCategoryInput">
+          <option value="subscription">訂閱服務</option>
+          <option value="insurance">保險</option>
+          <option value="annual_fee">年費</option>
+          <option value="tax">稅款</option>
+          <option value="other">其他</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">重複週期</label>
+        <select class="form-input" id="reminderRepeatInput">
+          <option value="none">不重複（一次性）</option>
+          <option value="monthly">每月</option>
+          <option value="yearly">每年</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">備註（選填）</label>
+        <input class="form-input" id="reminderNoteInput" placeholder="備註說明">
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;padding:8px 20px 16px">
+      <button id="reminderDeleteBtn" onclick="deleteReminder()" style="display:none;padding:12px 16px;background:var(--red-dim);border:1px solid rgba(239,68,68,0.3);border-radius:var(--radius-sm);color:var(--red);font-size:13px;font-weight:600;font-family:var(--font);cursor:pointer">刪除</button>
+      <button onclick="saveReminder()" style="flex:1;padding:12px;background:var(--orange);border:none;border-radius:var(--radius-sm);color:#fff;font-size:13px;font-weight:700;font-family:var(--font);cursor:pointer">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- PDF 帳單解析 Modal (Step 1) -->
     <div class="modal-overlay" id="pdfImportModal" onclick="closePdfImportModal(event)">
       <div class="modal" onclick="event.stopPropagation()" style="max-height:90vh;display:flex;flex-direction:column">
         <div class="modal-handle"></div>
@@ -2305,7 +2371,7 @@ auth.onAuthStateChanged(async user=>{
     setSyncDot('syncing');
     try{
       const snap=await db.collection('users').doc(userId).collection('data').doc('main').get();
-      if(snap.exists){const d=snap.data();state.transactions=d.transactions||[];state.accounts=d.accounts||[];state.tags=d.tags||state.tags;state.expCats=d.expCats||state.expCats;state.incCats=d.incCats||state.incCats;state.bankRates=d.bankRates||[];state.billsData=d.billsData||{};state.bankList=d.bankList||[];state.budgets=d.budgets||[];migrateCats();}
+      if(snap.exists){const d=snap.data();state.transactions=d.transactions||[];state.accounts=d.accounts||[];state.tags=d.tags||state.tags;state.expCats=d.expCats||state.expCats;state.incCats=d.incCats||state.incCats;state.bankRates=d.bankRates||[];state.billsData=d.billsData||{};state.bankList=d.bankList||[];state.budgets=d.budgets||[];state.reminders=d.reminders||[];migrateCats();}
       setSyncDot('synced');
     }catch(e){
       console.error('Firestore load error:',e.code, e.message);
@@ -3596,6 +3662,7 @@ function renderBillsPage(){
   renderBillsAlert();
   renderBillsByCategory('credit_card','ccBillsList');
   renderBillsByCategory('telco','telcoBillsList');
+  renderCustomReminders();
   renderBillsStatus();
 }
 
@@ -5394,7 +5461,7 @@ saveToFirebase=async function(){
       transactions:state.transactions,accounts:state.accounts,tags:state.tags,
       expCats:state.expCats,incCats:state.incCats,bankRates:state.bankRates||[],
       billsData:state.billsData||{},bankList:state.bankList||[],
-      budgets:state.budgets||[],
+      budgets:state.budgets||[],reminders:state.reminders||[],
       updatedAt:Date.now()
     });setSyncDot('synced');
   }catch(e){setSyncDot('error');showToast('同步失敗');}
@@ -5575,6 +5642,181 @@ window.deleteBudget=function(){
   renderBudgetSection();
   const sub=document.getElementById('budgetSettingsSubtitle');
   if(sub)sub.textContent=state.budgets.length?`已設定 ${state.budgets.length} 個分類預算`:'設定各支出分類的每月預算上限';
+  showToast('已刪除');
+};
+
+// ══════════════════════════════════════════════
+// 自訂到期提醒
+// ══════════════════════════════════════════════
+
+const REMINDER_CAT_ICON = {
+  subscription: '📺', insurance: '🛡️', annual_fee: '💳', tax: '🧾', other: '🔔'
+};
+const REMINDER_CAT_LABEL = {
+  subscription: '訂閱服務', insurance: '保險', annual_fee: '年費', tax: '稅款', other: '其他'
+};
+
+function getReminders(){ if(!state.reminders)state.reminders=[]; return state.reminders; }
+
+let _editingReminderId = null;
+
+function renderCustomReminders(){
+  const el = document.getElementById('customRemindersList');
+  if(!el) return;
+  const reminders = getReminders();
+  const now = Date.now();
+
+  if(!reminders.length){
+    el.innerHTML = '<div class="alloc-empty" style="padding:16px 32px">尚無提醒，點右上角新增</div>';
+    return;
+  }
+
+  const sorted = reminders.slice().sort((a,b) => {
+    const da = a.dueDate || '9999';
+    const db2 = b.dueDate || '9999';
+    return da.localeCompare(db2);
+  });
+
+  el.innerHTML = sorted.map(r => {
+    const icon = REMINDER_CAT_ICON[r.category] || '🔔';
+    const catLabel = REMINDER_CAT_LABEL[r.category] || '其他';
+    const repeatLabel = r.repeat === 'monthly' ? '每月' : r.repeat === 'yearly' ? '每年' : '';
+
+    let daysText = '', daysColor = 'var(--text3)';
+    if(r.dueDate){
+      const days = Math.ceil((new Date(r.dueDate).getTime() - now) / 86400000);
+      if(days < 0){ daysText = `逾期 ${-days} 天`; daysColor = 'var(--red)'; }
+      else if(days === 0){ daysText = '今天到期'; daysColor = 'var(--red)'; }
+      else if(days <= 7){ daysText = `還有 ${days} 天`; daysColor = '#f59e0b'; }
+      else { daysText = `還有 ${days} 天`; daysColor = 'var(--text2)'; }
+    }
+
+    const dueDateFmt = r.dueDate
+      ? new Date(r.dueDate + 'T00:00:00').toLocaleDateString('zh-TW')
+      : '—';
+    const metaParts = [catLabel, dueDateFmt];
+    if(repeatLabel) metaParts.push(repeatLabel);
+    if(r.note) metaParts.push(r.note);
+
+    return `<div class="reminder-card" onclick="openEditReminderModal('${r.id}')">
+      <div class="reminder-card-left">
+        <div class="reminder-card-icon">${icon}</div>
+        <div>
+          <div class="reminder-card-name">${r.name}</div>
+          <div class="reminder-card-meta">${metaParts.join(' · ')}</div>
+        </div>
+      </div>
+      <div class="reminder-card-right">
+        <div class="reminder-card-days" style="color:${daysColor}">${daysText}</div>
+        <div class="reminder-card-amount">${r.amount ? 'NT$ ' + Number(r.amount).toLocaleString() : ''}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+const _origRenderBillsAlert = renderBillsAlert;
+renderBillsAlert = function(){
+  _origRenderBillsAlert();
+  const now = Date.now();
+  const urgent = getReminders().filter(r => {
+    if(!r.dueDate) return false;
+    const days = Math.ceil((new Date(r.dueDate).getTime() - now) / 86400000);
+    return days <= 7 && days >= -14;
+  });
+  if(!urgent.length) return;
+  const bar = document.getElementById('billsAlertBar');
+  const list = document.getElementById('billsAlertList');
+  if(!bar || !list) return;
+  bar.style.display = 'block';
+  list.innerHTML += urgent.map(r => {
+    const days = Math.ceil((new Date(r.dueDate).getTime() - now) / 86400000);
+    const label = days < 0 ? `逾期 ${-days} 天` : days === 0 ? '今天到期' : `還有 ${days} 天`;
+    const amt = r.amount ? ` · NT$ ${Number(r.amount).toLocaleString()}` : '';
+    return `<div style="padding:2px 0">${r.name}${amt} <span style="color:var(--red)">${label}</span></div>`;
+  }).join('');
+};
+
+window.openAddReminderModal = function(){
+  _editingReminderId = null;
+  document.getElementById('addReminderModalTitle').textContent = '新增提醒';
+  document.getElementById('reminderNameInput').value = '';
+  document.getElementById('reminderDueDateInput').value = '';
+  document.getElementById('reminderAmountInput').value = '';
+  document.getElementById('reminderCategoryInput').value = 'subscription';
+  document.getElementById('reminderRepeatInput').value = 'none';
+  document.getElementById('reminderNoteInput').value = '';
+  document.getElementById('reminderDeleteBtn').style.display = 'none';
+  document.getElementById('addReminderModal').classList.add('open');
+};
+
+window.openEditReminderModal = function(id){
+  const r = getReminders().find(x => x.id === id);
+  if(!r) return;
+  _editingReminderId = id;
+  document.getElementById('addReminderModalTitle').textContent = '編輯提醒';
+  document.getElementById('reminderNameInput').value = r.name || '';
+  document.getElementById('reminderDueDateInput').value = r.dueDate || '';
+  document.getElementById('reminderAmountInput').value = r.amount || '';
+  document.getElementById('reminderCategoryInput').value = r.category || 'other';
+  document.getElementById('reminderRepeatInput').value = r.repeat || 'none';
+  document.getElementById('reminderNoteInput').value = r.note || '';
+  document.getElementById('reminderDeleteBtn').style.display = 'block';
+  document.getElementById('addReminderModal').classList.add('open');
+};
+
+window.closeAddReminderModal = function(e){
+  if(!e || e.target === document.getElementById('addReminderModal'))
+    document.getElementById('addReminderModal').classList.remove('open');
+};
+
+window.saveReminder = function(){
+  const name = document.getElementById('reminderNameInput').value.trim();
+  const dueDate = document.getElementById('reminderDueDateInput').value;
+  const amount = document.getElementById('reminderAmountInput').value;
+  const category = document.getElementById('reminderCategoryInput').value;
+  const repeat = document.getElementById('reminderRepeatInput').value;
+  const note = document.getElementById('reminderNoteInput').value.trim();
+
+  if(!name){ showToast('請輸入名稱'); return; }
+
+  const reminders = getReminders();
+  if(_editingReminderId){
+    const r = reminders.find(x => x.id === _editingReminderId);
+    if(r){ r.name=name; r.dueDate=dueDate; r.amount=amount?Number(amount):null; r.category=category; r.repeat=repeat; r.note=note; }
+  } else {
+    reminders.push({ id:'rm'+Date.now(), name, dueDate, amount:amount?Number(amount):null, category, repeat, note });
+  }
+
+  // 自動推算下次到期日（重複週期）
+  if(repeat !== 'none'){
+    const savedId = _editingReminderId || reminders[reminders.length-1].id;
+    const r = reminders.find(x => x.id === savedId);
+    if(r && r.dueDate){
+      const d = new Date(r.dueDate + 'T00:00:00');
+      const today = new Date(); today.setHours(0,0,0,0);
+      while(d < today){
+        if(repeat === 'monthly') d.setMonth(d.getMonth()+1);
+        else d.setFullYear(d.getFullYear()+1);
+      }
+      r.dueDate = d.toISOString().slice(0,10);
+    }
+  }
+
+  state._localUpdateAt = Date.now(); scheduleSave();
+  document.getElementById('addReminderModal').classList.remove('open');
+  renderCustomReminders();
+  renderBillsAlert();
+  showToast('提醒已儲存 ✓');
+};
+
+window.deleteReminder = function(){
+  if(!_editingReminderId) return;
+  if(!confirm('確認刪除此提醒？')) return;
+  state.reminders = getReminders().filter(r => r.id !== _editingReminderId);
+  state._localUpdateAt = Date.now(); scheduleSave();
+  document.getElementById('addReminderModal').classList.remove('open');
+  renderCustomReminders();
+  renderBillsAlert();
   showToast('已刪除');
 };
 
